@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,19 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Nectarine brand colors
+				nectarine: {
+					50: '#FFF8F0',
+					100: '#FFEED8',
+					200: '#FFDFB5',
+					300: '#FFCA80',
+					400: '#FFB84D',
+					500: '#FFA01A',
+					600: '#FF9A56',
+					700: '#E67A00',
+					800: '#B35F00',
+					900: '#804400',
 				}
 			},
 			borderRadius: {
@@ -89,6 +103,9 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
+			},
+			fontFamily: {
+				sans: ['Inter', 'sans-serif'],
 			}
 		}
 	},
