@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -106,8 +105,8 @@ const BuyForMe = () => {
         // screenshotUrl = data?.path;
       }
 
-      // Insert the buy request into the database
-      const { data, error } = await supabase
+      // Step 1: Insert the buy request into the database
+      const { data: buyRequestData, error: buyRequestError } = await supabase
         .from("buy_requests")
         .insert({
           user_id: user.id,
@@ -121,23 +120,22 @@ const BuyForMe = () => {
           notes: values.notes,
           country_of_purchase: values.country,
         })
-        .select();
+        .select()
+        .single();
 
-      if (error) throw error;
-
-      // Create an order record for this buy request
-      if (data && data.length > 0) {
-        const orderInsert = await supabase
-          .from("orders")
-          .insert({
-            user_id: user.id,
-            order_type: "buy_request",
-            reference_id: data[0].id,
-            status: "pending"
-          });
-        
-        if (orderInsert.error) throw orderInsert.error;
-      }
+      if (buyRequestError) throw buyRequestError;
+      
+      // Step 2: Create an order record for this buy request
+      const { error: orderError } = await supabase
+        .from("orders")
+        .insert({
+          user_id: user.id, // This is critical for RLS
+          order_type: "buy_request",
+          reference_id: buyRequestData.id,
+          status: "pending"
+        });
+      
+      if (orderError) throw orderError;
       
       toast({
         title: "Request submitted",
@@ -148,7 +146,7 @@ const BuyForMe = () => {
       form.reset();
       
       // Redirect to dashboard
-      navigate("/dashboard");
+      navigate("/dashboard/orders");
       
     } catch (error: any) {
       console.error("Error submitting form:", error);
