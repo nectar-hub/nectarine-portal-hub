@@ -14,6 +14,10 @@ import Dashboard from "./pages/dashboard/Dashboard";
 import BuyForMe from "./pages/dashboard/BuyForMe";
 import ShippingAddress from "./pages/dashboard/ShippingAddress";
 import Orders from "./pages/dashboard/Orders";
+import Users from "./pages/admin/Users";
+import Requests from "./pages/admin/Requests";
+import Analytics from "./pages/admin/Analytics";
+import Settings from "./pages/admin/Settings";
 import NotFound from "./pages/NotFound";
 import MainLayout from "./layouts/MainLayout";
 
@@ -64,6 +68,48 @@ const App = () => (
               element={
                 <MainLayout requireAuth>
                   <Orders />
+                </MainLayout>
+              }
+            />
+            
+            {/* Admin Routes */}
+            <Route
+              path="/admin/users"
+              element={
+                <MainLayout requireAuth adminOnly>
+                  <Users />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/admin/requests"
+              element={
+                <MainLayout requireAuth adminOnly>
+                  <Requests />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/admin/analytics"
+              element={
+                <MainLayout requireAuth adminOnly>
+                  <Analytics />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/admin/settings"
+              element={
+                <MainLayout requireAuth adminOnly>
+                  <Settings />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <MainLayout requireAuth adminOnly>
+                  <Dashboard />
                 </MainLayout>
               }
             />
