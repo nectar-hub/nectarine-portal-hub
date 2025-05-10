@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { Search, UserPlus, Check, X } from "lucide-react";
+import { Search, UserPlus, Check, X, AlertCircle } from "lucide-react";
 
 type User = {
   id: string;
@@ -31,25 +31,37 @@ const Users = () => {
   const { isAdmin } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (isAdmin) {
+      fetchUsers();
+    }
+  }, [isAdmin]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      setError(null);
+      console.log("Fetching users...");
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching users:", error);
+        throw error;
+      }
+      
+      console.log("Users fetched:", data?.length || 0);
       setUsers(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching users:", error);
+      setError(error.message || "Failed to load users");
       toast({
         title: "Error",
         description: "Failed to load users",
@@ -79,11 +91,11 @@ const Users = () => {
         title: "Success",
         description: `User admin status updated`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating user:", error);
       toast({
         title: "Error",
-        description: "Failed to update user",
+        description: error.message || "Failed to update user",
         variant: "destructive"
       });
     } finally {
@@ -129,9 +141,25 @@ const Users = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button className="nectarine-gradient hover:opacity-90 transition-opacity w-full sm:w-auto">
-            <UserPlus className="mr-2 h-4 w-4" /> Invite User
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button 
+              className="nectarine-gradient hover:opacity-90 transition-opacity w-full sm:w-auto"
+              onClick={() => toast({
+                title: "Feature Coming Soon",
+                description: "User invitation functionality will be available soon.",
+              })}
+            >
+              <UserPlus className="mr-2 h-4 w-4" /> Invite User
+            </Button>
+            <Button 
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={fetchUsers}
+              disabled={loading}
+            >
+              Refresh
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -139,6 +167,15 @@ const Users = () => {
             {loading ? (
               <div className="flex justify-center p-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nectarine-500"></div>
+              </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center p-12">
+                <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+                <p className="text-xl font-semibold mb-4">Error Loading Users</p>
+                <p className="text-muted-foreground mb-4">{error}</p>
+                <Button variant="outline" onClick={fetchUsers}>
+                  Try Again
+                </Button>
               </div>
             ) : filteredUsers.length > 0 ? (
               <Table>

@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { useLocation } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,101 +42,146 @@ type Request = {
 
 const Requests = () => {
   const { isAdmin } = useAuth();
+  const location = useLocation();
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState("all");
   const [processingId, setProcessingId] = useState<string | null>(null);
+
+  const currentPath = location.pathname;
+  const isBuyRequestsPage = currentPath.includes('/buy-requests');
+  const isSelfPurchasesPage = currentPath.includes('/self-purchases');
 
   useEffect(() => {
     if (isAdmin) {
       fetchRequests();
     }
-  }, [isAdmin, filter]);
+  }, [isAdmin, filter, currentPath]);
 
   const fetchRequests = async () => {
     try {
       setLoading(true);
+      setError(null);
       
-      // Get buy requests
-      const { data: buyRequests, error: buyError } = await supabase
-        .from('buy_requests')
-        .select(`
-          id, user_id, product_name, store_name, quantity, product_price, 
-          country_of_purchase, status, created_at
-        `)
-        .eq(filter !== 'all' ? 'status' : 'id', filter !== 'all' ? filter : 'id');
+      // Determine which type of requests to fetch based on the current route
+      const shouldFetchBuyRequests = !isSelfPurchasesPage || currentPath === '/admin/requests';
+      const shouldFetchSelfPurchases = !isBuyRequestsPage || currentPath === '/admin/requests';
       
-      if (buyError) throw buyError;
-      
-      // Get self purchases
-      const { data: selfPurchases, error: selfError } = await supabase
-        .from('self_purchases')
-        .select(`
-          id, user_id, description, store_name, quantity, estimated_value, 
-          status, created_at
-        `)
-        .eq(filter !== 'all' ? 'status' : 'id', filter !== 'all' ? filter : 'id');
-      
-      if (selfError) throw selfError;
-      
-      // Transform and combine the data
-      const buyRequestsFormatted = (buyRequests || []).map(req => ({
-        id: req.id,
-        user_id: req.user_id,
-        request_type: 'buy_request' as const,
-        product_name: req.product_name,
-        store_name: req.store_name || 'Unknown',
-        quantity: req.quantity,
-        price: req.product_price,
-        status: req.status,
-        created_at: req.created_at,
-        country: req.country_of_purchase
-      }));
-      
-      const selfPurchasesFormatted = (selfPurchases || []).map(purchase => ({
-        id: purchase.id,
-        user_id: purchase.user_id,
-        request_type: 'self_purchase' as const,
-        product_name: purchase.description,
-        store_name: purchase.store_name,
-        quantity: purchase.quantity,
-        price: purchase.estimated_value,
-        status: purchase.status,
-        created_at: purchase.created_at
-      }));
-      
-      const combinedRequests = [...buyRequestsFormatted, ...selfPurchasesFormatted];
-      
-      // Fetch user details for each request
-      const userIds = [...new Set(combinedRequests.map(req => req.user_id))];
-      const { data: users, error: usersError } = await supabase
-        .from('profiles')
-        .select('id, email, full_name')
-        .in('id', userIds);
-      
-      if (usersError) throw usersError;
-      
-      // Map user details to requests
-      const requestsWithUserDetails = combinedRequests.map(req => {
-        const user = users?.find(u => u.id === req.user_id);
-        return {
-          ...req,
-          user_email: user?.email || 'Unknown',
-          user_name: user?.full_name || 'Unknown'
-        };
+      console.log("Fetching requests:", { 
+        path: currentPath,
+        fetchBuy: shouldFetchBuyRequests,
+        fetchSelf: shouldFetchSelfPurchases
       });
       
-      // Sort by created_at
-      requestsWithUserDetails.sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      let buyRequestsFormatted: Request[] = [];
+      let selfPurchasesFormatted: Request[] = [];
       
-      setRequests(requestsWithUserDetails);
-    } catch (error) {
-      console.error("Error fetching requests:", error);
+      // Fetch buy requests if needed
+      if (shouldFetchBuyRequests) {
+        const { data: buyRequests, error: buyError } = await supabase
+          .from('buy_requests')
+          .select(`
+            id, user_id, product_name, store_name, quantity, product_price, 
+            country_of_purchase, status, created_at
+          `)
+          .eq(filter !== 'all' ? 'status' : 'id', filter !== 'all' ? filter : 'id');
+        
+        if (buyError) {
+          console.error("Error fetching buy requests:", buyError);
+          throw new Error(`Error fetching buy requests: ${buyError.message}`);
+        }
+        
+        buyRequestsFormatted = (buyRequests || []).map(req => ({
+          id: req.id,
+          user_id: req.user_id,
+          request_type: 'buy_request' as const,
+          product_name: req.product_name,
+          store_name: req.store_name || 'Unknown',
+          quantity: req.quantity,
+          price: req.product_price,
+          status: req.status,
+          created_at: req.created_at,
+          country: req.country_of_purchase
+        }));
+      }
+      
+      // Fetch self purchases if needed
+      if (shouldFetchSelfPurchases) {
+        const { data: selfPurchases, error: selfError } = await supabase
+          .from('self_purchases')
+          .select(`
+            id, user_id, description, store_name, quantity, estimated_value, 
+            status, created_at
+          `)
+          .eq(filter !== 'all' ? 'status' : 'id', filter !== 'all' ? filter : 'id');
+        
+        if (selfError) {
+          console.error("Error fetching self purchases:", selfError);
+          throw new Error(`Error fetching self purchases: ${selfError.message}`);
+        }
+        
+        selfPurchasesFormatted = (selfPurchases || []).map(purchase => ({
+          id: purchase.id,
+          user_id: purchase.user_id,
+          request_type: 'self_purchase' as const,
+          product_name: purchase.description,
+          store_name: purchase.store_name,
+          quantity: purchase.quantity,
+          price: purchase.estimated_value,
+          status: purchase.status,
+          created_at: purchase.created_at
+        }));
+      }
+      
+      // Filter requests based on the current page
+      let combinedRequests: Request[] = [];
+      if (isBuyRequestsPage) {
+        combinedRequests = buyRequestsFormatted;
+      } else if (isSelfPurchasesPage) {
+        combinedRequests = selfPurchasesFormatted;
+      } else {
+        combinedRequests = [...buyRequestsFormatted, ...selfPurchasesFormatted];
+      }
+      
+      // Fetch user details for each request if there are any requests
+      if (combinedRequests.length > 0) {
+        const userIds = [...new Set(combinedRequests.map(req => req.user_id))];
+        const { data: users, error: usersError } = await supabase
+          .from('profiles')
+          .select('id, email, full_name')
+          .in('id', userIds);
+        
+        if (usersError) {
+          console.error("Error fetching user profiles:", usersError);
+          throw new Error(`Error fetching user profiles: ${usersError.message}`);
+        }
+        
+        // Map user details to requests
+        const requestsWithUserDetails = combinedRequests.map(req => {
+          const user = users?.find(u => u.id === req.user_id);
+          return {
+            ...req,
+            user_email: user?.email || 'Unknown',
+            user_name: user?.full_name || 'Unknown'
+          };
+        });
+        
+        // Sort by created_at
+        requestsWithUserDetails.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        
+        setRequests(requestsWithUserDetails);
+      } else {
+        setRequests([]);
+      }
+    } catch (error: any) {
+      console.error("Error in fetchRequests:", error);
+      setError(error.message || "Failed to load requests");
       toast({
         title: "Error",
-        description: "Failed to load requests",
+        description: error.message || "Failed to load requests",
         variant: "destructive"
       });
     } finally {
@@ -175,16 +221,22 @@ const Requests = () => {
         description: `Request marked as ${newStatus}`,
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating request status:", error);
       toast({
         title: "Update Failed",
-        description: "Could not update the request status",
+        description: error.message || "Could not update the request status",
         variant: "destructive"
       });
     } finally {
       setProcessingId(null);
     }
+  };
+
+  const getPageTitle = () => {
+    if (isBuyRequestsPage) return "Buy For Me Requests";
+    if (isSelfPurchasesPage) return "Self Purchases";
+    return "Purchase Requests";
   };
 
   if (!isAdmin) {
@@ -204,9 +256,13 @@ const Requests = () => {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Purchase Requests</h1>
+          <h1 className="text-3xl font-bold text-foreground">{getPageTitle()}</h1>
           <p className="text-muted-foreground mt-1">
-            Review and manage customer purchase requests
+            {isBuyRequestsPage 
+              ? "Review and manage customer buy for me requests"
+              : isSelfPurchasesPage
+              ? "Review and manage self-purchase requests"
+              : "Review and manage all customer purchase requests"}
           </p>
         </div>
 
@@ -227,6 +283,13 @@ const Requests = () => {
               </SelectContent>
             </Select>
           </div>
+          <Button 
+            variant="outline" 
+            onClick={fetchRequests} 
+            disabled={loading}
+          >
+            Refresh
+          </Button>
         </div>
 
         <Card>
@@ -235,11 +298,22 @@ const Requests = () => {
               <div className="flex justify-center p-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nectarine-500"></div>
               </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center p-12 text-center">
+                <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+                <h3 className="text-lg font-medium mb-2">Error Loading Data</h3>
+                <p className="text-muted-foreground mb-6">{error}</p>
+                <Button variant="outline" onClick={fetchRequests}>
+                  Try Again
+                </Button>
+              </div>
             ) : requests.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Type</TableHead>
+                    {!isBuyRequestsPage && !isSelfPurchasesPage && (
+                      <TableHead>Type</TableHead>
+                    )}
                     <TableHead>User</TableHead>
                     <TableHead>Product</TableHead>
                     <TableHead>Store</TableHead>
@@ -253,18 +327,20 @@ const Requests = () => {
                 <TableBody>
                   {requests.map((request) => (
                     <TableRow key={request.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {request.request_type === 'buy_request' ? (
-                            <ShoppingCart className="h-4 w-4 text-blue-500" />
-                          ) : (
-                            <Package className="h-4 w-4 text-green-500" />
-                          )}
-                          <span>
-                            {request.request_type === 'buy_request' ? 'Buy Request' : 'Self Purchase'}
-                          </span>
-                        </div>
-                      </TableCell>
+                      {!isBuyRequestsPage && !isSelfPurchasesPage && (
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {request.request_type === 'buy_request' ? (
+                              <ShoppingCart className="h-4 w-4 text-blue-500" />
+                            ) : (
+                              <Package className="h-4 w-4 text-green-500" />
+                            )}
+                            <span>
+                              {request.request_type === 'buy_request' ? 'Buy Request' : 'Self Purchase'}
+                            </span>
+                          </div>
+                        </TableCell>
+                      )}
                       <TableCell>
                         <div>
                           <div className="font-medium">{request.user_name || 'N/A'}</div>
