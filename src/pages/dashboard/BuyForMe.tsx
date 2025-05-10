@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -155,7 +154,8 @@ const BuyForMe = () => {
       
       console.log("[BUY FOR ME] Creating order with data:", orderData);
       
-      const { data: orderData, error: orderError } = await supabase
+      // Fixed variable name conflict by changing 'data: orderData' to 'data: createdOrder'
+      const { data: createdOrder, error: orderError } = await supabase
         .from("orders")
         .insert(orderData)
         .select();
@@ -174,7 +174,8 @@ const BuyForMe = () => {
         throw new Error(`Order creation error: ${orderError.message || "Unknown error occurred"}`);
       }
       
-      console.log("[BUY FOR ME] Order created successfully:", orderData);
+      // Changed from orderData to createdOrder here as well
+      console.log("[BUY FOR ME] Order created successfully:", createdOrder);
       
       toast({
         title: "Request submitted",
