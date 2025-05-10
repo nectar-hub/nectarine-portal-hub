@@ -109,7 +109,7 @@ const BuyForMe = () => {
         // screenshotUrl = data?.path;
       }
 
-      console.log("Submitting buy request with user_id:", user.id);
+      console.log("[BUY FOR ME] Starting submission process with user_id:", user.id);
       
       // Create buy request with the current user's ID
       const buyRequestData = {
@@ -125,6 +125,8 @@ const BuyForMe = () => {
         country_of_purchase: values.country,
       };
       
+      console.log("[BUY FOR ME] Submitting buy request with data:", buyRequestData);
+      
       // Step 1: Insert the buy request into the database
       const { data: createdBuyRequest, error: buyRequestError } = await supabase
         .from("buy_requests")
@@ -133,7 +135,7 @@ const BuyForMe = () => {
         .single();
 
       if (buyRequestError) {
-        console.error("Buy request error:", buyRequestError);
+        console.error("[BUY FOR ME] Buy request error:", buyRequestError);
         throw new Error(`Buy request error: ${buyRequestError.message || "Unknown error occurred"}`);
       }
       
@@ -141,12 +143,9 @@ const BuyForMe = () => {
         throw new Error("Failed to create buy request - no ID returned");
       }
       
-      console.log("Buy request created successfully:", createdBuyRequest);
+      console.log("[BUY FOR ME] Buy request created successfully:", createdBuyRequest);
       
-      // Step 2: Create an order record for this buy request using RPC (stored procedure) or a trigger
-      // This approach avoids RLS issues by letting the server handle the order creation
-      // For now, we'll try a simpler approach with explicit user_id setting
-      
+      // Step 2: Try inserting the order with a simplified approach
       const orderData = {
         user_id: user.id,  // Explicitly set user_id
         order_type: "buy_request",
@@ -154,16 +153,28 @@ const BuyForMe = () => {
         status: "pending"
       };
       
-      console.log("Creating order with data:", orderData);
+      console.log("[BUY FOR ME] Creating order with data:", orderData);
       
-      const { error: orderError } = await supabase
+      const { data: orderData, error: orderError } = await supabase
         .from("orders")
-        .insert(orderData);
+        .insert(orderData)
+        .select();
       
       if (orderError) {
-        console.error("Order creation error:", orderError);
+        console.error("[BUY FOR ME] Order creation error:", orderError);
+        
+        // Try to get detailed information about the error
+        const errorDetails = orderError?.details || orderError?.message || "Unknown error";
+        console.log("[BUY FOR ME] Error details:", errorDetails);
+        
+        // Check if the user is authenticated in Supabase
+        const { data: sessionData } = await supabase.auth.getSession();
+        console.log("[BUY FOR ME] Current session:", sessionData);
+        
         throw new Error(`Order creation error: ${orderError.message || "Unknown error occurred"}`);
       }
+      
+      console.log("[BUY FOR ME] Order created successfully:", orderData);
       
       toast({
         title: "Request submitted",
@@ -177,7 +188,7 @@ const BuyForMe = () => {
       navigate("/dashboard/orders");
       
     } catch (error: any) {
-      console.error("Error submitting form:", error);
+      console.error("[BUY FOR ME] Error submitting form:", error);
       setError(error.message || "There was an error submitting your request. Please try again.");
       toast({
         title: "Submission failed",
