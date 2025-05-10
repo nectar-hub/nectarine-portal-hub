@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,6 +7,7 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +36,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const formSchema = z.object({
   productName: z.string().min(2, "Product name must be at least 2 characters"),
@@ -61,6 +63,7 @@ type FormValues = z.infer<typeof formSchema>;
 const BuyForMe = () => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const form = useForm<FormValues>({
@@ -86,6 +89,7 @@ const BuyForMe = () => {
     }
 
     setIsSubmitting(true);
+    setError(null);
     let screenshotUrl = null;
     
     try {
@@ -105,6 +109,8 @@ const BuyForMe = () => {
         // screenshotUrl = data?.path;
       }
 
+      console.log("Submitting buy request with user_id:", user.id);
+      
       // Step 1: Insert the buy request into the database
       const { data: buyRequestData, error: buyRequestError } = await supabase
         .from("buy_requests")
@@ -123,9 +129,19 @@ const BuyForMe = () => {
         .select()
         .single();
 
-      if (buyRequestError) throw buyRequestError;
+      if (buyRequestError) {
+        console.error("Buy request error:", buyRequestError);
+        throw new Error(`Buy request error: ${buyRequestError.message || "Unknown error occurred"}`);
+      }
+      
+      if (!buyRequestData || !buyRequestData.id) {
+        throw new Error("Failed to create buy request - no ID returned");
+      }
+      
+      console.log("Buy request created:", buyRequestData);
       
       // Step 2: Create an order record for this buy request
+      console.log("Creating order with reference_id:", buyRequestData.id, "and user_id:", user.id);
       const { error: orderError } = await supabase
         .from("orders")
         .insert({
@@ -135,7 +151,10 @@ const BuyForMe = () => {
           status: "pending"
         });
       
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error("Order creation error:", orderError);
+        throw new Error(`Order creation error: ${orderError.message || "Unknown error occurred"}`);
+      }
       
       toast({
         title: "Request submitted",
@@ -150,6 +169,7 @@ const BuyForMe = () => {
       
     } catch (error: any) {
       console.error("Error submitting form:", error);
+      setError(error.message || "There was an error submitting your request. Please try again.");
       toast({
         title: "Submission failed",
         description: error.message || "There was an error submitting your request. Please try again.",
@@ -171,6 +191,12 @@ const BuyForMe = () => {
         </div>
 
         <div className="bg-card rounded-lg border border-border p-6">
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
