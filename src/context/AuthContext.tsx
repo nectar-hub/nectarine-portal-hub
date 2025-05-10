@@ -1,20 +1,25 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Session, User } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
-type User = {
+type Profile = {
   id: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: 'user' | 'admin';
+  full_name: string | null;
+  phone: string | null;
+  email: string | null;
+  is_admin: boolean;
 };
 
 type AuthContextType = {
+  session: Session | null;
   user: User | null;
+  profile: Profile | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, newPassword: string) => Promise<void>;
   isAdmin: boolean;
@@ -38,36 +43,82 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
 
-  // Mock authentication functions for now - would connect to backend in real implementation
+  // Load user profile from Supabase
+  const loadUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error loading user profile:', error);
+        return;
+      }
+
+      setProfile(data);
+    } catch (error) {
+      console.error('Error in loadUserProfile:', error);
+    }
+  };
+
+  // Setup auth state change listener and check for existing session
+  useEffect(() => {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          // Use setTimeout to avoid potential deadlocks
+          setTimeout(() => {
+            loadUserProfile(session.user.id);
+          }, 0);
+        } else {
+          setProfile(null);
+        }
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      if (session?.user) {
+        loadUserProfile(session.user.id);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // This would be a real API call in production
-      console.log(`Login attempt with ${email}`);
-      
-      // For demo purposes, we'll simulate different user roles
-      if (email.includes('admin')) {
-        setUser({
-          id: 'admin-123',
-          name: 'Admin User',
-          email: email,
-          phone: '+1234567890',
-          role: 'admin'
-        });
-      } else {
-        setUser({
-          id: 'user-123',
-          name: 'Regular User',
-          email: email,
-          phone: '+1234567890',
-          role: 'user'
-        });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw error;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
+      toast({
+        title: "Login failed",
+        description: error.message || "Please check your credentials and try again",
+        variant: "destructive"
+      });
       throw error;
     } finally {
       setLoading(false);
@@ -77,40 +128,78 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const register = async (userData: RegisterData) => {
     setLoading(true);
     try {
-      // This would be a real API call in production
-      console.log(`Registration for ${userData.email}`);
-      
-      // Simulate successful registration
-      setUser({
-        id: `user-${Math.floor(Math.random() * 1000)}`,
-        name: userData.fullName,
+      const { data, error } = await supabase.auth.signUp({
         email: userData.email,
-        phone: userData.phone,
-        role: 'user'
+        password: userData.password,
+        options: {
+          data: {
+            full_name: userData.fullName,
+            phone: userData.phone,
+          },
+        },
       });
-    } catch (error) {
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Registration successful!",
+        description: "Your account has been created.",
+      });
+
+    } catch (error: any) {
       console.error("Registration error:", error);
+      toast({
+        title: "Registration failed",
+        description: error.message || "Please check your details and try again",
+        variant: "destructive"
+      });
       throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = () => {
-    // Clear user data
-    setUser(null);
-    // In a real app, you'd also remove tokens from localStorage, cookies, etc.
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out",
+      });
+    } catch (error: any) {
+      console.error("Logout error:", error);
+      toast({
+        title: "Logout failed",
+        description: error.message || "An error occurred during logout",
+        variant: "destructive"
+      });
+    }
   };
 
   const forgotPassword = async (email: string) => {
     setLoading(true);
     try {
-      // This would be a real API call in production
-      console.log(`Password reset requested for ${email}`);
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    } catch (error) {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Password reset email sent",
+        description: "Check your inbox for a link to reset your password",
+      });
+    } catch (error: any) {
       console.error("Forgot password error:", error);
+      toast({
+        title: "Password reset failed",
+        description: error.message || "Please check your email and try again",
+        variant: "destructive"
+      });
       throw error;
     } finally {
       setLoading(false);
@@ -120,48 +209,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const resetPassword = async (token: string, newPassword: string) => {
     setLoading(true);
     try {
-      // This would be a real API call in production
-      console.log(`Password reset with token ${token}`);
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    } catch (error) {
+      // Note: For Supabase, we don't need to use the token directly in the API call
+      // as it's already included in the URL and handled by Supabase
+      const { data, error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Password reset successful",
+        description: "Your password has been updated",
+      });
+    } catch (error: any) {
       console.error("Reset password error:", error);
+      toast({
+        title: "Password reset failed",
+        description: error.message || "An error occurred while resetting your password",
+        variant: "destructive"
+      });
       throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  // Check if there's an existing session on app load
-  useEffect(() => {
-    // In a real app, you'd check for tokens in localStorage or cookies
-    // and validate them with your backend
-    
-    // Simulate checking session
-    const checkSession = async () => {
-      try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        // For demo purposes, we'll assume no existing session
-        setUser(null);
-      } catch (error) {
-        console.error("Session check error:", error);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    checkSession();
-  }, []);
-
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = !!profile?.is_admin;
 
   return (
     <AuthContext.Provider 
       value={{ 
+        session,
         user, 
+        profile,
         loading, 
         login, 
         register, 

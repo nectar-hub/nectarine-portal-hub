@@ -1,6 +1,6 @@
 
-import { ReactNode, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { ReactNode, useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,16 +23,22 @@ type DashboardLayoutProps = {
 };
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, profile, logout, isAdmin } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    // Close mobile menu when location changes
+    setIsMobileMenuOpen(false);
+  }, [location]);
 
   const userNavItems = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Buy For Me', href: '/dashboard/buy-for-me', icon: ShoppingCart },
     { name: 'My Shipping Address', href: '/dashboard/shipping-address', icon: MapPin },
-    { name: 'Track My Packages', href: '/dashboard/track-packages', icon: Package },
     { name: 'My Orders', href: '/dashboard/orders', icon: ClipboardList },
+    { name: 'Track My Packages', href: '/dashboard/track-packages', icon: Package },
     { name: 'My Account', href: '/dashboard/account', icon: Settings },
   ];
 
@@ -46,6 +52,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   ];
 
   const navItems = isAdmin ? adminNavItems : userNavItems;
+  
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -81,17 +92,17 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <div className="p-4 border-t border-sidebar-border">
           <div className="flex items-center mb-4">
             <div className="bg-nectarine-600 rounded-full h-10 w-10 flex items-center justify-center text-white">
-              {user?.name?.charAt(0).toUpperCase() || 'U'}
+              {profile?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium">{user?.name}</p>
+              <p className="text-sm font-medium">{profile?.full_name || user?.email}</p>
               <p className="text-xs text-sidebar-foreground opacity-70">{user?.email}</p>
             </div>
           </div>
           <Button
             variant="outline"
             className="w-full bg-sidebar-accent text-sidebar-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground flex items-center justify-center"
-            onClick={logout}
+            onClick={handleLogout}
           >
             <LogOut className="mr-2 h-4 w-4" /> Sign Out
           </Button>
@@ -130,20 +141,17 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <div className="mt-8 pt-4 border-t border-border">
               <div className="flex items-center mb-4 px-4">
                 <div className="bg-nectarine-600 rounded-full h-10 w-10 flex items-center justify-center text-white">
-                  {user?.name?.charAt(0).toUpperCase() || 'U'}
+                  {profile?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium">{user?.name}</p>
+                  <p className="text-sm font-medium">{profile?.full_name || user?.email}</p>
                   <p className="text-xs text-muted-foreground">{user?.email}</p>
                 </div>
               </div>
               <Button
                 variant="outline"
                 className="w-full flex items-center justify-center"
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  logout();
-                }}
+                onClick={handleLogout}
               >
                 <LogOut className="mr-2 h-4 w-4" /> Sign Out
               </Button>

@@ -9,13 +9,261 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      buy_requests: {
+        Row: {
+          country_of_purchase: string
+          created_at: string
+          delivery_deadline: string | null
+          id: string
+          notes: string | null
+          product_name: string
+          product_price: number | null
+          product_url: string | null
+          quantity: number
+          screenshot_url: string | null
+          status: string
+          store_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          country_of_purchase: string
+          created_at?: string
+          delivery_deadline?: string | null
+          id?: string
+          notes?: string | null
+          product_name: string
+          product_price?: number | null
+          product_url?: string | null
+          quantity?: number
+          screenshot_url?: string | null
+          status?: string
+          store_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          country_of_purchase?: string
+          created_at?: string
+          delivery_deadline?: string | null
+          id?: string
+          notes?: string | null
+          product_name?: string
+          product_price?: number | null
+          product_url?: string | null
+          quantity?: number
+          screenshot_url?: string | null
+          status?: string
+          store_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buy_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          id: string
+          order_type: string
+          reference_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_type: string
+          reference_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_type?: string
+          reference_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          is_admin: boolean
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          is_admin?: boolean
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          is_admin?: boolean
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      self_purchases: {
+        Row: {
+          courier: string
+          created_at: string
+          description: string
+          estimated_value: number | null
+          id: string
+          invoice_url: string | null
+          notes: string | null
+          quantity: number
+          status: string
+          store_name: string
+          tracking_number: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          courier: string
+          created_at?: string
+          description: string
+          estimated_value?: number | null
+          id?: string
+          invoice_url?: string | null
+          notes?: string | null
+          quantity?: number
+          status?: string
+          store_name: string
+          tracking_number: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          courier?: string
+          created_at?: string
+          description?: string
+          estimated_value?: number | null
+          id?: string
+          invoice_url?: string | null
+          notes?: string | null
+          quantity?: number
+          status?: string
+          store_name?: string
+          tracking_number?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "self_purchases_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shipping_addresses: {
+        Row: {
+          address: string
+          country: string
+          created_at: string
+          id: string
+          instructions: string | null
+          reference_code: string
+        }
+        Insert: {
+          address: string
+          country: string
+          created_at?: string
+          id?: string
+          instructions?: string | null
+          reference_code: string
+        }
+        Update: {
+          address?: string
+          country?: string
+          created_at?: string
+          id?: string
+          instructions?: string | null
+          reference_code?: string
+        }
+        Relationships: []
+      }
+      user_shipping_addresses: {
+        Row: {
+          address_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          address_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          address_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_shipping_addresses_address_id_fkey"
+            columns: ["address_id"]
+            isOneToOne: false
+            referencedRelation: "shipping_addresses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_shipping_addresses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

@@ -5,6 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +35,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const formSchema = z.object({
   productName: z.string().min(2, "Product name must be at least 2 characters"),
@@ -57,7 +60,9 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const BuyForMe = () => {
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -72,11 +77,67 @@ const BuyForMe = () => {
   });
 
   const onSubmit = async (values: FormValues) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "You must be logged in to submit a request",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
+    let screenshotUrl = null;
+    
     try {
-      // Here you would send the form data to your backend
-      console.log("Form values:", values);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      // Handle file upload if there's a screenshot
+      if (values.screenshot && values.screenshot.length > 0) {
+        const file = values.screenshot[0];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+        const filePath = `${user.id}/buy-requests/${fileName}`;
+        
+        // TODO: Upload the file to Supabase Storage once it's set up
+        // const { data, error } = await supabase.storage
+        //   .from("buy-request-screenshots")
+        //   .upload(filePath, file);
+        
+        // if (error) throw error;
+        // screenshotUrl = data?.path;
+      }
+
+      // Insert the buy request into the database
+      const { data, error } = await supabase
+        .from("buy_requests")
+        .insert({
+          user_id: user.id,
+          product_name: values.productName,
+          product_url: values.productUrl,
+          quantity: parseInt(values.quantity),
+          product_price: parseFloat(values.productPrice),
+          store_name: values.storeName,
+          delivery_deadline: values.deliveryDeadline.toISOString(),
+          screenshot_url: screenshotUrl,
+          notes: values.notes,
+          country_of_purchase: values.country,
+        })
+        .select();
+
+      if (error) throw error;
+
+      // Create an order record for this buy request
+      if (data && data.length > 0) {
+        const orderInsert = await supabase
+          .from("orders")
+          .insert({
+            user_id: user.id,
+            order_type: "buy_request",
+            reference_id: data[0].id,
+            status: "pending"
+          });
+        
+        if (orderInsert.error) throw orderInsert.error;
+      }
       
       toast({
         title: "Request submitted",
@@ -85,11 +146,15 @@ const BuyForMe = () => {
       
       // Reset form after successful submission
       form.reset();
-    } catch (error) {
+      
+      // Redirect to dashboard
+      navigate("/dashboard");
+      
+    } catch (error: any) {
       console.error("Error submitting form:", error);
       toast({
         title: "Submission failed",
-        description: "There was an error submitting your request. Please try again.",
+        description: error.message || "There was an error submitting your request. Please try again.",
         variant: "destructive"
       });
     } finally {

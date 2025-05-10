@@ -13,6 +13,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import Dashboard from "./pages/dashboard/Dashboard";
 import BuyForMe from "./pages/dashboard/BuyForMe";
 import ShippingAddress from "./pages/dashboard/ShippingAddress";
+import Orders from "./pages/dashboard/Orders";
 import NotFound from "./pages/NotFound";
 import MainLayout from "./layouts/MainLayout";
 
@@ -58,8 +59,14 @@ const App = () => (
                 </MainLayout>
               }
             />
-            
-            {/* Add more routes as needed */}
+            <Route
+              path="/dashboard/orders"
+              element={
+                <MainLayout requireAuth>
+                  <Orders />
+                </MainLayout>
+              }
+            />
             
             {/* Catch-all route for 404 */}
             <Route path="*" element={<NotFound />} />

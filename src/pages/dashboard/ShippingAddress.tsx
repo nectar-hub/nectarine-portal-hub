@@ -1,4 +1,7 @@
 
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,44 +9,110 @@ import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-// Mock data for shipping addresses
-const shippingAddresses = [
-  {
-    country: "usa",
-    countryName: "United States",
-    reference: "NECT-US12345",
-    addressLine1: "123 Nectarine Street",
-    addressLine2: "Suite 101",
-    city: "New York",
-    state: "NY",
-    zipCode: "10001",
-    phone: "+1 (212) 555-6789",
-  },
-  {
-    country: "uk",
-    countryName: "United Kingdom",
-    reference: "NECT-UK67890",
-    addressLine1: "456 Orange Road",
-    addressLine2: "Unit 7",
-    city: "London",
-    state: "",
-    zipCode: "SW1A 1AA",
-    phone: "+44 20 7123 4567",
-  },
-  {
-    country: "china",
-    countryName: "China",
-    reference: "NECT-CN24680",
-    addressLine1: "789 Peach Avenue",
-    addressLine2: "Building B, Floor 12",
-    city: "Shanghai",
-    state: "",
-    zipCode: "200000",
-    phone: "+86 21 5812 3456",
-  },
-];
+type ShippingAddress = {
+  id: string;
+  country: string;
+  countryName: string;
+  reference_code: string;
+  address: string;
+  address_parts: {
+    addressLine1: string;
+    addressLine2: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
+  phone: string;
+  instructions: string | null;
+  created_at: string;
+};
 
 const ShippingAddress = () => {
+  const { user } = useAuth();
+  const [shippingAddresses, setShippingAddresses] = useState<ShippingAddress[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchShippingAddresses = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('shipping_addresses')
+          .select(`
+            id, 
+            country, 
+            reference_code, 
+            address, 
+            instructions,
+            created_at
+          `)
+          .in('id', 
+            supabase
+              .from('user_shipping_addresses')
+              .select('address_id')
+              .eq('user_id', user.id)
+          );
+
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          // Transform and enhance the data
+          const enhancedData = data.map(address => {
+            // Parse the address to get individual components
+            // In a real app, these would be separate fields in the database
+            const addressParts = parseAddress(address.address, address.country);
+            
+            return {
+              ...address,
+              countryName: getCountryName(address.country),
+              address_parts: addressParts
+            };
+          });
+          
+          setShippingAddresses(enhancedData);
+        }
+      } catch (error) {
+        console.error('Error fetching shipping addresses:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load shipping addresses",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchShippingAddresses();
+  }, [user]);
+
+  // Helper function to parse the address string into components
+  const parseAddress = (address: string, country: string) => {
+    // In a real app, you would parse this properly or have separate fields
+    // This is just a placeholder implementation
+    const lines = address.split(',');
+    return {
+      addressLine1: lines[0]?.trim() || '',
+      addressLine2: lines[1]?.trim() || '',
+      city: lines[2]?.trim() || '',
+      state: lines[3]?.trim() || '',
+      zipCode: lines[4]?.trim() || ''
+    };
+  };
+
+  // Helper function to get country name from code
+  const getCountryName = (code: string) => {
+    const countries = {
+      'usa': 'United States',
+      'uk': 'United Kingdom',
+      'china': 'China',
+    };
+    return countries[code as keyof typeof countries] || code;
+  };
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
@@ -52,11 +121,70 @@ const ShippingAddress = () => {
     });
   };
 
-  const formatAddress = (address: typeof shippingAddresses[0]) => {
-    return `${address.reference}\n${address.addressLine1}\n${address.addressLine2}\n${address.city}${
-      address.state ? `, ${address.state}` : ""
-    } ${address.zipCode}\n${address.countryName}\n${address.phone}`;
+  const formatAddress = (address: ShippingAddress) => {
+    const parts = address.address_parts;
+    return `${address.reference_code}\n${parts.addressLine1}\n${parts.addressLine2}\n${parts.city}${
+      parts.state ? `, ${parts.state}` : ""
+    } ${parts.zipCode}\n${address.countryName}`;
   };
+
+  // Fallback mock data for development
+  const mockAddresses = [
+    {
+      id: "usa-id",
+      country: "usa",
+      countryName: "United States",
+      reference_code: "NECT-US12345",
+      address: "123 Nectarine Street, Suite 101, New York, NY, 10001",
+      address_parts: {
+        addressLine1: "123 Nectarine Street",
+        addressLine2: "Suite 101",
+        city: "New York",
+        state: "NY",
+        zipCode: "10001"
+      },
+      phone: "+1 (212) 555-6789",
+      instructions: null,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: "uk-id",
+      country: "uk",
+      countryName: "United Kingdom",
+      reference_code: "NECT-UK67890",
+      address: "456 Orange Road, Unit 7, London, , SW1A 1AA",
+      address_parts: {
+        addressLine1: "456 Orange Road",
+        addressLine2: "Unit 7",
+        city: "London",
+        state: "",
+        zipCode: "SW1A 1AA"
+      },
+      phone: "+44 20 7123 4567",
+      instructions: null,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: "china-id",
+      country: "china",
+      countryName: "China",
+      reference_code: "NECT-CN24680",
+      address: "789 Peach Avenue, Building B, Floor 12, Shanghai, , 200000",
+      address_parts: {
+        addressLine1: "789 Peach Avenue",
+        addressLine2: "Building B, Floor 12",
+        city: "Shanghai",
+        state: "",
+        zipCode: "200000"
+      },
+      phone: "+86 21 5812 3456",
+      instructions: null,
+      created_at: new Date().toISOString()
+    }
+  ];
+
+  // Use mock data if no addresses found from the database
+  const displayAddresses = shippingAddresses.length > 0 ? shippingAddresses : mockAddresses;
 
   return (
     <DashboardLayout>
@@ -69,84 +197,93 @@ const ShippingAddress = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="usa" className="w-full">
-          <TabsList className="grid grid-cols-3 mb-6">
-            <TabsTrigger value="usa">USA</TabsTrigger>
-            <TabsTrigger value="uk">UK</TabsTrigger>
-            <TabsTrigger value="china">China</TabsTrigger>
-          </TabsList>
+        {loading ? (
+          <div className="flex justify-center p-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nectarine-500"></div>
+          </div>
+        ) : (
+          <Tabs defaultValue={displayAddresses[0]?.country || "usa"} className="w-full">
+            <TabsList className="grid grid-cols-3 mb-6">
+              {displayAddresses.map((address) => (
+                <TabsTrigger key={address.id} value={address.country}>
+                  {address.countryName}
+                </TabsTrigger>
+              ))}
+            </TabsList>
 
-          {shippingAddresses.map((address) => (
-            <TabsContent key={address.country} value={address.country} className="mt-0">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex justify-between items-center">
-                    <span>{address.countryName} Shipping Address</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-1"
-                      onClick={() => copyToClipboard(formatAddress(address))}
-                    >
-                      <Copy className="h-4 w-4" />
-                      <span>Copy</span>
-                    </Button>
-                  </CardTitle>
-                  <CardDescription>
-                    Use this address when shopping online in {address.countryName}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-muted p-4 rounded-md font-mono text-sm">
-                    <div className="grid gap-2">
-                      <div>
-                        <span className="text-muted-foreground">Reference:</span>{" "}
-                        <span className="font-semibold">{address.reference}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Address Line 1:</span>{" "}
-                        {address.addressLine1}
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Address Line 2:</span>{" "}
-                        {address.addressLine2}
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">City:</span> {address.city}
-                      </div>
-                      {address.state && (
+            {displayAddresses.map((address) => (
+              <TabsContent key={address.id} value={address.country} className="mt-0">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex justify-between items-center">
+                      <span>{address.countryName} Shipping Address</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-1"
+                        onClick={() => copyToClipboard(formatAddress(address))}
+                      >
+                        <Copy className="h-4 w-4" />
+                        <span>Copy</span>
+                      </Button>
+                    </CardTitle>
+                    <CardDescription>
+                      Use this address when shopping online in {address.countryName}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-muted p-4 rounded-md font-mono text-sm">
+                      <div className="grid gap-2">
                         <div>
-                          <span className="text-muted-foreground">State/Province:</span>{" "}
-                          {address.state}
+                          <span className="text-muted-foreground">Reference:</span>{" "}
+                          <span className="font-semibold">{address.reference_code}</span>
                         </div>
-                      )}
-                      <div>
-                        <span className="text-muted-foreground">Postal/ZIP Code:</span>{" "}
-                        {address.zipCode}
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Country:</span> {address.countryName}
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Phone:</span> {address.phone}
+                        <div>
+                          <span className="text-muted-foreground">Address Line 1:</span>{" "}
+                          {address.address_parts.addressLine1}
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Address Line 2:</span>{" "}
+                          {address.address_parts.addressLine2}
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">City:</span> {address.address_parts.city}
+                        </div>
+                        {address.address_parts.state && (
+                          <div>
+                            <span className="text-muted-foreground">State/Province:</span>{" "}
+                            {address.address_parts.state}
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-muted-foreground">Postal/ZIP Code:</span>{" "}
+                          {address.address_parts.zipCode}
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Country:</span> {address.countryName}
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Phone:</span> {address.phone}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="mt-6 bg-yellow-50 text-yellow-800 p-4 rounded-md border border-yellow-200">
-                    <h4 className="font-semibold mb-2">Important Instructions</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li>Always include your unique reference code: <strong>{address.reference}</strong></li>
-                      <li>Submit a "Self Purchase Notification" form after ordering to help us identify your package</li>
-                      <li>Please forward any tracking information you receive</li>
-                      <li>We cannot accept food, liquid, or prohibited items</li>
-                    </ul>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          ))}
-        </Tabs>
+                    <div className="mt-6 bg-yellow-50 text-yellow-800 p-4 rounded-md border border-yellow-200">
+                      <h4 className="font-semibold mb-2">Important Instructions</h4>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Always include your unique reference code: <strong>{address.reference_code}</strong></li>
+                        <li>Submit a "Self Purchase Notification" form after ordering to help us identify your package</li>
+                        <li>Please forward any tracking information you receive</li>
+                        <li>We cannot accept food, liquid, or prohibited items</li>
+                        {address.instructions && <li>{address.instructions}</li>}
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            ))}
+          </Tabs>
+        )}
       </div>
     </DashboardLayout>
   );
