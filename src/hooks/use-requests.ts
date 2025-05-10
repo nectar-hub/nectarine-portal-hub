@@ -33,13 +33,20 @@ export function useRequests(requestType?: string, filter: string = "all") {
       
       // Fetch buy requests if needed
       if (shouldFetchBuyRequests) {
-        const { data: buyRequests, error: buyError } = await supabase
+        // Create a query based on the filter
+        let buyRequestsQuery = supabase
           .from('buy_requests')
           .select(`
             id, user_id, product_name, store_name, quantity, product_price, 
             country_of_purchase, status, created_at
-          `)
-          .eq(filter !== 'all' ? 'status' : 'id', filter !== 'all' ? filter : 'id');
+          `);
+          
+        // Apply filter if it's not 'all'
+        if (filter !== 'all') {
+          buyRequestsQuery = buyRequestsQuery.eq('status', filter);
+        }
+        
+        const { data: buyRequests, error: buyError } = await buyRequestsQuery;
         
         if (buyError) {
           console.error("Error fetching buy requests:", buyError);
@@ -62,13 +69,20 @@ export function useRequests(requestType?: string, filter: string = "all") {
       
       // Fetch self purchases if needed
       if (shouldFetchSelfPurchases) {
-        const { data: selfPurchases, error: selfError } = await supabase
+        // Create a query based on the filter
+        let selfPurchasesQuery = supabase
           .from('self_purchases')
           .select(`
             id, user_id, description, store_name, quantity, estimated_value, 
             status, created_at
-          `)
-          .eq(filter !== 'all' ? 'status' : 'id', filter !== 'all' ? filter : 'id');
+          `);
+          
+        // Apply filter if it's not 'all'
+        if (filter !== 'all') {
+          selfPurchasesQuery = selfPurchasesQuery.eq('status', filter);
+        }
+        
+        const { data: selfPurchases, error: selfError } = await selfPurchasesQuery;
         
         if (selfError) {
           console.error("Error fetching self purchases:", selfError);

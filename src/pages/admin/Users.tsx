@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import DashboardLayout from "@/layouts/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { Search, UserPlus, Check, X, AlertCircle } from "lucide-react";
+import { Search, UserPlus, Check, X } from "lucide-react";
+import LoadingState from "@/components/admin/LoadingState";
+import ErrorState from "@/components/admin/ErrorState";
+import AccessDenied from "@/components/admin/AccessDenied";
 
 type User = {
   id: string;
@@ -109,16 +112,7 @@ const Users = () => {
   );
 
   if (!isAdmin) {
-    return (
-      <DashboardLayout>
-        <div className="flex flex-col items-center justify-center h-[60vh]">
-          <h1 className="text-3xl font-bold text-red-600 mb-4">Access Denied</h1>
-          <p className="text-gray-600 text-lg text-center max-w-md">
-            You don't have permission to view this page. Please contact an administrator if you believe this is an error.
-          </p>
-        </div>
-      </DashboardLayout>
-    );
+    return <AccessDenied />;
   }
 
   return (
@@ -165,18 +159,12 @@ const Users = () => {
         <Card>
           <CardContent className="p-0">
             {loading ? (
-              <div className="flex justify-center p-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nectarine-500"></div>
-              </div>
+              <LoadingState />
             ) : error ? (
-              <div className="flex flex-col items-center justify-center p-12">
-                <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-                <p className="text-xl font-semibold mb-4">Error Loading Users</p>
-                <p className="text-muted-foreground mb-4">{error}</p>
-                <Button variant="outline" onClick={fetchUsers}>
-                  Try Again
-                </Button>
-              </div>
+              <ErrorState 
+                message={error} 
+                onRetry={fetchUsers}
+              />
             ) : filteredUsers.length > 0 ? (
               <Table>
                 <TableHeader>
