@@ -144,38 +144,21 @@ const BuyForMe = () => {
       
       console.log("[BUY FOR ME] Buy request created successfully:", createdBuyRequest);
       
-      // Step 2: Try inserting the order with a simplified approach
-      const orderData = {
-        user_id: user.id,  // Explicitly set user_id
-        order_type: "buy_request",
-        reference_id: createdBuyRequest.id,
-        status: "pending"
-      };
+      // Step 2: Use the database function to create an order
+      console.log("[BUY FOR ME] Creating order with reference_id:", createdBuyRequest.id);
       
-      console.log("[BUY FOR ME] Creating order with data:", orderData);
-      
-      // Fixed variable name conflict by changing 'data: orderData' to 'data: createdOrder'
-      const { data: createdOrder, error: orderError } = await supabase
-        .from("orders")
-        .insert(orderData)
-        .select();
+      const { data: orderId, error: orderError } = await supabase
+        .rpc('create_order', {
+          _reference_id: createdBuyRequest.id,
+          _user_id: user.id
+        });
       
       if (orderError) {
         console.error("[BUY FOR ME] Order creation error:", orderError);
-        
-        // Try to get detailed information about the error
-        const errorDetails = orderError?.details || orderError?.message || "Unknown error";
-        console.log("[BUY FOR ME] Error details:", errorDetails);
-        
-        // Check if the user is authenticated in Supabase
-        const { data: sessionData } = await supabase.auth.getSession();
-        console.log("[BUY FOR ME] Current session:", sessionData);
-        
         throw new Error(`Order creation error: ${orderError.message || "Unknown error occurred"}`);
       }
       
-      // Changed from orderData to createdOrder here as well
-      console.log("[BUY FOR ME] Order created successfully:", createdOrder);
+      console.log("[BUY FOR ME] Order created successfully with ID:", orderId);
       
       toast({
         title: "Request submitted",
