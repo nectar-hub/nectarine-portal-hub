@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -37,42 +36,51 @@ const ShippingAddress = () => {
       if (!user) return;
 
       try {
-        const { data, error } = await supabase
-          .from('shipping_addresses')
-          .select(`
-            id, 
-            country, 
-            reference_code, 
-            address, 
-            instructions,
-            created_at
-          `)
-          .in('id', 
-            supabase
-              .from('user_shipping_addresses')
-              .select('address_id')
-              .eq('user_id', user.id)
-          );
-
-        if (error) {
-          throw error;
+        const { data: userAddressData, error: userAddressError } = await supabase
+          .from('user_shipping_addresses')
+          .select('address_id')
+          .eq('user_id', user.id);
+        
+        if (userAddressError) {
+          throw userAddressError;
         }
-
-        if (data) {
-          // Transform and enhance the data
-          const enhancedData = data.map(address => {
-            // Parse the address to get individual components
-            // In a real app, these would be separate fields in the database
-            const addressParts = parseAddress(address.address, address.country);
-            
-            return {
-              ...address,
-              countryName: getCountryName(address.country),
-              address_parts: addressParts
-            };
-          });
+        
+        if (userAddressData && userAddressData.length > 0) {
+          const addressIds = userAddressData.map(item => item.address_id);
           
-          setShippingAddresses(enhancedData);
+          const { data: addressData, error: addressError } = await supabase
+            .from('shipping_addresses')
+            .select(`
+              id, 
+              country, 
+              reference_code, 
+              address, 
+              instructions,
+              created_at
+            `)
+            .in('id', addressIds);
+            
+          if (addressError) {
+            throw addressError;
+          }
+
+          if (addressData) {
+            // Transform and enhance the data
+            const enhancedData: ShippingAddress[] = addressData.map(address => {
+              // Parse the address to get individual components
+              // In a real app, these would be separate fields in the database
+              const addressParts = parseAddress(address.address, address.country);
+              
+              return {
+                ...address,
+                countryName: getCountryName(address.country),
+                address_parts: addressParts,
+                phone: getCountryPhone(address.country) // Add default phone based on country
+              };
+            });
+            
+            setShippingAddresses(enhancedData);
+          }
         }
       } catch (error) {
         console.error('Error fetching shipping addresses:', error);
@@ -113,6 +121,16 @@ const ShippingAddress = () => {
     return countries[code as keyof typeof countries] || code;
   };
 
+  // Helper function to get default phone based on country
+  const getCountryPhone = (code: string) => {
+    const phones = {
+      'usa': '+1 (212) 555-6789',
+      'uk': '+44 20 7123 4567',
+      'china': '+86 21 5812 3456',
+    };
+    return phones[code as keyof typeof phones] || '+1 (000) 000-0000';
+  };
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
@@ -129,7 +147,7 @@ const ShippingAddress = () => {
   };
 
   // Fallback mock data for development
-  const mockAddresses = [
+  const mockAddresses: ShippingAddress[] = [
     {
       id: "usa-id",
       country: "usa",

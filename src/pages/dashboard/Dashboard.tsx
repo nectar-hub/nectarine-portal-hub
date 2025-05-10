@@ -7,7 +7,7 @@ import { ShoppingCart, Package, ClipboardList } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   // These would come from API calls in a real app
   const stats = {
@@ -20,7 +20,7 @@ const Dashboard = () => {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Welcome, {user?.name}!</h1>
+          <h1 className="text-3xl font-bold text-foreground">Welcome, {profile?.full_name || user?.email?.split('@')[0] || 'User'}!</h1>
           <p className="text-muted-foreground mt-1">
             Manage your shipping and purchasing requests all in one place.
           </p>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -115,7 +114,7 @@ const Orders = () => {
           // For each order, fetch the details based on the order type and reference_id
           const ordersWithDetails = await Promise.all(
             orderData.map(async (order) => {
-              let details = {};
+              let details = {} as Order['details'];
               
               if (order.order_type === 'buy_request') {
                 const { data, error } = await supabase
@@ -127,10 +126,10 @@ const Orders = () => {
                 if (!error && data) {
                   details = {
                     product_name: data.product_name,
-                    store_name: data.store_name,
+                    store_name: data.store_name || '',
                     country_of_purchase: data.country_of_purchase,
                     quantity: data.quantity,
-                    price: data.product_price
+                    price: data.product_price || 0
                   };
                 }
               } else if (order.order_type === 'self_purchase') {
@@ -145,7 +144,7 @@ const Orders = () => {
                     tracking_number: data.tracking_number,
                     store_name: data.store_name,
                     quantity: data.quantity,
-                    price: data.estimated_value,
+                    price: data.estimated_value || 0,
                     product_name: data.description
                   };
                 }
@@ -153,8 +152,9 @@ const Orders = () => {
               
               return {
                 ...order,
+                order_type: order.order_type as 'buy_request' | 'self_purchase',
                 details
-              };
+              } as Order;
             })
           );
           
@@ -176,10 +176,10 @@ const Orders = () => {
   }, [user, orderType, status]);
 
   // Mock orders for development if API returns no data
-  const mockOrders = [
+  const mockOrders: Order[] = [
     {
       id: "1",
-      order_type: 'buy_request' as const,
+      order_type: 'buy_request',
       status: 'pending',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -193,7 +193,7 @@ const Orders = () => {
     },
     {
       id: "2",
-      order_type: 'self_purchase' as const,
+      order_type: 'self_purchase',
       status: 'in_transit',
       created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
       updated_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
@@ -207,7 +207,7 @@ const Orders = () => {
     },
     {
       id: "3",
-      order_type: 'buy_request' as const,
+      order_type: 'buy_request',
       status: 'completed',
       created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
       updated_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
