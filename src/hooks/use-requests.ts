@@ -114,33 +114,39 @@ export function useRequests(requestType?: string, filter: string = "all") {
       
       // Fetch user details for each request if there are any requests
       if (combinedRequests.length > 0) {
-        const userIds = [...new Set(combinedRequests.map(req => req.user_id))];
-        const { data: users, error: usersError } = await supabase
-          .from('profiles')
-          .select('id, email, full_name')
-          .in('id', userIds);
-        
-        if (usersError) {
-          console.error("Error fetching user profiles:", usersError);
-          throw new Error(`Error fetching user profiles: ${usersError.message}`);
+        try {
+          const userIds = [...new Set(combinedRequests.map(req => req.user_id))];
+          const { data: users, error: usersError } = await supabase
+            .from('profiles')
+            .select('id, email, full_name')
+            .in('id', userIds);
+          
+          if (usersError) {
+            console.error("Error fetching user profiles:", usersError);
+            throw new Error(`Error fetching user profiles: ${usersError.message}`);
+          }
+          
+          // Map user details to requests
+          const requestsWithUserDetails = combinedRequests.map(req => {
+            const user = users?.find(u => u.id === req.user_id);
+            return {
+              ...req,
+              user_email: user?.email || 'Unknown',
+              user_name: user?.full_name || 'Unknown'
+            };
+          });
+          
+          // Sort by created_at
+          requestsWithUserDetails.sort((a, b) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+          
+          setRequests(requestsWithUserDetails);
+        } catch (userError: any) {
+          console.error("Error processing user details:", userError);
+          // Still set the requests even if user details fail
+          setRequests(combinedRequests);
         }
-        
-        // Map user details to requests
-        const requestsWithUserDetails = combinedRequests.map(req => {
-          const user = users?.find(u => u.id === req.user_id);
-          return {
-            ...req,
-            user_email: user?.email || 'Unknown',
-            user_name: user?.full_name || 'Unknown'
-          };
-        });
-        
-        // Sort by created_at
-        requestsWithUserDetails.sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-        
-        setRequests(requestsWithUserDetails);
       } else {
         setRequests([]);
       }
