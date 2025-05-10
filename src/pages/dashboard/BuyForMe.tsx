@@ -111,21 +111,24 @@ const BuyForMe = () => {
 
       console.log("Submitting buy request with user_id:", user.id);
       
+      // Create buy request with the current user's ID
+      const buyRequestData = {
+        user_id: user.id,
+        product_name: values.productName,
+        product_url: values.productUrl,
+        quantity: parseInt(values.quantity),
+        product_price: parseFloat(values.productPrice),
+        store_name: values.storeName,
+        delivery_deadline: values.deliveryDeadline.toISOString(),
+        screenshot_url: screenshotUrl,
+        notes: values.notes,
+        country_of_purchase: values.country,
+      };
+      
       // Step 1: Insert the buy request into the database
-      const { data: buyRequestData, error: buyRequestError } = await supabase
+      const { data: createdBuyRequest, error: buyRequestError } = await supabase
         .from("buy_requests")
-        .insert({
-          user_id: user.id,
-          product_name: values.productName,
-          product_url: values.productUrl,
-          quantity: parseInt(values.quantity),
-          product_price: parseFloat(values.productPrice),
-          store_name: values.storeName,
-          delivery_deadline: values.deliveryDeadline.toISOString(),
-          screenshot_url: screenshotUrl,
-          notes: values.notes,
-          country_of_purchase: values.country,
-        })
+        .insert(buyRequestData)
         .select()
         .single();
 
@@ -134,22 +137,28 @@ const BuyForMe = () => {
         throw new Error(`Buy request error: ${buyRequestError.message || "Unknown error occurred"}`);
       }
       
-      if (!buyRequestData || !buyRequestData.id) {
+      if (!createdBuyRequest || !createdBuyRequest.id) {
         throw new Error("Failed to create buy request - no ID returned");
       }
       
-      console.log("Buy request created:", buyRequestData);
+      console.log("Buy request created successfully:", createdBuyRequest);
       
-      // Step 2: Create an order record for this buy request
-      console.log("Creating order with reference_id:", buyRequestData.id, "and user_id:", user.id);
+      // Step 2: Create an order record for this buy request using RPC (stored procedure) or a trigger
+      // This approach avoids RLS issues by letting the server handle the order creation
+      // For now, we'll try a simpler approach with explicit user_id setting
+      
+      const orderData = {
+        user_id: user.id,  // Explicitly set user_id
+        order_type: "buy_request",
+        reference_id: createdBuyRequest.id,
+        status: "pending"
+      };
+      
+      console.log("Creating order with data:", orderData);
+      
       const { error: orderError } = await supabase
         .from("orders")
-        .insert({
-          user_id: user.id, // This is critical for RLS
-          order_type: "buy_request",
-          reference_id: buyRequestData.id,
-          status: "pending"
-        });
+        .insert(orderData);
       
       if (orderError) {
         console.error("Order creation error:", orderError);
