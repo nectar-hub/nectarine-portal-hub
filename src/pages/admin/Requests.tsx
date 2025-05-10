@@ -14,6 +14,7 @@ import ErrorState from "@/components/admin/ErrorState";
 import EmptyState from "@/components/admin/EmptyState";
 import AccessDenied from "@/components/admin/AccessDenied";
 import { getPageTitleByPath, getPageDescriptionByPath, getRequestTypeByPath } from "@/utils/request-utils";
+import { toast } from "@/hooks/use-toast";
 
 const Requests = () => {
   const { isAdmin } = useAuth();
@@ -35,17 +36,31 @@ const Requests = () => {
   } = useRequests(requestType, filter);
 
   if (!isAdmin) {
+    console.log("Access denied: User is not an admin");
     return <AccessDenied />;
   }
 
   const handleFilterChange = (value: string) => {
     console.log("Changing filter to:", value);
     setFilter(value);
+    
+    // Show toast for filter changes
+    toast({
+      title: "Filter Applied",
+      description: `Showing ${value === 'all' ? 'all requests' : `${value} requests`}`,
+      variant: "default"
+    });
   };
 
   const handleRefresh = () => {
     console.log("Refreshing data...");
     fetchRequests();
+    
+    toast({
+      title: "Refreshing Data",
+      description: "Getting the latest requests information",
+      variant: "default"
+    });
   };
 
   return (
@@ -56,7 +71,7 @@ const Requests = () => {
           description={getPageDescriptionByPath(currentPath)}
         />
 
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0">
           <StatusFilter 
             value={filter} 
             onValueChange={handleFilterChange} 
@@ -65,8 +80,9 @@ const Requests = () => {
             variant="outline" 
             onClick={handleRefresh} 
             disabled={loading}
+            className="w-full sm:w-auto"
           >
-            Refresh
+            {loading ? "Refreshing..." : "Refresh"}
           </Button>
         </div>
 

@@ -34,73 +34,87 @@ export function useRequests(requestType?: string, filter: string = "all") {
       
       // Fetch buy requests if needed
       if (shouldFetchBuyRequests) {
-        // Create a query based on the filter
-        let buyRequestsQuery = supabase
-          .from('buy_requests')
-          .select(`
-            id, user_id, product_name, store_name, quantity, product_price, 
-            country_of_purchase, status, created_at
-          `);
+        try {
+          // Create a query based on the filter
+          let buyRequestsQuery = supabase
+            .from('buy_requests')
+            .select(`
+              id, user_id, product_name, store_name, quantity, product_price, 
+              country_of_purchase, status, created_at
+            `);
+            
+          // Apply filter if it's not 'all'
+          if (filter !== 'all') {
+            buyRequestsQuery = buyRequestsQuery.eq('status', filter);
+          }
           
-        // Apply filter if it's not 'all'
-        if (filter !== 'all') {
-          buyRequestsQuery = buyRequestsQuery.eq('status', filter);
+          const { data: buyRequests, error: buyError } = await buyRequestsQuery;
+          
+          if (buyError) {
+            console.error("Error fetching buy requests:", buyError);
+            throw new Error(`Error fetching buy requests: ${buyError.message}`);
+          }
+          
+          buyRequestsFormatted = (buyRequests || []).map(req => ({
+            id: req.id,
+            user_id: req.user_id,
+            request_type: 'buy_request' as const,
+            product_name: req.product_name,
+            store_name: req.store_name || 'Unknown',
+            quantity: req.quantity,
+            price: req.product_price,
+            status: req.status,
+            created_at: req.created_at,
+            country: req.country_of_purchase
+          }));
+          
+          console.log(`Fetched ${buyRequestsFormatted.length} buy requests`);
+        } catch (buyErr: any) {
+          console.error("Error processing buy requests:", buyErr);
+          // Continue to try fetching self-purchases even if buy requests fail
         }
-        
-        const { data: buyRequests, error: buyError } = await buyRequestsQuery;
-        
-        if (buyError) {
-          console.error("Error fetching buy requests:", buyError);
-          throw new Error(`Error fetching buy requests: ${buyError.message}`);
-        }
-        
-        buyRequestsFormatted = (buyRequests || []).map(req => ({
-          id: req.id,
-          user_id: req.user_id,
-          request_type: 'buy_request' as const,
-          product_name: req.product_name,
-          store_name: req.store_name || 'Unknown',
-          quantity: req.quantity,
-          price: req.product_price,
-          status: req.status,
-          created_at: req.created_at,
-          country: req.country_of_purchase
-        }));
       }
       
       // Fetch self purchases if needed
       if (shouldFetchSelfPurchases) {
-        // Create a query based on the filter
-        let selfPurchasesQuery = supabase
-          .from('self_purchases')
-          .select(`
-            id, user_id, description, store_name, quantity, estimated_value, 
-            status, created_at
-          `);
+        try {
+          // Create a query based on the filter
+          let selfPurchasesQuery = supabase
+            .from('self_purchases')
+            .select(`
+              id, user_id, description, store_name, quantity, estimated_value, 
+              status, created_at
+            `);
+            
+          // Apply filter if it's not 'all'
+          if (filter !== 'all') {
+            selfPurchasesQuery = selfPurchasesQuery.eq('status', filter);
+          }
           
-        // Apply filter if it's not 'all'
-        if (filter !== 'all') {
-          selfPurchasesQuery = selfPurchasesQuery.eq('status', filter);
+          const { data: selfPurchases, error: selfError } = await selfPurchasesQuery;
+          
+          if (selfError) {
+            console.error("Error fetching self purchases:", selfError);
+            throw new Error(`Error fetching self purchases: ${selfError.message}`);
+          }
+          
+          selfPurchasesFormatted = (selfPurchases || []).map(purchase => ({
+            id: purchase.id,
+            user_id: purchase.user_id,
+            request_type: 'self_purchase' as const,
+            product_name: purchase.description,
+            store_name: purchase.store_name,
+            quantity: purchase.quantity,
+            price: purchase.estimated_value,
+            status: purchase.status,
+            created_at: purchase.created_at
+          }));
+          
+          console.log(`Fetched ${selfPurchasesFormatted.length} self purchases`);
+        } catch (selfErr: any) {
+          console.error("Error processing self purchases:", selfErr);
+          // Continue with whatever data we have
         }
-        
-        const { data: selfPurchases, error: selfError } = await selfPurchasesQuery;
-        
-        if (selfError) {
-          console.error("Error fetching self purchases:", selfError);
-          throw new Error(`Error fetching self purchases: ${selfError.message}`);
-        }
-        
-        selfPurchasesFormatted = (selfPurchases || []).map(purchase => ({
-          id: purchase.id,
-          user_id: purchase.user_id,
-          request_type: 'self_purchase' as const,
-          product_name: purchase.description,
-          store_name: purchase.store_name,
-          quantity: purchase.quantity,
-          price: purchase.estimated_value,
-          status: purchase.status,
-          created_at: purchase.created_at
-        }));
       }
       
       // Filter requests based on the current page
@@ -113,10 +127,14 @@ export function useRequests(requestType?: string, filter: string = "all") {
         combinedRequests = [...buyRequestsFormatted, ...selfPurchasesFormatted];
       }
       
+      console.log(`Combined ${combinedRequests.length} total requests`);
+      
       // Fetch user details for each request if there are any requests
       if (combinedRequests.length > 0) {
         try {
           const userIds = [...new Set(combinedRequests.map(req => req.user_id))];
+          console.log(`Fetching details for ${userIds.length} unique users`);
+          
           const { data: users, error: usersError } = await supabase
             .from('profiles')
             .select('id, email, full_name')
@@ -169,6 +187,7 @@ export function useRequests(requestType?: string, filter: string = "all") {
       setProcessingId(requestId);
       
       const table = requestType === 'buy_request' ? 'buy_requests' : 'self_purchases';
+      console.log(`Updating ${table} status for request ${requestId} to ${newStatus}`);
       
       // Update the request status
       const { error: requestError } = await supabase
@@ -176,7 +195,10 @@ export function useRequests(requestType?: string, filter: string = "all") {
         .update({ status: newStatus })
         .eq('id', requestId);
       
-      if (requestError) throw requestError;
+      if (requestError) {
+        console.error(`Error updating ${table}:`, requestError);
+        throw requestError;
+      }
       
       // Update the associated order status
       const { error: orderError } = await supabase
@@ -184,7 +206,13 @@ export function useRequests(requestType?: string, filter: string = "all") {
         .update({ status: newStatus })
         .eq('reference_id', requestId);
       
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error("Error updating order:", orderError);
+        // Don't throw here, the primary update succeeded
+        console.warn("Order status update failed, but request status was updated successfully");
+      } else {
+        console.log("Order status updated successfully");
+      }
       
       // Update local state
       setRequests(requests.map(req => 
