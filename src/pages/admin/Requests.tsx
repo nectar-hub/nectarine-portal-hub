@@ -38,6 +38,16 @@ const Requests = () => {
     return <AccessDenied />;
   }
 
+  const handleFilterChange = (value: string) => {
+    console.log("Changing filter to:", value);
+    setFilter(value);
+  };
+
+  const handleRefresh = () => {
+    console.log("Refreshing data...");
+    fetchRequests();
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -47,10 +57,13 @@ const Requests = () => {
         />
 
         <div className="flex justify-between items-center">
-          <StatusFilter value={filter} onValueChange={setFilter} />
+          <StatusFilter 
+            value={filter} 
+            onValueChange={handleFilterChange} 
+          />
           <Button 
             variant="outline" 
-            onClick={fetchRequests} 
+            onClick={handleRefresh} 
             disabled={loading}
           >
             Refresh
@@ -62,7 +75,7 @@ const Requests = () => {
             {loading ? (
               <LoadingState />
             ) : error ? (
-              <ErrorState message={error} onRetry={fetchRequests} />
+              <ErrorState message={error} onRetry={handleRefresh} />
             ) : requests.length > 0 ? (
               <RequestsTable 
                 requests={requests} 
@@ -73,7 +86,7 @@ const Requests = () => {
             ) : (
               <EmptyState 
                 showClearFilter={filter !== 'all'} 
-                onClearFilter={() => setFilter('all')}
+                onClearFilter={() => handleFilterChange('all')}
               />
             )}
           </CardContent>

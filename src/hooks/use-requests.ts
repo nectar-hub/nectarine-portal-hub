@@ -24,6 +24,7 @@ export function useRequests(requestType?: string, filter: string = "all") {
       
       console.log("Fetching requests:", { 
         type: requestType,
+        filter: filter,
         fetchBuy: shouldFetchBuyRequests,
         fetchSelf: shouldFetchSelfPurchases
       });
