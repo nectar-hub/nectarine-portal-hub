@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -145,14 +144,13 @@ const BuyForMe = () => {
       
       console.log("[BUY FOR ME] Buy request created successfully:", createdBuyRequest);
       
-      // Step 2: Use the database function to create an order
+      // Step 2: Use the updated database function to create an order (with only the required parameters)
       console.log("[BUY FOR ME] Creating order with reference_id:", createdBuyRequest.id);
       
       const { data: orderId, error: orderError } = await supabase
         .rpc('create_order', {
           _reference_id: createdBuyRequest.id,
-          _user_id: user.id,
-          _order_type: 'buy_request' // Explicitly include the order_type parameter
+          _user_id: user.id
         });
       
       if (orderError) {

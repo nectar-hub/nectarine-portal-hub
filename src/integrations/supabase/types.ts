@@ -261,7 +261,7 @@ export type Database = {
     }
     Functions: {
       create_order: {
-        Args: { _reference_id: string; _user_id: string; _order_type?: string }
+        Args: { _reference_id: string; _user_id: string }
         Returns: string
       }
       is_admin: {
