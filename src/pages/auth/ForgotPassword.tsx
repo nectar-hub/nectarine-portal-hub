@@ -91,7 +91,10 @@ const ForgotPassword = () => {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => form.reset() || setEmailSent(false)}
+                  onClick={() => {
+                    form.reset();
+                    setEmailSent(false);
+                  }}
                 >
                   Try another email
                 </Button>
