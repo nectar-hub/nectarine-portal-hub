@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -92,6 +93,30 @@ const App = () => (
               element={
                 <MainLayout requireAuth adminOnly>
                   <Requests />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/admin/buy-requests"
+              element={
+                <MainLayout requireAuth adminOnly>
+                  <Requests />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/admin/self-purchases"
+              element={
+                <MainLayout requireAuth adminOnly>
+                  <Requests />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/admin/shipping-addresses"
+              element={
+                <MainLayout requireAuth adminOnly>
+                  <ShippingAddress />
                 </MainLayout>
               }
             />
