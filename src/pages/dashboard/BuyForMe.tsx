@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -145,17 +146,17 @@ const BuyForMe = () => {
       console.log("[BUY FOR ME] Buy request created successfully:", createdBuyRequest);
       
       // Step 2: Create an order directly to avoid using the RPC call that was causing stack depth errors
-      const orderData = {
+      const orderPayload = {
         reference_id: createdBuyRequest.id,
         user_id: user.id,
         order_type: 'buy_request'
       };
       
-      console.log("[BUY FOR ME] Creating order with data:", orderData);
+      console.log("[BUY FOR ME] Creating order with data:", orderPayload);
       
-      const { data: orderData, error: orderError } = await supabase
+      const { data: createdOrder, error: orderError } = await supabase
         .from("orders")
-        .insert(orderData)
+        .insert(orderPayload)
         .select("id")
         .single();
       
@@ -164,7 +165,7 @@ const BuyForMe = () => {
         throw new Error(`Order creation error: ${orderError.message || "Unknown error occurred"}`);
       }
       
-      console.log("[BUY FOR ME] Order created successfully with ID:", orderData?.id);
+      console.log("[BUY FOR ME] Order created successfully with ID:", createdOrder?.id);
       
       toast({
         title: "Request submitted",
