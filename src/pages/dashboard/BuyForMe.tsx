@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -111,7 +110,7 @@ const BuyForMe = () => {
 
       console.log("[BUY FOR ME] Starting submission process with user_id:", user.id);
       
-      // Create buy request with the current user's ID
+      // Step 1: Insert the buy request into the database
       const buyRequestData = {
         user_id: user.id,
         product_name: values.productName,
@@ -127,7 +126,7 @@ const BuyForMe = () => {
       
       console.log("[BUY FOR ME] Submitting buy request with data:", buyRequestData);
       
-      // Step 1: Insert the buy request into the database
+      // First create the buy request
       const { data: createdBuyRequest, error: buyRequestError } = await supabase
         .from("buy_requests")
         .insert(buyRequestData)
@@ -145,27 +144,27 @@ const BuyForMe = () => {
       
       console.log("[BUY FOR ME] Buy request created successfully:", createdBuyRequest);
       
-      // Step 2: Use the updated database function to create an order
-      // Log the exact values being passed to ensure they are valid UUIDs
-      const reference_id = createdBuyRequest.id;
-      const user_id = user.id;
+      // Step 2: Create an order directly to avoid using the RPC call that was causing stack depth errors
+      const orderData = {
+        reference_id: createdBuyRequest.id,
+        user_id: user.id,
+        order_type: 'buy_request'
+      };
       
-      console.log("[BUY FOR ME] Creating order with parameters:");
-      console.log("Reference ID:", reference_id, "Type:", typeof reference_id);
-      console.log("User ID:", user_id, "Type:", typeof user_id);
+      console.log("[BUY FOR ME] Creating order with data:", orderData);
       
-      const { data: orderId, error: orderError } = await supabase
-        .rpc('create_order', {
-          _reference_id: reference_id,
-          _user_id: user_id
-        });
+      const { data: orderData, error: orderError } = await supabase
+        .from("orders")
+        .insert(orderData)
+        .select("id")
+        .single();
       
       if (orderError) {
         console.error("[BUY FOR ME] Order creation error:", orderError);
         throw new Error(`Order creation error: ${orderError.message || "Unknown error occurred"}`);
       }
       
-      console.log("[BUY FOR ME] Order created successfully with ID:", orderId);
+      console.log("[BUY FOR ME] Order created successfully with ID:", orderData?.id);
       
       toast({
         title: "Request submitted",
