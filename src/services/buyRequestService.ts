@@ -71,7 +71,7 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
     product_price: firstItem.productPrice ? parseFloat(firstItem.productPrice) : null,
     screenshot_url: screenshotUrl,
     notes: notesWithDetails,
-    country_of_purchase: values.country || "Default", // Use form country field if available
+    country_of_purchase: values.country || "Default", // Use country from form values or default
     store_name: firstItem.storeName || "Not specified", // Add store name if available
     color: firstItem.color || null,
     size: firstItem.size || null

@@ -14,4 +14,5 @@ export interface BuyRequestFormValues {
   items: BuyRequestItem[];
   notes?: string;
   screenshot?: FileList;
+  country?: string; // Added country field to match usage in buyRequestService.ts
 }

@@ -14,6 +14,7 @@ import { useAuth } from "@/context/AuthContext";
 const formSchema = z.object({
   notes: z.string().optional(),
   screenshot: z.instanceof(FileList).optional(),
+  country: z.string().optional(), // Add country field to the schema
 });
 
 export function useBuyRequestForm() {
@@ -46,6 +47,7 @@ export function useBuyRequestForm() {
     defaultValues: {
       notes: "",
       screenshot: undefined,
+      country: "Default", // Add default country value
     },
   });
 
@@ -172,7 +174,8 @@ export function useBuyRequestForm() {
       const fullFormValues: BuyRequestFormValues = {
         items,
         notes: values.notes,
-        screenshot: values.screenshot
+        screenshot: values.screenshot,
+        country: values.country // Include country in the form values
       };
       
       await createBuyRequest(fullFormValues, user.id);
