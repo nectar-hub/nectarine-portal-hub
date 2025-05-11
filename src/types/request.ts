@@ -17,4 +17,9 @@ export type Request = {
   size?: string;
   notes?: string;
   screenshot_url?: string;
+  delivery_deadline?: string;
+  // Self-purchase specific fields
+  tracking_number?: string;
+  courier?: string;
+  invoice_url?: string;
 };

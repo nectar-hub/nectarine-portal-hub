@@ -18,8 +18,11 @@ import {
   Palette,
   Ruler,
   FileText,
-  Image
+  Image,
+  Calendar,
+  Truck
 } from "lucide-react";
+import { format } from "date-fns";
 
 interface RequestDetailsDialogProps {
   request: Request | null;
@@ -37,6 +40,11 @@ const RequestDetailsDialog = ({
   onUpdateStatus
 }: RequestDetailsDialogProps) => {
   if (!request) return null;
+  
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return 'N/A';
+    return format(new Date(dateString), 'PPP');
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -80,7 +88,7 @@ const RequestDetailsDialog = ({
             
             <div className="space-y-2">
               <h3 className="text-sm font-medium text-muted-foreground">Date Submitted</h3>
-              <p>{new Date(request.created_at).toLocaleString()}</p>
+              <p>{formatDate(request.created_at)}</p>
             </div>
           </div>
           
@@ -140,8 +148,8 @@ const RequestDetailsDialog = ({
                 <p>{request.price ? `$${request.price.toFixed(2)}` : 'N/A'}</p>
               </div>
               
-              {/* Color information - only show for buy_requests */}
-              {request.request_type === 'buy_request' && request.color && (
+              {/* Color information - only show if available */}
+              {request.color && (
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium flex items-center">
                     <Palette className="h-4 w-4 mr-2 text-gray-500" />
@@ -153,8 +161,8 @@ const RequestDetailsDialog = ({
                 </div>
               )}
               
-              {/* Size information - only show for buy_requests */}
-              {request.request_type === 'buy_request' && request.size && (
+              {/* Size information - only show if available */}
+              {request.size && (
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium flex items-center">
                     <Ruler className="h-4 w-4 mr-2 text-gray-500" />
@@ -170,10 +178,46 @@ const RequestDetailsDialog = ({
                   <p>{request.country}</p>
                 </div>
               )}
+
+              {/* Delivery Deadline - show for buy requests if available */}
+              {request.request_type === 'buy_request' && request.delivery_deadline && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium flex items-center">
+                    <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+                    Delivery Deadline
+                  </h4>
+                  <p>{formatDate(request.delivery_deadline)}</p>
+                </div>
+              )}
+
+              {/* Self-purchase specific fields */}
+              {request.request_type === 'self_purchase' && (
+                <>
+                  {request.tracking_number && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium flex items-center">
+                        <Hash className="h-4 w-4 mr-2 text-gray-500" />
+                        Tracking Number
+                      </h4>
+                      <p>{request.tracking_number}</p>
+                    </div>
+                  )}
+                  
+                  {request.courier && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium flex items-center">
+                        <Truck className="h-4 w-4 mr-2 text-gray-500" />
+                        Courier
+                      </h4>
+                      <p>{request.courier}</p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
           
-          {/* Notes/Instructions - conditionally show based on request type */}
+          {/* Notes/Instructions - conditionally show if available */}
           {request.notes && (
             <div className="border-t pt-4">
               <h4 className="text-sm font-medium flex items-center mb-2">
@@ -187,18 +231,18 @@ const RequestDetailsDialog = ({
           )}
           
           {/* Screenshot/Invoice - conditionally show based on request type */}
-          {request.screenshot_url && (
+          {(request.screenshot_url || request.invoice_url) && (
             <div className="border-t pt-4">
               <h4 className="text-sm font-medium flex items-center mb-2">
                 <Image className="h-4 w-4 mr-2 text-gray-500" />
-                Screenshot/Invoice
+                {request.request_type === 'buy_request' ? 'Screenshot' : 'Invoice'}
               </h4>
               <div className="border rounded-md overflow-hidden bg-background">
                 <div className="relative w-full">
                   <AspectRatio ratio={16 / 9} className="bg-muted">
                     <img
-                      src={request.screenshot_url}
-                      alt="Uploaded screenshot or invoice"
+                      src={request.screenshot_url || request.invoice_url}
+                      alt={request.request_type === 'buy_request' ? 'Uploaded screenshot' : 'Uploaded invoice'}
                       className="object-contain w-full h-full"
                       onError={(e) => {
                         // If image fails to load, show as a link instead
@@ -206,7 +250,7 @@ const RequestDetailsDialog = ({
                         const container = target.parentNode?.parentNode as HTMLDivElement;
                         if (container) {
                           const link = document.createElement('a');
-                          link.href = request.screenshot_url || '';
+                          link.href = request.screenshot_url || request.invoice_url || '';
                           link.target = '_blank';
                           link.rel = 'noopener noreferrer';
                           link.className = 'text-blue-500 hover:underline flex items-center justify-center h-full';
@@ -229,7 +273,7 @@ const RequestDetailsDialog = ({
                 </div>
                 <div className="p-2 text-center">
                   <a 
-                    href={request.screenshot_url} 
+                    href={request.screenshot_url || request.invoice_url} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-blue-500 hover:underline text-sm flex items-center justify-center"

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -40,7 +39,8 @@ export function useRequests(requestType?: string, filter: string = "all") {
             .from('buy_requests')
             .select(`
               id, user_id, product_name, store_name, quantity, product_price, 
-              country_of_purchase, status, created_at
+              country_of_purchase, status, created_at, updated_at, 
+              product_url, notes, screenshot_url, delivery_deadline
             `);
             
           // Apply filter if it's not 'all'
@@ -65,7 +65,12 @@ export function useRequests(requestType?: string, filter: string = "all") {
             price: req.product_price,
             status: req.status,
             created_at: req.created_at,
-            country: req.country_of_purchase
+            updated_at: req.updated_at,
+            country: req.country_of_purchase,
+            product_url: req.product_url,
+            notes: req.notes,
+            screenshot_url: req.screenshot_url,
+            delivery_deadline: req.delivery_deadline
           }));
           
           console.log(`Fetched ${buyRequestsFormatted.length} buy requests`);
@@ -83,7 +88,8 @@ export function useRequests(requestType?: string, filter: string = "all") {
             .from('self_purchases')
             .select(`
               id, user_id, description, store_name, quantity, estimated_value, 
-              status, created_at
+              status, created_at, updated_at, notes, invoice_url,
+              tracking_number, courier
             `);
             
           // Apply filter if it's not 'all'
@@ -107,7 +113,12 @@ export function useRequests(requestType?: string, filter: string = "all") {
             quantity: purchase.quantity,
             price: purchase.estimated_value,
             status: purchase.status,
-            created_at: purchase.created_at
+            created_at: purchase.created_at,
+            updated_at: purchase.updated_at,
+            notes: purchase.notes,
+            invoice_url: purchase.invoice_url,
+            tracking_number: purchase.tracking_number,
+            courier: purchase.courier
           }));
           
           console.log(`Fetched ${selfPurchasesFormatted.length} self purchases`);
