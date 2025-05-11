@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import { Request } from "@/types/request";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Package, Check, X, Info, ExternalLink } from "lucide-react";
+import { ShoppingCart, Package, Check, X, Info, ExternalLink, Link, Store, Hash, DollarSign, Palette, Ruler, FileText, Image } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,7 @@ import {
   DialogTitle,
   DialogDescription
 } from "@/components/ui/dialog";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 interface RequestsTableProps {
   requests: Request[];
@@ -162,7 +164,7 @@ const RequestsTable = ({ requests, showType = false, processingId, onUpdateStatu
       
       {/* Request Details Dialog */}
       <Dialog open={!!selectedRequest} onOpenChange={(open) => !open && handleCloseDialog()}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Request Details</DialogTitle>
             <DialogDescription>
@@ -171,7 +173,7 @@ const RequestsTable = ({ requests, showType = false, processingId, onUpdateStatu
           </DialogHeader>
           
           {selectedRequest && (
-            <div className="space-y-4 mt-4">
+            <div className="space-y-6 mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <h3 className="text-sm font-medium text-muted-foreground">Request Type</h3>
@@ -216,23 +218,32 @@ const RequestsTable = ({ requests, showType = false, processingId, onUpdateStatu
               </div>
               
               <div className="border-t pt-4">
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Product Information</h3>
+                <h3 className="text-lg font-medium mb-4">Product Information</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium">Product Name</h4>
+                    <h4 className="text-sm font-medium flex items-center">
+                      <Package className="h-4 w-4 mr-2 text-gray-500" />
+                      Product Name
+                    </h4>
                     <p>{selectedRequest.product_name}</p>
                   </div>
                   
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium">Store</h4>
+                    <h4 className="text-sm font-medium flex items-center">
+                      <Store className="h-4 w-4 mr-2 text-gray-500" />
+                      Store
+                    </h4>
                     <p>{selectedRequest.store_name || 'N/A'}</p>
                   </div>
                   
                   {selectedRequest.product_url && (
                     <div className="space-y-2 col-span-2">
-                      <h4 className="text-sm font-medium">Product URL</h4>
-                      <p className="flex items-center break-all">
+                      <h4 className="text-sm font-medium flex items-center">
+                        <Link className="h-4 w-4 mr-2 text-gray-500" />
+                        Product URL
+                      </h4>
+                      <p className="break-all">
                         <a 
                           href={selectedRequest.product_url} 
                           target="_blank" 
@@ -247,14 +258,44 @@ const RequestsTable = ({ requests, showType = false, processingId, onUpdateStatu
                   )}
                   
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium">Quantity</h4>
+                    <h4 className="text-sm font-medium flex items-center">
+                      <Hash className="h-4 w-4 mr-2 text-gray-500" />
+                      Quantity
+                    </h4>
                     <p>{selectedRequest.quantity}</p>
                   </div>
                   
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium">Price</h4>
+                    <h4 className="text-sm font-medium flex items-center">
+                      <DollarSign className="h-4 w-4 mr-2 text-gray-500" />
+                      Price
+                    </h4>
                     <p>{selectedRequest.price ? `$${selectedRequest.price.toFixed(2)}` : 'N/A'}</p>
                   </div>
+                  
+                  {/* Color information */}
+                  {selectedRequest.color && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium flex items-center">
+                        <Palette className="h-4 w-4 mr-2 text-gray-500" />
+                        Color
+                      </h4>
+                      <div className="flex items-center gap-2">
+                        {selectedRequest.color}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Size information */}
+                  {selectedRequest.size && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium flex items-center">
+                        <Ruler className="h-4 w-4 mr-2 text-gray-500" />
+                        Size
+                      </h4>
+                      <p>{selectedRequest.size}</p>
+                    </div>
+                  )}
                   
                   {selectedRequest.country && (
                     <div className="space-y-2">
@@ -264,6 +305,75 @@ const RequestsTable = ({ requests, showType = false, processingId, onUpdateStatu
                   )}
                 </div>
               </div>
+              
+              {/* Notes/Instructions */}
+              {selectedRequest.notes && (
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-medium flex items-center mb-2">
+                    <FileText className="h-4 w-4 mr-2 text-gray-500" />
+                    Notes/Instructions
+                  </h4>
+                  <div className="bg-secondary/30 p-3 rounded-md whitespace-pre-wrap">
+                    {selectedRequest.notes}
+                  </div>
+                </div>
+              )}
+              
+              {/* Screenshot/Invoice */}
+              {selectedRequest.screenshot_url && (
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-medium flex items-center mb-2">
+                    <Image className="h-4 w-4 mr-2 text-gray-500" />
+                    Screenshot/Invoice
+                  </h4>
+                  <div className="border rounded-md overflow-hidden bg-background">
+                    <div className="relative w-full">
+                      <AspectRatio ratio={16 / 9} className="bg-muted">
+                        <img
+                          src={selectedRequest.screenshot_url}
+                          alt="Uploaded screenshot or invoice"
+                          className="object-contain w-full h-full"
+                          onError={(e) => {
+                            // If image fails to load, show as a link instead
+                            const target = e.target as HTMLImageElement;
+                            const container = target.parentNode?.parentNode as HTMLDivElement;
+                            if (container) {
+                              const link = document.createElement('a');
+                              link.href = selectedRequest.screenshot_url || '';
+                              link.target = '_blank';
+                              link.rel = 'noopener noreferrer';
+                              link.className = 'text-blue-500 hover:underline flex items-center justify-center h-full';
+                              link.innerHTML = `
+                                <span class="flex items-center">
+                                  View File
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                    <polyline points="15 3 21 3 21 9"></polyline>
+                                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                                  </svg>
+                                </span>
+                              `;
+                              container.innerHTML = '';
+                              container.appendChild(link);
+                            }
+                          }}
+                        />
+                      </AspectRatio>
+                    </div>
+                    <div className="p-2 text-center">
+                      <a 
+                        href={selectedRequest.screenshot_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline text-sm flex items-center justify-center"
+                      >
+                        Open in new tab
+                        <ExternalLink className="h-3 w-3 ml-1" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div className="border-t pt-4 flex justify-between items-center">
                 <h3 className="text-sm font-medium">Actions</h3>

@@ -7,7 +7,7 @@ export interface BuyRequestItem {
   productPrice: string;
   color: string;
   size: string;
-  storeName?: string; // Added store name field
+  storeName?: string;
 }
 
 export interface BuyRequestFormValues {
