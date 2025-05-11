@@ -9,8 +9,59 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      buy_request_items: {
+        Row: {
+          buy_request_id: string
+          color: string | null
+          created_at: string
+          id: string
+          price: number | null
+          product_name: string
+          product_url: string | null
+          quantity: number
+          size: string | null
+          store_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          buy_request_id: string
+          color?: string | null
+          created_at?: string
+          id?: string
+          price?: number | null
+          product_name: string
+          product_url?: string | null
+          quantity?: number
+          size?: string | null
+          store_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          buy_request_id?: string
+          color?: string | null
+          created_at?: string
+          id?: string
+          price?: number | null
+          product_name?: string
+          product_url?: string | null
+          quantity?: number
+          size?: string | null
+          store_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buy_request_items_buy_request_id_fkey"
+            columns: ["buy_request_id"]
+            isOneToOne: false
+            referencedRelation: "buy_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buy_requests: {
         Row: {
+          color: string | null
           country_of_purchase: string
           created_at: string
           delivery_deadline: string | null
@@ -21,12 +72,14 @@ export type Database = {
           product_url: string | null
           quantity: number
           screenshot_url: string | null
+          size: string | null
           status: string
           store_name: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          color?: string | null
           country_of_purchase: string
           created_at?: string
           delivery_deadline?: string | null
@@ -37,12 +90,14 @@ export type Database = {
           product_url?: string | null
           quantity?: number
           screenshot_url?: string | null
+          size?: string | null
           status?: string
           store_name?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          color?: string | null
           country_of_purchase?: string
           created_at?: string
           delivery_deadline?: string | null
@@ -53,6 +108,7 @@ export type Database = {
           product_url?: string | null
           quantity?: number
           screenshot_url?: string | null
+          size?: string | null
           status?: string
           store_name?: string | null
           updated_at?: string

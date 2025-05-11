@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -41,7 +40,7 @@ export function useRequests(requestType?: string, filter: string = "all") {
             .select(`
               id, user_id, product_name, store_name, quantity, product_price, 
               country_of_purchase, status, created_at, updated_at, 
-              product_url, notes, screenshot_url, delivery_deadline
+              product_url, notes, screenshot_url, delivery_deadline, color, size
             `);
             
           // Apply filter if it's not 'all'
@@ -70,43 +69,37 @@ export function useRequests(requestType?: string, filter: string = "all") {
               const buyRequestIds = buyRequests.map(req => req.id);
               
               try {
-                // Check if the table exists first to avoid the error
-                const { data: tableExists } = await supabase
+                // Check if the table exists by querying it directly
+                const { data: items, error: itemsError } = await supabase
                   .from('buy_request_items')
-                  .select('count')
-                  .limit(1)
-                  .single();
+                  .select('*')
+                  .in('buy_request_id', buyRequestIds);
                 
-                if (tableExists !== null) {
-                  // Table exists, so we can query it
-                  const { data: items } = await supabase
-                    .from('buy_request_items')
-                    .select('*')
-                    .in('buy_request_id', buyRequestIds);
-                  
-                  if (items && items.length > 0) {
-                    // Group items by buy_request_id
-                    items.forEach(item => {
-                      const requestId = item.buy_request_id;
-                      if (!buyRequestItems[requestId]) {
-                        buyRequestItems[requestId] = [];
-                      }
-                      
-                      buyRequestItems[requestId].push({
-                        id: item.id,
-                        product_name: item.product_name,
-                        product_url: item.product_url,
-                        quantity: item.quantity,
-                        price: item.price,
-                        color: item.color,
-                        size: item.size,
-                        store_name: item.store_name
-                      });
+                if (itemsError) {
+                  console.warn("Error fetching buy request items:", itemsError);
+                  // Continue execution even if there's an error
+                } else if (items && items.length > 0) {
+                  // Group items by buy_request_id
+                  items.forEach(item => {
+                    const requestId = item.buy_request_id;
+                    if (!buyRequestItems[requestId]) {
+                      buyRequestItems[requestId] = [];
+                    }
+                    
+                    buyRequestItems[requestId].push({
+                      id: item.id,
+                      product_name: item.product_name,
+                      product_url: item.product_url,
+                      quantity: item.quantity,
+                      price: item.price,
+                      color: item.color,
+                      size: item.size,
+                      store_name: item.store_name
                     });
-                  }
+                  });
                 }
               } catch (itemsErr) {
-                console.warn("Error or table doesn't exist:", itemsErr);
+                console.warn("Error processing items:", itemsErr);
                 // Continue execution even if there's an error
               }
             }
@@ -129,6 +122,8 @@ export function useRequests(requestType?: string, filter: string = "all") {
                 updated_at: req.updated_at,
                 country: req.country_of_purchase,
                 product_url: req.product_url,
+                color: req.color,
+                size: req.size,
                 notes: req.notes,
                 screenshot_url: req.screenshot_url,
                 delivery_deadline: req.delivery_deadline,
