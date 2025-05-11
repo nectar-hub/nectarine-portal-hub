@@ -26,6 +26,14 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
   // Step 1: Insert the buy request into the database for the first item
   const firstItem = values.items[0];
   
+  // Store color and size information in the notes field if they exist
+  let notesWithDetails = values.notes || "";
+  if (firstItem.color || firstItem.size) {
+    notesWithDetails += `\n\nItem Details:\n`;
+    if (firstItem.color) notesWithDetails += `Color: ${firstItem.color}\n`;
+    if (firstItem.size) notesWithDetails += `Size: ${firstItem.size}\n`;
+  }
+  
   const buyRequestData = {
     user_id: userId,
     product_name: firstItem.productName,
@@ -33,12 +41,8 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
     quantity: parseInt(firstItem.quantity),
     product_price: firstItem.productPrice ? parseFloat(firstItem.productPrice) : null,
     screenshot_url: screenshotUrl,
-    notes: values.notes,
-    // We'll store color and size in notes if they exist
-    additional_details: JSON.stringify({
-      color: firstItem.color || null,
-      size: firstItem.size || null
-    })
+    notes: notesWithDetails,
+    country_of_purchase: "Default" // Default value required by schema
   };
   
   console.log("[BUY SERVICE] Submitting buy request with data:", buyRequestData);
@@ -86,18 +90,23 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
     // For additional items, create separate buy requests linked to the same order
     const additionalItems = values.items.slice(1);
     for (const item of additionalItems) {
+      // Prepare notes with color and size for this item
+      let itemNotesWithDetails = values.notes || "";
+      if (item.color || item.size) {
+        itemNotesWithDetails += `\n\nItem Details:\n`;
+        if (item.color) itemNotesWithDetails += `Color: ${item.color}\n`;
+        if (item.size) itemNotesWithDetails += `Size: ${item.size}\n`;
+      }
+      
       const additionalItemData = {
         user_id: userId,
         product_name: item.productName,
         product_url: item.productUrl,
         quantity: parseInt(item.quantity),
         product_price: item.productPrice ? parseFloat(item.productPrice) : null,
-        notes: values.notes,
-        parent_order_id: createdOrder.id, // Link to the main order
-        additional_details: JSON.stringify({
-          color: item.color || null,
-          size: item.size || null
-        })
+        notes: itemNotesWithDetails,
+        country_of_purchase: "Default", // Default value required by schema
+        parent_order_id: createdOrder.id
       };
       
       console.log("[BUY SERVICE] Adding additional item:", additionalItemData);
