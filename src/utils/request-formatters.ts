@@ -1,4 +1,3 @@
-
 import { Request, RequestItem } from "@/types/request";
 
 export function formatBuyRequests(
@@ -8,6 +7,8 @@ export function formatBuyRequests(
   return buyRequests.map(req => {
     // Check if this request has multiple items
     const items = buyRequestItems[req.id] || [];
+    
+    console.log(`Request ${req.id} has ${items.length} items`);
     
     return {
       id: req.id,
@@ -27,7 +28,8 @@ export function formatBuyRequests(
       notes: req.notes,
       screenshot_url: req.screenshot_url,
       delivery_deadline: req.delivery_deadline,
-      items: items.length > 0 ? items : undefined
+      // Important fix: Always include items array, even if empty
+      items: items
     };
   });
 }

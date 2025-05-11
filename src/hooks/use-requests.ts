@@ -49,10 +49,11 @@ export function useRequests(requestType?: string, filter: string = "all") {
         try {
           const buyRequests = await fetchBuyRequests(filter);
           
-          // If we have buy requests, fetch their items
+          // Always fetch items for buy requests, even if there are none
           if (buyRequests.length > 0) {
             const buyRequestIds = buyRequests.map(req => req.id);
             const buyRequestItems = await fetchBuyRequestItems(buyRequestIds);
+            console.log("Fetched items for buy requests:", buyRequestItems);
             buyRequestsFormatted = formatBuyRequests(buyRequests, buyRequestItems);
           }
           
@@ -99,6 +100,9 @@ export function useRequests(requestType?: string, filter: string = "all") {
           // Map user details to requests and sort by date
           const requestsWithUserDetails = addUserDetailsToRequests(combinedRequests, users);
           const sortedRequests = sortRequestsByDate(requestsWithUserDetails);
+          
+          // Log full data for debugging
+          console.log("Final formatted requests:", sortedRequests);
           
           setRequests(sortedRequests);
         } catch (userError: any) {

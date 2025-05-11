@@ -15,18 +15,20 @@ interface MultiItemAccordionProps {
 }
 
 export const MultiItemAccordion = ({ items, country }: MultiItemAccordionProps) => {
+  console.log("MultiItemAccordion received items:", items);
+  
   return (
     <div className="space-y-4">
-      <Accordion type="single" collapsible className="w-full">
+      <Accordion type="single" collapsible className="w-full" defaultValue="item-0">
         {items.map((item, index) => (
           <AccordionItem key={item.id || index} value={`item-${index}`} className="border rounded-lg px-4">
             <AccordionTrigger className="hover:no-underline py-3">
               <div className="flex items-center justify-between w-full text-left">
                 <span className="font-medium">
-                  {item.product_name}
+                  {item.product_name || 'Unnamed Item'}
                 </span>
                 <span className="text-sm text-muted-foreground">
-                  {item.price ? `$${Number(item.price).toFixed(2)}` : 'N/A'} × {item.quantity}
+                  {item.price ? `$${Number(item.price).toFixed(2)}` : 'N/A'} × {item.quantity || 1}
                 </span>
               </div>
             </AccordionTrigger>
@@ -41,7 +43,7 @@ export const MultiItemAccordion = ({ items, country }: MultiItemAccordionProps) 
                 <RequestPropertyItem
                   icon={Hash}
                   label="Quantity"
-                  value={item.quantity}
+                  value={item.quantity || 1}
                 />
                 
                 {item.price && (

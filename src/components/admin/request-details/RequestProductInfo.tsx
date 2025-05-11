@@ -8,8 +8,12 @@ interface RequestProductInfoProps {
 }
 
 export const RequestProductInfo = ({ request }: RequestProductInfoProps) => {
-  // Check if the request has multiple items (this was the issue - not properly checking)
-  const hasMultipleItems = request.items && request.items.length > 0;
+  // The issue is here - this logic is incorrect
+  // We need to properly check if there are multiple items
+  const hasMultipleItems = request.items && request.items.length > 1;
+  
+  console.log("Request items:", request.items);
+  console.log("Has multiple items:", hasMultipleItems);
 
   return (
     <div className="border-t pt-4">
