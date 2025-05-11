@@ -3,37 +3,12 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import DashboardLayout from "@/layouts/DashboardLayout";
-import { 
-  Table, 
-  TableHeader, 
-  TableRow, 
-  TableHead, 
-  TableBody, 
-  TableCell 
-} from "@/components/ui/table";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { 
-  ShoppingBag,
-  Package,
-  ArrowRight,
-  AlertCircle
-} from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { OrderFilters } from "@/components/dashboard/OrderFilters";
+import { OrdersTable } from "@/components/dashboard/OrdersTable";
+import { OrdersEmptyState } from "@/components/dashboard/OrdersEmptyState";
+import { LoadingSpinner } from "@/components/dashboard/LoadingSpinner";
 
 type Order = {
   id: string;
@@ -49,34 +24,6 @@ type Order = {
     quantity: number;
     price?: number;
   }
-};
-
-const OrderStatusBadge = ({ status }: { status: string }) => {
-  let colorClass;
-  
-  switch (status) {
-    case 'completed':
-      colorClass = 'bg-green-100 text-green-800';
-      break;
-    case 'in_transit':
-      colorClass = 'bg-blue-100 text-blue-800';
-      break;
-    case 'processing':
-      colorClass = 'bg-yellow-100 text-yellow-800';
-      break;
-    case 'cancelled':
-      colorClass = 'bg-red-100 text-red-800';
-      break;
-    case 'pending':
-    default:
-      colorClass = 'bg-gray-100 text-gray-800';
-  }
-  
-  return (
-    <span className={`px-2 py-1 rounded-full text-xs ${colorClass}`}>
-      {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
-    </span>
-  );
 };
 
 const Orders = () => {
@@ -186,130 +133,19 @@ const Orders = () => {
           </p>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
-          <div className="flex flex-col md:flex-row gap-4 md:items-center">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium">Order Type:</span>
-              <Select value={orderType} onValueChange={setOrderType}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="All Orders" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Orders</SelectItem>
-                  <SelectItem value="buy_request">Buy For Me</SelectItem>
-                  <SelectItem value="self_purchase">Self Purchase</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium">Status:</span>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="All Statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="processing">Processing</SelectItem>
-                  <SelectItem value="in_transit">In Transit</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="flex space-x-2">
-            <Button variant="outline" size="sm">
-              Export
-            </Button>
-            <Button 
-              className="nectarine-gradient hover:opacity-90 transition-opacity"
-              size="sm"
-              asChild
-            >
-              <a href="/dashboard/buy-for-me">New Buy Request</a>
-            </Button>
-          </div>
-        </div>
+        <OrderFilters 
+          orderType={orderType}
+          status={status}
+          onOrderTypeChange={setOrderType}
+          onStatusChange={setStatus}
+        />
 
         {loading ? (
-          <div className="flex justify-center p-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nectarine-500"></div>
-          </div>
+          <LoadingSpinner />
         ) : orders.length > 0 ? (
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order ID</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Product/Tracking</TableHead>
-                    <TableHead>Store</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-mono text-xs">
-                        {order.id.split('-')[0]}...
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {order.order_type === 'buy_request' ? (
-                            <ShoppingBag className="h-4 w-4 text-nectarine-500" />
-                          ) : (
-                            <Package className="h-4 w-4 text-nectarine-500" />
-                          )}
-                          <span>
-                            {order.order_type === 'buy_request' ? 'Buy For Me' : 'Self Purchase'}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate">
-                        {order.order_type === 'buy_request' 
-                          ? order.details.product_name 
-                          : order.details.tracking_number}
-                      </TableCell>
-                      <TableCell>{order.details.store_name}</TableCell>
-                      <TableCell>
-                        {format(new Date(order.created_at), 'MMM d, yyyy')}
-                      </TableCell>
-                      <TableCell>
-                        <OrderStatusBadge status={order.status} />
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <ArrowRight className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <OrdersTable orders={orders} />
         ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-              <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">No orders found</h3>
-              <p className="text-muted-foreground mb-6">
-                You don't have any orders yet that match your selected filters.
-              </p>
-              <Button 
-                className="nectarine-gradient hover:opacity-90 transition-opacity"
-                asChild
-              >
-                <a href="/dashboard/buy-for-me">Create Your First Order</a>
-              </Button>
-            </CardContent>
-          </Card>
+          <OrdersEmptyState />
         )}
       </div>
     </DashboardLayout>
