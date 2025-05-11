@@ -3,6 +3,7 @@ import { Request } from "@/types/request";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import StatusBadge from "./StatusBadge";
 import RequestActions from "./RequestActions";
 import {
@@ -20,7 +21,8 @@ import {
   FileText,
   Image,
   Calendar,
-  Truck
+  Truck,
+  List
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -45,6 +47,8 @@ const RequestDetailsDialog = ({
     if (!dateString) return 'N/A';
     return format(new Date(dateString), 'PPP');
   };
+
+  const hasMultipleItems = request.items && request.items.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -93,128 +97,229 @@ const RequestDetailsDialog = ({
           </div>
           
           <div className="border-t pt-4">
-            <h3 className="text-lg font-medium mb-4">Product Information</h3>
+            <h3 className="text-lg font-medium mb-4">
+              {hasMultipleItems ? 'Items' : 'Product Information'}
+            </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium flex items-center">
-                  <Package className="h-4 w-4 mr-2 text-gray-500" />
-                  Product Name
-                </h4>
-                <p>{request.product_name}</p>
-              </div>
-              
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium flex items-center">
-                  <Store className="h-4 w-4 mr-2 text-gray-500" />
-                  Store
-                </h4>
-                <p>{request.store_name || 'N/A'}</p>
-              </div>
-              
-              {request.product_url && (
-                <div className="space-y-2 col-span-2">
-                  <h4 className="text-sm font-medium flex items-center">
-                    <Link className="h-4 w-4 mr-2 text-gray-500" />
-                    Product URL
-                  </h4>
-                  <p className="break-all">
-                    <a 
-                      href={request.product_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline flex items-center"
-                    >
-                      {request.product_url}
-                      <ExternalLink className="h-4 w-4 ml-1 inline" />
-                    </a>
-                  </p>
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium flex items-center">
-                  <Hash className="h-4 w-4 mr-2 text-gray-500" />
-                  Quantity
-                </h4>
-                <p>{request.quantity}</p>
-              </div>
-              
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium flex items-center">
-                  <DollarSign className="h-4 w-4 mr-2 text-gray-500" />
-                  Price
-                </h4>
-                <p>{request.price ? `$${request.price.toFixed(2)}` : 'N/A'}</p>
-              </div>
-              
-              {/* Color information - only show if available */}
-              {request.color && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium flex items-center">
-                    <Palette className="h-4 w-4 mr-2 text-gray-500" />
-                    Color
-                  </h4>
-                  <div className="flex items-center gap-2">
-                    {request.color}
+            {hasMultipleItems ? (
+              <div className="space-y-4">
+                <Accordion type="single" collapsible className="w-full">
+                  {request.items?.map((item, index) => (
+                    <AccordionItem key={item.id || index} value={`item-${index}`} className="border rounded-lg px-4">
+                      <AccordionTrigger className="hover:no-underline py-3">
+                        <div className="flex items-center justify-between w-full text-left">
+                          <span className="font-medium">
+                            {item.product_name}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {item.price ? `$${Number(item.price).toFixed(2)}` : 'N/A'} × {item.quantity}
+                          </span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="pb-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-medium flex items-center">
+                              <Store className="h-4 w-4 mr-2 text-gray-500" />
+                              Store
+                            </h4>
+                            <p>{item.store_name || request.store_name || 'N/A'}</p>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-medium flex items-center">
+                              <Hash className="h-4 w-4 mr-2 text-gray-500" />
+                              Quantity
+                            </h4>
+                            <p>{item.quantity}</p>
+                          </div>
+                          
+                          {item.price && (
+                            <div className="space-y-2">
+                              <h4 className="text-sm font-medium flex items-center">
+                                <DollarSign className="h-4 w-4 mr-2 text-gray-500" />
+                                Price
+                              </h4>
+                              <p>{`$${Number(item.price).toFixed(2)}`}</p>
+                            </div>
+                          )}
+                          
+                          {item.product_url && (
+                            <div className="space-y-2 col-span-2">
+                              <h4 className="text-sm font-medium flex items-center">
+                                <Link className="h-4 w-4 mr-2 text-gray-500" />
+                                Product URL
+                              </h4>
+                              <p className="break-all">
+                                <a 
+                                  href={item.product_url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-blue-500 hover:underline flex items-center"
+                                >
+                                  {item.product_url}
+                                  <ExternalLink className="h-4 w-4 ml-1 inline" />
+                                </a>
+                              </p>
+                            </div>
+                          )}
+                          
+                          {item.color && (
+                            <div className="space-y-2">
+                              <h4 className="text-sm font-medium flex items-center">
+                                <Palette className="h-4 w-4 mr-2 text-gray-500" />
+                                Color
+                              </h4>
+                              <div className="flex items-center gap-2">
+                                {item.color}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {item.size && (
+                            <div className="space-y-2">
+                              <h4 className="text-sm font-medium flex items-center">
+                                <Ruler className="h-4 w-4 mr-2 text-gray-500" />
+                                Size
+                              </h4>
+                              <p>{item.size}</p>
+                            </div>
+                          )}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+                
+                {request.country && (
+                  <div className="space-y-2 border-t pt-3">
+                    <h4 className="text-sm font-medium">Country of Purchase</h4>
+                    <p>{request.country}</p>
                   </div>
-                </div>
-              )}
-              
-              {/* Size information - only show if available */}
-              {request.size && (
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium flex items-center">
-                    <Ruler className="h-4 w-4 mr-2 text-gray-500" />
-                    Size
+                    <Package className="h-4 w-4 mr-2 text-gray-500" />
+                    Product Name
                   </h4>
-                  <p>{request.size}</p>
+                  <p>{request.product_name}</p>
                 </div>
-              )}
-              
-              {request.country && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Country</h4>
-                  <p>{request.country}</p>
-                </div>
-              )}
-
-              {/* Delivery Deadline - show for buy requests if available */}
-              {request.request_type === 'buy_request' && request.delivery_deadline && (
+                
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium flex items-center">
-                    <Calendar className="h-4 w-4 mr-2 text-gray-500" />
-                    Delivery Deadline
+                    <Store className="h-4 w-4 mr-2 text-gray-500" />
+                    Store
                   </h4>
-                  <p>{formatDate(request.delivery_deadline)}</p>
+                  <p>{request.store_name || 'N/A'}</p>
                 </div>
-              )}
+                
+                {request.product_url && (
+                  <div className="space-y-2 col-span-2">
+                    <h4 className="text-sm font-medium flex items-center">
+                      <Link className="h-4 w-4 mr-2 text-gray-500" />
+                      Product URL
+                    </h4>
+                    <p className="break-all">
+                      <a 
+                        href={request.product_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline flex items-center"
+                      >
+                        {request.product_url}
+                        <ExternalLink className="h-4 w-4 ml-1 inline" />
+                      </a>
+                    </p>
+                  </div>
+                )}
+                
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium flex items-center">
+                    <Hash className="h-4 w-4 mr-2 text-gray-500" />
+                    Quantity
+                  </h4>
+                  <p>{request.quantity}</p>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium flex items-center">
+                    <DollarSign className="h-4 w-4 mr-2 text-gray-500" />
+                    Price
+                  </h4>
+                  <p>{request.price ? `$${Number(request.price).toFixed(2)}` : 'N/A'}</p>
+                </div>
+                
+                {/* Color information - only show if available */}
+                {request.color && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium flex items-center">
+                      <Palette className="h-4 w-4 mr-2 text-gray-500" />
+                      Color
+                    </h4>
+                    <div className="flex items-center gap-2">
+                      {request.color}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Size information - only show if available */}
+                {request.size && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium flex items-center">
+                      <Ruler className="h-4 w-4 mr-2 text-gray-500" />
+                      Size
+                    </h4>
+                    <p>{request.size}</p>
+                  </div>
+                )}
+                
+                {request.country && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium">Country</h4>
+                    <p>{request.country}</p>
+                  </div>
+                )}
 
-              {/* Self-purchase specific fields */}
-              {request.request_type === 'self_purchase' && (
-                <>
-                  {request.tracking_number && (
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium flex items-center">
-                        <Hash className="h-4 w-4 mr-2 text-gray-500" />
-                        Tracking Number
-                      </h4>
-                      <p>{request.tracking_number}</p>
-                    </div>
-                  )}
-                  
-                  {request.courier && (
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium flex items-center">
-                        <Truck className="h-4 w-4 mr-2 text-gray-500" />
-                        Courier
-                      </h4>
-                      <p>{request.courier}</p>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+                {/* Delivery Deadline - show for buy requests if available */}
+                {request.request_type === 'buy_request' && request.delivery_deadline && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium flex items-center">
+                      <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+                      Delivery Deadline
+                    </h4>
+                    <p>{formatDate(request.delivery_deadline)}</p>
+                  </div>
+                )}
+
+                {/* Self-purchase specific fields */}
+                {request.request_type === 'self_purchase' && (
+                  <>
+                    {request.tracking_number && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium flex items-center">
+                          <Hash className="h-4 w-4 mr-2 text-gray-500" />
+                          Tracking Number
+                        </h4>
+                        <p>{request.tracking_number}</p>
+                      </div>
+                    )}
+                    
+                    {request.courier && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium flex items-center">
+                          <Truck className="h-4 w-4 mr-2 text-gray-500" />
+                          Courier
+                        </h4>
+                        <p>{request.courier}</p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </div>
           
           {/* Notes/Instructions - conditionally show if available */}

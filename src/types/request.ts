@@ -1,4 +1,15 @@
 
+export type RequestItem = {
+  id?: string;
+  product_name: string;
+  store_name?: string;
+  quantity: number;
+  price?: number;
+  color?: string;
+  size?: string;
+  product_url?: string;
+};
+
 export type Request = {
   id: string;
   user_id: string;
@@ -22,4 +33,6 @@ export type Request = {
   tracking_number?: string;
   courier?: string;
   invoice_url?: string;
+  // Optional items array for multi-item orders
+  items?: RequestItem[];
 };

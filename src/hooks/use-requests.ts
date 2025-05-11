@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Request } from "@/types/request";
+import { Request, RequestItem } from "@/types/request";
 
 export function useRequests(requestType?: string, filter: string = "all") {
   const [requests, setRequests] = useState<Request[]>([]);
@@ -40,7 +41,8 @@ export function useRequests(requestType?: string, filter: string = "all") {
             .select(`
               id, user_id, product_name, store_name, quantity, product_price, 
               country_of_purchase, status, created_at, updated_at, 
-              product_url, notes, screenshot_url, delivery_deadline
+              product_url, notes, screenshot_url, delivery_deadline,
+              color, size
             `);
             
           // Apply filter if it's not 'all'
@@ -55,23 +57,69 @@ export function useRequests(requestType?: string, filter: string = "all") {
             throw new Error(`Error fetching buy requests: ${buyError.message}`);
           }
           
-          buyRequestsFormatted = (buyRequests || []).map(req => ({
-            id: req.id,
-            user_id: req.user_id,
-            request_type: 'buy_request' as const,
-            product_name: req.product_name,
-            store_name: req.store_name || 'Unknown',
-            quantity: req.quantity,
-            price: req.product_price,
-            status: req.status,
-            created_at: req.created_at,
-            updated_at: req.updated_at,
-            country: req.country_of_purchase,
-            product_url: req.product_url,
-            notes: req.notes,
-            screenshot_url: req.screenshot_url,
-            delivery_deadline: req.delivery_deadline
-          }));
+          // Attempt to fetch buy request items if they exist
+          const buyRequestIds = buyRequests?.map(req => req.id) || [];
+          let buyRequestItems: Record<string, RequestItem[]> = {};
+          
+          if (buyRequestIds.length > 0) {
+            try {
+              const { data: items, error: itemsError } = await supabase
+                .from('buy_request_items')
+                .select('*')
+                .in('buy_request_id', buyRequestIds);
+              
+              if (!itemsError && items) {
+                // Group items by buy_request_id
+                buyRequestItems = items.reduce((acc: Record<string, RequestItem[]>, item) => {
+                  const requestId = item.buy_request_id;
+                  if (!acc[requestId]) {
+                    acc[requestId] = [];
+                  }
+                  
+                  acc[requestId].push({
+                    id: item.id,
+                    product_name: item.product_name,
+                    product_url: item.product_url,
+                    quantity: item.quantity,
+                    price: item.price,
+                    color: item.color,
+                    size: item.size,
+                    store_name: item.store_name
+                  });
+                  
+                  return acc;
+                }, {});
+              }
+            } catch (itemsErr) {
+              console.warn("Error fetching buy request items:", itemsErr);
+              // Continue even if items fetch fails
+            }
+          }
+          
+          buyRequestsFormatted = (buyRequests || []).map(req => {
+            const items = buyRequestItems[req.id] || [];
+            
+            return {
+              id: req.id,
+              user_id: req.user_id,
+              request_type: 'buy_request' as const,
+              product_name: req.product_name,
+              store_name: req.store_name || 'Unknown',
+              quantity: req.quantity,
+              price: req.product_price,
+              status: req.status,
+              created_at: req.created_at,
+              updated_at: req.updated_at,
+              country: req.country_of_purchase,
+              product_url: req.product_url,
+              color: req.color,
+              size: req.size,
+              notes: req.notes,
+              screenshot_url: req.screenshot_url,
+              delivery_deadline: req.delivery_deadline,
+              items: items.length > 0 ? items : undefined
+            };
+          });
           
           console.log(`Fetched ${buyRequestsFormatted.length} buy requests`);
         } catch (buyErr: any) {
