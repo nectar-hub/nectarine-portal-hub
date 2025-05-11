@@ -12,4 +12,5 @@ export type Request = {
   status: string;
   created_at: string;
   country?: string;
+  product_url?: string;
 };

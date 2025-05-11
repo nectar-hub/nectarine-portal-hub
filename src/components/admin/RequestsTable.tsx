@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Request } from "@/types/request";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Package, Check, X, Info } from "lucide-react";
+import { ShoppingCart, Package, Check, X, Info, ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -229,6 +228,23 @@ const RequestsTable = ({ requests, showType = false, processingId, onUpdateStatu
                     <h4 className="text-sm font-medium">Store</h4>
                     <p>{selectedRequest.store_name || 'N/A'}</p>
                   </div>
+                  
+                  {selectedRequest.product_url && (
+                    <div className="space-y-2 col-span-2">
+                      <h4 className="text-sm font-medium">Product URL</h4>
+                      <p className="flex items-center break-all">
+                        <a 
+                          href={selectedRequest.product_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline flex items-center"
+                        >
+                          {selectedRequest.product_url}
+                          <ExternalLink className="h-4 w-4 ml-1 inline" />
+                        </a>
+                      </p>
+                    </div>
+                  )}
                   
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium">Quantity</h4>
