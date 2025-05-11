@@ -13,4 +13,8 @@ export type Request = {
   created_at: string;
   country?: string;
   product_url?: string;
+  color?: string;
+  size?: string;
+  notes?: string;
+  screenshot_url?: string;
 };

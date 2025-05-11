@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Request } from "@/types/request";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -273,8 +272,8 @@ const RequestsTable = ({ requests, showType = false, processingId, onUpdateStatu
                     <p>{selectedRequest.price ? `$${selectedRequest.price.toFixed(2)}` : 'N/A'}</p>
                   </div>
                   
-                  {/* Color information */}
-                  {selectedRequest.color && (
+                  {/* Color information - only show for buy_requests */}
+                  {selectedRequest.request_type === 'buy_request' && selectedRequest.color && (
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium flex items-center">
                         <Palette className="h-4 w-4 mr-2 text-gray-500" />
@@ -286,8 +285,8 @@ const RequestsTable = ({ requests, showType = false, processingId, onUpdateStatu
                     </div>
                   )}
                   
-                  {/* Size information */}
-                  {selectedRequest.size && (
+                  {/* Size information - only show for buy_requests */}
+                  {selectedRequest.request_type === 'buy_request' && selectedRequest.size && (
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium flex items-center">
                         <Ruler className="h-4 w-4 mr-2 text-gray-500" />
@@ -306,7 +305,7 @@ const RequestsTable = ({ requests, showType = false, processingId, onUpdateStatu
                 </div>
               </div>
               
-              {/* Notes/Instructions */}
+              {/* Notes/Instructions - conditionally show based on request type */}
               {selectedRequest.notes && (
                 <div className="border-t pt-4">
                   <h4 className="text-sm font-medium flex items-center mb-2">
@@ -319,7 +318,7 @@ const RequestsTable = ({ requests, showType = false, processingId, onUpdateStatu
                 </div>
               )}
               
-              {/* Screenshot/Invoice */}
+              {/* Screenshot/Invoice - conditionally show based on request type */}
               {selectedRequest.screenshot_url && (
                 <div className="border-t pt-4">
                   <h4 className="text-sm font-medium flex items-center mb-2">
