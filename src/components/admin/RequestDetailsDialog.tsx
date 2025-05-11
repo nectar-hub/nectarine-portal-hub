@@ -3,6 +3,8 @@ import { Request } from "@/types/request";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import StatusBadge from "./StatusBadge";
+import RequestActions from "./RequestActions";
 import {
   ShoppingCart,
   Package,
