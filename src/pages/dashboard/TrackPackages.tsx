@@ -14,13 +14,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
+// Update the schema to reflect the required fields according to the database
 const selfPurchaseSchema = z.object({
   description: z.string().min(1, "Product description is required"),
   store_name: z.string().min(1, "Store name is required"),
   quantity: z.number().int().positive("Quantity must be a positive number"),
   estimated_value: z.number().positive("Value must be positive").optional(),
-  tracking_number: z.string().optional().nullable(),
-  courier: z.string().optional().nullable(),
+  tracking_number: z.string().min(1, "Tracking number is required"),
+  courier: z.string().min(1, "Courier is required"),
   notes: z.string().optional(),
 });
 
@@ -99,11 +100,18 @@ const TrackPackages = () => {
         return;
       }
 
+      // Ensure we're sending all required fields to match the database schema
       const { error } = await supabase
         .from('self_purchases')
         .insert({
-          ...values,
           user_id: user.id,
+          description: values.description,
+          store_name: values.store_name,
+          quantity: values.quantity,
+          estimated_value: values.estimated_value,
+          tracking_number: values.tracking_number,
+          courier: values.courier,
+          notes: values.notes,
         });
 
       if (error) throw error;
@@ -228,9 +236,9 @@ const TrackPackages = () => {
                       name="tracking_number"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Tracking Number (optional)</FormLabel>
+                          <FormLabel>Tracking Number</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter tracking number if available" {...field} />
+                            <Input placeholder="Enter tracking number" required {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -242,9 +250,9 @@ const TrackPackages = () => {
                       name="courier"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Courier (optional)</FormLabel>
+                          <FormLabel>Courier</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter courier name if available" {...field} />
+                            <Input placeholder="Enter courier name" required {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
