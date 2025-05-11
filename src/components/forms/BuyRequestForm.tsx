@@ -47,6 +47,11 @@ export function BuyRequestForm() {
     }
   ]);
 
+  // Track which items are open (expanded)
+  const [openItems, setOpenItems] = useState<Record<string, boolean>>({
+    [items[0].id]: true // First item is open by default
+  });
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -55,10 +60,21 @@ export function BuyRequestForm() {
   });
 
   const addNewItem = () => {
+    const newItemId = uuidv4();
+    
+    // Close all existing items
+    const updatedOpenItems: Record<string, boolean> = {};
+    items.forEach(item => {
+      updatedOpenItems[item.id] = false;
+    });
+    
+    // Open the new item
+    updatedOpenItems[newItemId] = true;
+    
     setItems([
       ...items,
       {
-        id: uuidv4(),
+        id: newItemId,
         productName: "",
         productUrl: "",
         quantity: "1",
@@ -67,6 +83,8 @@ export function BuyRequestForm() {
         size: ""
       }
     ]);
+    
+    setOpenItems(updatedOpenItems);
   };
 
   const updateItem = (index: number, field: string, value: string) => {
@@ -77,8 +95,22 @@ export function BuyRequestForm() {
 
   const removeItem = (index: number) => {
     if (items.length > 1) {
-      setItems(items.filter((_, i) => i !== index));
+      const newItems = items.filter((_, i) => i !== index);
+      
+      // Update the openItems state to remove the deleted item
+      const updatedOpenItems = { ...openItems };
+      delete updatedOpenItems[items[index].id];
+      
+      setItems(newItems);
+      setOpenItems(updatedOpenItems);
     }
+  };
+  
+  const handleItemOpenChange = (itemId: string, isOpen: boolean) => {
+    setOpenItems(prev => ({
+      ...prev,
+      [itemId]: isOpen
+    }));
   };
 
   const validateItems = () => {
@@ -209,6 +241,8 @@ export function BuyRequestForm() {
                   removeItem={removeItem}
                   isLast={index === items.length - 1}
                   addNewItem={addNewItem}
+                  isOpen={!!openItems[item.id]}
+                  onOpenChange={(isOpen) => handleItemOpenChange(item.id, isOpen)}
                 />
               ))}
             </div>

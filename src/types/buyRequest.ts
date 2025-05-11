@@ -11,9 +11,6 @@ export interface BuyRequestItem {
 
 export interface BuyRequestFormValues {
   items: BuyRequestItem[];
-  storeName?: string;
-  deliveryDeadline?: Date;
-  country?: string;
   notes?: string;
   screenshot?: FileList;
 }
