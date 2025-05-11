@@ -12,6 +12,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 
+// Update the interface to match the form schema in useBuyRequestForm.ts
 interface BuyRequestOrderDetailsProps {
   form: UseFormReturn<{
     notes?: string | undefined;

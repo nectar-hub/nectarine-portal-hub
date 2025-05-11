@@ -10,6 +10,7 @@ import { BuyRequestFormValues, BuyRequestItem } from "@/types/buyRequest";
 import { createBuyRequest } from "@/services/buyRequestService";
 import { useAuth } from "@/context/AuthContext";
 
+// Update the form schema to match what BuyRequestOrderDetails expects
 const formSchema = z.object({
   notes: z.string().optional(),
   screenshot: z.instanceof(FileList).optional(),
@@ -38,10 +39,12 @@ export function useBuyRequestForm() {
     [items[0].id]: true // First item is open by default
   });
 
+  // Update form with the correct default values matching the schema
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       notes: "",
+      screenshot: undefined,
     },
   });
 
