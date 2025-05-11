@@ -14,6 +14,7 @@ import Dashboard from "./pages/dashboard/Dashboard";
 import BuyForMe from "./pages/dashboard/BuyForMe";
 import ShippingAddress from "./pages/dashboard/ShippingAddress";
 import Orders from "./pages/dashboard/Orders";
+import TrackPackages from "./pages/dashboard/TrackPackages";
 import Users from "./pages/admin/Users";
 import Requests from "./pages/admin/Requests";
 import Analytics from "./pages/admin/Analytics";
@@ -75,6 +76,14 @@ const App = () => (
               element={
                 <MainLayout requireAuth>
                   <Orders />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/dashboard/track-packages"
+              element={
+                <MainLayout requireAuth>
+                  <TrackPackages />
                 </MainLayout>
               }
             />
