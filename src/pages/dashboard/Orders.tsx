@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -175,55 +176,6 @@ const Orders = () => {
     fetchOrders();
   }, [user, orderType, status]);
 
-  // Mock orders for development if API returns no data
-  const mockOrders: Order[] = [
-    {
-      id: "1",
-      order_type: 'buy_request',
-      status: 'pending',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      details: {
-        product_name: 'iPhone 15 Pro',
-        store_name: 'Apple',
-        country_of_purchase: 'usa',
-        quantity: 1,
-        price: 999.99
-      }
-    },
-    {
-      id: "2",
-      order_type: 'self_purchase',
-      status: 'in_transit',
-      created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      updated_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      details: {
-        tracking_number: 'USPS12345678',
-        store_name: 'Nike',
-        quantity: 2,
-        price: 120,
-        product_name: 'Air Force 1 Shoes'
-      }
-    },
-    {
-      id: "3",
-      order_type: 'buy_request',
-      status: 'completed',
-      created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      updated_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-      details: {
-        product_name: 'MacBook Air M3',
-        store_name: 'Best Buy',
-        country_of_purchase: 'usa',
-        quantity: 1,
-        price: 1499.99
-      }
-    }
-  ];
-
-  // Use mock orders if the API returned no orders
-  const displayOrders = orders.length > 0 ? orders : mockOrders;
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -286,7 +238,7 @@ const Orders = () => {
           <div className="flex justify-center p-12">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nectarine-500"></div>
           </div>
-        ) : displayOrders.length > 0 ? (
+        ) : orders.length > 0 ? (
           <Card>
             <CardContent className="p-0">
               <Table>
@@ -302,7 +254,7 @@ const Orders = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {displayOrders.map((order) => (
+                  {orders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-mono text-xs">
                         {order.id.split('-')[0]}...

@@ -9,19 +9,6 @@ import { Link } from "react-router-dom";
 const Dashboard = () => {
   const { user, profile, isAdmin } = useAuth();
 
-  // These would come from API calls in a real app
-  const stats = {
-    pendingBuyRequests: 2,
-    packagesInTransit: 3,
-    totalOrders: 5,
-  };
-
-  const adminStats = {
-    totalUsers: 12,
-    pendingRequests: 8,
-    completedOrders: 24,
-  };
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -46,7 +33,7 @@ const Dashboard = () => {
                 <CardDescription>Registered users in the system</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold mb-2">{adminStats.totalUsers}</div>
+                <div className="text-3xl font-bold mb-2">-</div>
                 <Link to="/admin/users">
                   <Button variant="outline" className="w-full">Manage Users</Button>
                 </Link>
@@ -62,7 +49,7 @@ const Dashboard = () => {
                 <CardDescription>Waiting for your approval</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold mb-2">{adminStats.pendingRequests}</div>
+                <div className="text-3xl font-bold mb-2">-</div>
                 <Link to="/admin/requests">
                   <Button variant="outline" className="w-full">View Requests</Button>
                 </Link>
@@ -78,7 +65,7 @@ const Dashboard = () => {
                 <CardDescription>Performance and metrics</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold mb-2">{adminStats.completedOrders}</div>
+                <div className="text-3xl font-bold mb-2">-</div>
                 <Link to="/admin/analytics">
                   <Button variant="outline" className="w-full">View Analytics</Button>
                 </Link>
@@ -97,7 +84,7 @@ const Dashboard = () => {
                 <CardDescription>Your pending purchase requests</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold mb-2">{stats.pendingBuyRequests}</div>
+                <div className="text-3xl font-bold mb-2">-</div>
                 <Link to="/dashboard/buy-for-me">
                   <Button variant="outline" className="w-full">Create New Request</Button>
                 </Link>
@@ -113,7 +100,7 @@ const Dashboard = () => {
                 <CardDescription>Packages on the way to you</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold mb-2">{stats.packagesInTransit}</div>
+                <div className="text-3xl font-bold mb-2">-</div>
                 <Link to="/dashboard/track-packages">
                   <Button variant="outline" className="w-full">Track Packages</Button>
                 </Link>
@@ -129,7 +116,7 @@ const Dashboard = () => {
                 <CardDescription>All your orders with us</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold mb-2">{stats.totalOrders}</div>
+                <div className="text-3xl font-bold mb-2">-</div>
                 <Link to="/dashboard/orders">
                   <Button variant="outline" className="w-full">View Orders</Button>
                 </Link>
@@ -148,34 +135,8 @@ const Dashboard = () => {
                   <CardDescription>Latest actions in the system</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="flex justify-between items-center p-3 bg-muted rounded-md">
-                        <div>
-                          <p className="font-medium">
-                            {i === 0 ? "New user registration" : 
-                             i === 1 ? "Buy request approved" : 
-                             "Package marked delivered"}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(2025, 5 - i, 10 + i).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          i === 0 
-                            ? "bg-blue-100 text-blue-800"
-                            : i === 1
-                            ? "bg-green-100 text-green-800"
-                            : "bg-purple-100 text-purple-800"
-                        }`}>
-                          {i === 0 
-                            ? "User"
-                            : i === 1
-                            ? "Order"
-                            : "Delivery"}
-                        </span>
-                      </div>
-                    ))}
+                  <div className="flex flex-col items-center justify-center py-6 text-center">
+                    <p className="text-muted-foreground">No recent activity to display</p>
                   </div>
                 </CardContent>
               </Card>
@@ -216,32 +177,11 @@ const Dashboard = () => {
                   <CardDescription>Your recent purchase and shipping requests</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="flex justify-between items-center p-3 bg-muted rounded-md">
-                        <div>
-                          <p className="font-medium">
-                            {i % 2 === 0 ? "iPhone 15 Pro" : "Nike Air Force 1"}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(2023, 5 - i, 10 + i).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          i === 0 
-                            ? "bg-yellow-100 text-yellow-800"
-                            : i === 1
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-green-100 text-green-800"
-                        }`}>
-                          {i === 0 
-                            ? "Processing"
-                            : i === 1
-                            ? "In Transit"
-                            : "Delivered"}
-                        </span>
-                      </div>
-                    ))}
+                  <div className="flex flex-col items-center justify-center py-6 text-center">
+                    <p className="text-muted-foreground">No recent orders to display</p>
+                    <Link to="/dashboard/buy-for-me" className="mt-4">
+                      <Button>Create Your First Order</Button>
+                    </Link>
                   </div>
                 </CardContent>
               </Card>
