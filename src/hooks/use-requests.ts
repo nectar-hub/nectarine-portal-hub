@@ -41,8 +41,7 @@ export function useRequests(requestType?: string, filter: string = "all") {
             .select(`
               id, user_id, product_name, store_name, quantity, product_price, 
               country_of_purchase, status, created_at, updated_at, 
-              product_url, notes, screenshot_url, delivery_deadline,
-              color, size
+              product_url, notes, screenshot_url, delivery_deadline
             `);
             
           // Apply filter if it's not 'all'
@@ -57,69 +56,86 @@ export function useRequests(requestType?: string, filter: string = "all") {
             throw new Error(`Error fetching buy requests: ${buyError.message}`);
           }
           
-          // Attempt to fetch buy request items if they exist
-          const buyRequestIds = buyRequests?.map(req => req.id) || [];
-          let buyRequestItems: Record<string, RequestItem[]> = {};
-          
-          if (buyRequestIds.length > 0) {
-            try {
-              const { data: items, error: itemsError } = await supabase
-                .from('buy_request_items')
-                .select('*')
-                .in('buy_request_id', buyRequestIds);
-              
-              if (!itemsError && items) {
-                // Group items by buy_request_id
-                buyRequestItems = items.reduce((acc: Record<string, RequestItem[]>, item) => {
-                  const requestId = item.buy_request_id;
-                  if (!acc[requestId]) {
-                    acc[requestId] = [];
-                  }
-                  
-                  acc[requestId].push({
-                    id: item.id,
-                    product_name: item.product_name,
-                    product_url: item.product_url,
-                    quantity: item.quantity,
-                    price: item.price,
-                    color: item.color,
-                    size: item.size,
-                    store_name: item.store_name
-                  });
-                  
-                  return acc;
-                }, {});
-              }
-            } catch (itemsErr) {
-              console.warn("Error fetching buy request items:", itemsErr);
-              // Continue even if items fetch fails
-            }
-          }
-          
-          buyRequestsFormatted = (buyRequests || []).map(req => {
-            const items = buyRequestItems[req.id] || [];
+          if (!buyRequests) {
+            console.log("No buy requests found");
+            buyRequestsFormatted = [];
+          } else {
+            // Format the buy requests
+            const buyRequestItems: Record<string, RequestItem[]> = {};
             
-            return {
-              id: req.id,
-              user_id: req.user_id,
-              request_type: 'buy_request' as const,
-              product_name: req.product_name,
-              store_name: req.store_name || 'Unknown',
-              quantity: req.quantity,
-              price: req.product_price,
-              status: req.status,
-              created_at: req.created_at,
-              updated_at: req.updated_at,
-              country: req.country_of_purchase,
-              product_url: req.product_url,
-              color: req.color,
-              size: req.size,
-              notes: req.notes,
-              screenshot_url: req.screenshot_url,
-              delivery_deadline: req.delivery_deadline,
-              items: items.length > 0 ? items : undefined
-            };
-          });
+            // Attempt to get additional item details for multi-item requests
+            // Check if there are any buy requests to process
+            if (buyRequests.length > 0) {
+              // Get the IDs of all buy requests
+              const buyRequestIds = buyRequests.map(req => req.id);
+              
+              try {
+                // Check if the table exists first to avoid the error
+                const { data: tableExists } = await supabase
+                  .from('buy_request_items')
+                  .select('count')
+                  .limit(1)
+                  .single();
+                
+                if (tableExists !== null) {
+                  // Table exists, so we can query it
+                  const { data: items } = await supabase
+                    .from('buy_request_items')
+                    .select('*')
+                    .in('buy_request_id', buyRequestIds);
+                  
+                  if (items && items.length > 0) {
+                    // Group items by buy_request_id
+                    items.forEach(item => {
+                      const requestId = item.buy_request_id;
+                      if (!buyRequestItems[requestId]) {
+                        buyRequestItems[requestId] = [];
+                      }
+                      
+                      buyRequestItems[requestId].push({
+                        id: item.id,
+                        product_name: item.product_name,
+                        product_url: item.product_url,
+                        quantity: item.quantity,
+                        price: item.price,
+                        color: item.color,
+                        size: item.size,
+                        store_name: item.store_name
+                      });
+                    });
+                  }
+                }
+              } catch (itemsErr) {
+                console.warn("Error or table doesn't exist:", itemsErr);
+                // Continue execution even if there's an error
+              }
+            }
+            
+            // Now format all the buy requests
+            buyRequestsFormatted = buyRequests.map(req => {
+              // Check if this request has multiple items
+              const items = buyRequestItems[req.id] || [];
+              
+              return {
+                id: req.id,
+                user_id: req.user_id,
+                request_type: 'buy_request' as const,
+                product_name: req.product_name,
+                store_name: req.store_name || 'Unknown',
+                quantity: req.quantity,
+                price: req.product_price,
+                status: req.status,
+                created_at: req.created_at,
+                updated_at: req.updated_at,
+                country: req.country_of_purchase,
+                product_url: req.product_url,
+                notes: req.notes,
+                screenshot_url: req.screenshot_url,
+                delivery_deadline: req.delivery_deadline,
+                items: items.length > 0 ? items : undefined
+              };
+            });
+          }
           
           console.log(`Fetched ${buyRequestsFormatted.length} buy requests`);
         } catch (buyErr: any) {

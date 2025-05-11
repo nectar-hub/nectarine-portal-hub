@@ -8,6 +8,7 @@ export type RequestItem = {
   color?: string;
   size?: string;
   product_url?: string;
+  buy_request_id?: string;
 };
 
 export type Request = {
