@@ -32,11 +32,11 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
     product_url: firstItem.productUrl,
     quantity: parseInt(firstItem.quantity),
     product_price: firstItem.productPrice ? parseFloat(firstItem.productPrice) : null,
-    store_name: values.storeName,
-    delivery_deadline: values.deliveryDeadline.toISOString(),
+    store_name: values.storeName || null,
+    delivery_deadline: values.deliveryDeadline ? values.deliveryDeadline.toISOString() : null,
     screenshot_url: screenshotUrl,
     notes: values.notes,
-    country_of_purchase: values.country,
+    country_of_purchase: values.country || null,
     // We'll store color and size in notes if they exist
     additional_details: JSON.stringify({
       color: firstItem.color || null,
@@ -95,9 +95,9 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
         product_url: item.productUrl,
         quantity: parseInt(item.quantity),
         product_price: item.productPrice ? parseFloat(item.productPrice) : null,
-        store_name: values.storeName,
-        delivery_deadline: values.deliveryDeadline.toISOString(),
-        country_of_purchase: values.country,
+        store_name: values.storeName || null,
+        delivery_deadline: values.deliveryDeadline ? values.deliveryDeadline.toISOString() : null,
+        country_of_purchase: values.country || null,
         notes: values.notes,
         parent_order_id: createdOrder.id, // Link to the main order
         additional_details: JSON.stringify({

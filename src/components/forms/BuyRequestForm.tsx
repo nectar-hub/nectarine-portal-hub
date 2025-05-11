@@ -3,8 +3,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,35 +17,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import { toast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BuyRequestItem } from "@/types/buyRequest";
 import { BuyRequestItemForm } from "./BuyRequestItemForm";
 import { createBuyRequest } from "@/services/buyRequestService";
+import { toast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
 
 const formSchema = z.object({
-  storeName: z.string().min(2, "Store name must be at least 2 characters"),
-  deliveryDeadline: z.date({
-    required_error: "Please select a delivery deadline",
-  }),
-  country: z.string({
-    required_error: "Please select a country",
-  }),
   notes: z.string().optional(),
   screenshot: z.instanceof(FileList).optional(),
 });
@@ -73,7 +50,6 @@ export function BuyRequestForm() {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      storeName: "",
       notes: "",
     },
   });
@@ -171,8 +147,9 @@ export function BuyRequestForm() {
     
     try {
       const fullFormValues = {
-        ...values,
-        items
+        items,
+        notes: values.notes,
+        screenshot: values.screenshot
       };
       
       await createBuyRequest(fullFormValues, user.id);
@@ -239,95 +216,6 @@ export function BuyRequestForm() {
 
           <div>
             <h3 className="text-lg font-medium mb-4">Order Details</h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <FormField
-              control={form.control}
-              name="storeName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Store Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter store name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="deliveryDeadline"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Delivery Deadline</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) => date < new Date()}
-                        initialFocus
-                        className="pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormDescription>
-                    When do you need these items by?
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="country"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Country of Purchase</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a country" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="usa">United States</SelectItem>
-                      <SelectItem value="uk">United Kingdom</SelectItem>
-                      <SelectItem value="china">China</SelectItem>
-                      <SelectItem value="uae">UAE</SelectItem>
-                      <SelectItem value="germany">Germany</SelectItem>
-                      <SelectItem value="japan">Japan</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </div>
 
           <FormField
