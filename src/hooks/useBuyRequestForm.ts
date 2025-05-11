@@ -10,7 +10,7 @@ import { BuyRequestFormValues, BuyRequestItem } from "@/types/buyRequest";
 import { createBuyRequest } from "@/services/buyRequestService";
 import { useAuth } from "@/context/AuthContext";
 
-// Update the form schema to match what BuyRequestOrderDetails expects
+// Define the form schema to match what BuyRequestOrderDetails expects
 const formSchema = z.object({
   notes: z.string().optional(),
   screenshot: z.instanceof(FileList).optional(),
@@ -30,7 +30,8 @@ export function useBuyRequestForm() {
       quantity: "1",
       productPrice: "",
       color: "",
-      size: ""
+      size: "",
+      storeName: ""
     }
   ]);
 
@@ -40,7 +41,7 @@ export function useBuyRequestForm() {
   });
 
   // Update form with the correct default values matching the schema
-  const form = useForm({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       notes: "",
@@ -69,7 +70,8 @@ export function useBuyRequestForm() {
         quantity: "1",
         productPrice: "",
         color: "",
-        size: ""
+        size: "",
+        storeName: ""
       }
     ]);
     

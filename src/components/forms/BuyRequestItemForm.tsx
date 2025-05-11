@@ -1,173 +1,170 @@
 
-import React, { useState } from "react";
-import { FormControl, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import React from "react";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { BuyRequestItem } from "@/types/buyRequest";
-import { ChevronDown, ChevronUp, Plus, Trash } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Trash2 } from "lucide-react";
 
 interface BuyRequestItemFormProps {
-  item: BuyRequestItem;
   index: number;
   updateItem: (index: number, field: string, value: string) => void;
   removeItem: (index: number) => void;
-  isLast: boolean;
-  addNewItem: () => void;
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
+  productName: string;
+  productUrl: string;
+  quantity: string;
+  productPrice: string;
+  color: string;
+  size: string;
+  storeName: string;
+  showRemoveButton: boolean;
 }
 
-export function BuyRequestItemForm({ 
-  item, 
-  index, 
-  updateItem, 
-  removeItem, 
-  isLast,
-  addNewItem,
-  isOpen,
-  onOpenChange
+export function BuyRequestItemForm({
+  index,
+  updateItem,
+  removeItem,
+  productName,
+  productUrl,
+  quantity,
+  productPrice,
+  color,
+  size,
+  storeName = "",
+  showRemoveButton,
 }: BuyRequestItemFormProps) {
   return (
-    <div className="border border-border rounded-md p-4 mb-4 relative">
-      <Collapsible open={isOpen} onOpenChange={onOpenChange}>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="font-medium text-base">Item {index + 1}: {item.productName || "New Item"}</h3>
-          
-          <div className="flex items-center gap-2">
-            {index > 0 && (
-              <Button 
-                type="button" 
-                variant="ghost" 
-                size="sm" 
-                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                onClick={() => removeItem(index)}
-              >
-                <Trash className="h-4 w-4" />
-              </Button>
-            )}
-            
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm">
-                {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </Button>
-            </CollapsibleTrigger>
-          </div>
-        </div>
-        
-        <CollapsibleContent className="space-y-4">
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <FormLabel htmlFor={`item-${index}-productName`}>Product Name</FormLabel>
-              <FormControl>
-                <Input
-                  id={`item-${index}-productName`}
-                  placeholder="Enter product name"
-                  value={item.productName}
-                  onChange={(e) => updateItem(index, "productName", e.target.value)}
-                />
-              </FormControl>
-              {!item.productName && item.productName !== "" && (
-                <p className="text-sm font-medium text-destructive mt-1">
-                  Product name is required
-                </p>
-              )}
-            </div>
-            
-            <div>
-              <FormLabel htmlFor={`item-${index}-productUrl`}>Product URL</FormLabel>
-              <FormControl>
-                <Input
-                  id={`item-${index}-productUrl`}
-                  placeholder="https://..."
-                  value={item.productUrl}
-                  onChange={(e) => updateItem(index, "productUrl", e.target.value)}
-                />
-              </FormControl>
-              {!item.productUrl && item.productUrl !== "" && (
-                <p className="text-sm font-medium text-destructive mt-1">
-                  Valid URL is required
-                </p>
-              )}
-              <FormDescription>
-                Link to the product on the store's website
-              </FormDescription>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <FormLabel htmlFor={`item-${index}-quantity`}>Quantity</FormLabel>
-              <FormControl>
-                <Input
-                  id={`item-${index}-quantity`}
-                  type="number"
-                  min="1"
-                  value={item.quantity}
-                  onChange={(e) => updateItem(index, "quantity", e.target.value)}
-                />
-              </FormControl>
-            </div>
-            
-            <div>
-              <FormLabel htmlFor={`item-${index}-productPrice`}>Price (Est.)</FormLabel>
-              <FormControl>
-                <Input
-                  id={`item-${index}-productPrice`}
-                  type="number"
-                  min="0" 
-                  step="0.01"
-                  placeholder="0.00"
-                  value={item.productPrice}
-                  onChange={(e) => updateItem(index, "productPrice", e.target.value)}
-                />
-              </FormControl>
-            </div>
-            
-            <div>
-              <FormLabel htmlFor={`item-${index}-color`}>Color (Optional)</FormLabel>
-              <FormControl>
-                <Input
-                  id={`item-${index}-color`}
-                  placeholder="e.g. Red, Blue"
-                  value={item.color || ""}
-                  onChange={(e) => updateItem(index, "color", e.target.value)}
-                />
-              </FormControl>
-            </div>
-            
-            <div>
-              <FormLabel htmlFor={`item-${index}-size`}>Size (Optional)</FormLabel>
-              <FormControl>
-                <Input
-                  id={`item-${index}-size`}
-                  placeholder="e.g. L, 42, 10"
-                  value={item.size || ""}
-                  onChange={(e) => updateItem(index, "size", e.target.value)}
-                />
-              </FormControl>
-            </div>
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-      
-      {isLast && (
-        <div className="mt-4">
+    <div className="space-y-4 border-b pb-4 last:border-0 last:pb-0">
+      <div className="flex items-center justify-between">
+        <h4 className="font-medium">Item {index + 1}</h4>
+        {showRemoveButton && (
           <Button
             type="button"
             variant="outline"
-            onClick={addNewItem}
-            className="w-full"
+            size="sm"
+            className="text-destructive hover:text-destructive"
+            onClick={() => removeItem(index)}
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Another Item
+            <Trash2 className="mr-1 h-4 w-4" />
+            Remove
           </Button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <FormLabel htmlFor={`item-${index}-product-name`}>
+            Product Name *
+          </FormLabel>
+          <FormControl>
+            <Input
+              id={`item-${index}-product-name`}
+              placeholder="Enter the product name"
+              value={productName}
+              onChange={(e) => updateItem(index, "productName", e.target.value)}
+            />
+          </FormControl>
+          <FormMessage />
         </div>
-      )}
+
+        <div>
+          <FormLabel htmlFor={`item-${index}-product-url`}>
+            Product URL *
+          </FormLabel>
+          <FormControl>
+            <Input
+              id={`item-${index}-product-url`}
+              placeholder="https://example.com/product"
+              value={productUrl}
+              onChange={(e) => updateItem(index, "productUrl", e.target.value)}
+              type="url"
+            />
+          </FormControl>
+          <FormMessage />
+        </div>
+
+        <div>
+          <FormLabel htmlFor={`item-${index}-store-name`}>
+            Store Name
+          </FormLabel>
+          <FormControl>
+            <Input
+              id={`item-${index}-store-name`}
+              placeholder="Enter the store name"
+              value={storeName}
+              onChange={(e) => updateItem(index, "storeName", e.target.value)}
+            />
+          </FormControl>
+          <FormMessage />
+        </div>
+
+        <div>
+          <FormLabel htmlFor={`item-${index}-quantity`}>Quantity *</FormLabel>
+          <FormControl>
+            <Input
+              id={`item-${index}-quantity`}
+              placeholder="Enter quantity"
+              value={quantity}
+              onChange={(e) => updateItem(index, "quantity", e.target.value)}
+              type="number"
+              min="1"
+              step="1"
+            />
+          </FormControl>
+          <FormMessage />
+        </div>
+
+        <div>
+          <FormLabel htmlFor={`item-${index}-price`}>Price (optional)</FormLabel>
+          <FormControl>
+            <Input
+              id={`item-${index}-price`}
+              placeholder="Enter the price"
+              value={productPrice}
+              onChange={(e) =>
+                updateItem(index, "productPrice", e.target.value)
+              }
+              type="number"
+              min="0"
+              step="0.01"
+            />
+          </FormControl>
+          <FormMessage />
+        </div>
+
+        <div>
+          <FormLabel htmlFor={`item-${index}-color`}>
+            Color (optional)
+          </FormLabel>
+          <FormControl>
+            <Input
+              id={`item-${index}-color`}
+              placeholder="Enter the color"
+              value={color}
+              onChange={(e) => updateItem(index, "color", e.target.value)}
+            />
+          </FormControl>
+          <FormMessage />
+        </div>
+
+        <div>
+          <FormLabel htmlFor={`item-${index}-size`}>Size (optional)</FormLabel>
+          <FormControl>
+            <Input
+              id={`item-${index}-size`}
+              placeholder="Enter the size"
+              value={size}
+              onChange={(e) => updateItem(index, "size", e.target.value)}
+            />
+          </FormControl>
+          <FormMessage />
+        </div>
+      </div>
     </div>
   );
 }

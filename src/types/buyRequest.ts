@@ -1,12 +1,13 @@
 
 export interface BuyRequestItem {
-  id: string; // Local ID for form management
+  id: string;
   productName: string;
   productUrl: string;
   quantity: string;
-  color?: string;
-  size?: string;
   productPrice: string;
+  color: string;
+  size: string;
+  storeName?: string; // Added store name field
 }
 
 export interface BuyRequestFormValues {

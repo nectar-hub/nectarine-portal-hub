@@ -7,18 +7,46 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
   
   // Handle file upload if there's a screenshot
   if (values.screenshot && values.screenshot.length > 0) {
-    const file = values.screenshot[0];
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-    const filePath = `${userId}/buy-requests/${fileName}`;
-    
-    // TODO: Upload the file to Supabase Storage once it's set up
-    // const { data, error } = await supabase.storage
-    //   .from("buy-request-screenshots")
-    //   .upload(filePath, file);
-    
-    // if (error) throw error;
-    // screenshotUrl = data?.path;
+    try {
+      const file = values.screenshot[0];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `${userId}/buy-requests/${fileName}`;
+      
+      // Create storage bucket if it doesn't exist
+      const { data: bucketExists } = await supabase
+        .storage
+        .getBucket('buy-request-screenshots');
+        
+      if (!bucketExists) {
+        await supabase
+          .storage
+          .createBucket('buy-request-screenshots', {
+            public: false,
+            fileSizeLimit: 10485760, // 10MB
+          });
+      }
+      
+      // Upload the file to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from("buy-request-screenshots")
+        .upload(filePath, file);
+      
+      if (error) throw error;
+      
+      if (data) {
+        // Get public URL for the uploaded file
+        const { data: urlData } = supabase
+          .storage
+          .from("buy-request-screenshots")
+          .getPublicUrl(filePath);
+          
+        screenshotUrl = urlData.publicUrl;
+      }
+    } catch (error) {
+      console.error("Screenshot upload failed:", error);
+      // Continue with the request even if screenshot upload fails
+    }
   }
 
   console.log("[BUY SERVICE] Starting submission process with user_id:", userId);
@@ -42,7 +70,8 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
     product_price: firstItem.productPrice ? parseFloat(firstItem.productPrice) : null,
     screenshot_url: screenshotUrl,
     notes: notesWithDetails,
-    country_of_purchase: "Default" // Default value required by schema
+    country_of_purchase: "Default", // Default value required by schema
+    store_name: firstItem.storeName || "Not specified" // Add store name if available
   };
   
   console.log("[BUY SERVICE] Submitting buy request with data:", buyRequestData);
@@ -106,7 +135,8 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
         product_price: item.productPrice ? parseFloat(item.productPrice) : null,
         notes: itemNotesWithDetails,
         country_of_purchase: "Default", // Default value required by schema
-        parent_order_id: createdOrder.id
+        parent_order_id: createdOrder.id,
+        store_name: item.storeName || "Not specified" // Add store name if available
       };
       
       console.log("[BUY SERVICE] Adding additional item:", additionalItemData);
