@@ -41,19 +41,24 @@ export async function fetchBuyRequestItems(buyRequestIds: string[]) {
   try {
     if (buyRequestIds.length === 0) return {};
     
+    console.log("Fetching items for buy request IDs:", buyRequestIds);
+    
     const { data: items, error: itemsError } = await supabase
       .from('buy_request_items')
       .select('*')
       .in('buy_request_id', buyRequestIds);
     
     if (itemsError) {
-      console.warn("Error fetching buy request items:", itemsError);
+      console.error("Error fetching buy request items:", itemsError);
       return {};
     }
     
     if (!items || items.length === 0) {
+      console.log("No buy request items found");
       return {};
     }
+    
+    console.log("Fetched items:", items);
     
     // Group items by buy_request_id
     const buyRequestItems: Record<string, RequestItem[]> = {};
@@ -77,6 +82,7 @@ export async function fetchBuyRequestItems(buyRequestIds: string[]) {
       });
     });
     
+    console.log("Grouped items by request ID:", buyRequestItems);
     return buyRequestItems;
   } catch (error: any) {
     console.error("Error in fetchBuyRequestItems:", error);

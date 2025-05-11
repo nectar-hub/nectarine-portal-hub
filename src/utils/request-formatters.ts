@@ -1,3 +1,4 @@
+
 import { Request, RequestItem } from "@/types/request";
 
 export function formatBuyRequests(
@@ -49,7 +50,9 @@ export function formatSelfPurchases(selfPurchases: any[]): Request[] {
     notes: purchase.notes,
     invoice_url: purchase.invoice_url,
     tracking_number: purchase.tracking_number,
-    courier: purchase.courier
+    courier: purchase.courier,
+    // Add empty items array for consistency
+    items: []
   }));
 }
 

@@ -17,6 +17,14 @@ interface MultiItemAccordionProps {
 export const MultiItemAccordion = ({ items, country }: MultiItemAccordionProps) => {
   console.log("MultiItemAccordion received items:", items);
   
+  if (!items || items.length === 0) {
+    return (
+      <div className="p-4 text-center text-muted-foreground">
+        No items found for this request
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-4">
       <Accordion type="single" collapsible className="w-full" defaultValue="item-0">

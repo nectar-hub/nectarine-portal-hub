@@ -50,6 +50,7 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
   }
 
   console.log("[BUY SERVICE] Starting submission process with user_id:", userId);
+  console.log("[BUY SERVICE] Form values:", values);
   
   // Step 1: Insert the buy request into the database for the first item
   const firstItem = values.items[0];
@@ -70,8 +71,10 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
     product_price: firstItem.productPrice ? parseFloat(firstItem.productPrice) : null,
     screenshot_url: screenshotUrl,
     notes: notesWithDetails,
-    country_of_purchase: "Default", // Default value required by schema
-    store_name: firstItem.storeName || "Not specified" // Add store name if available
+    country_of_purchase: values.country || "Default", // Use form country field if available
+    store_name: firstItem.storeName || "Not specified", // Add store name if available
+    color: firstItem.color || null,
+    size: firstItem.size || null
   };
   
   console.log("[BUY SERVICE] Submitting buy request with data:", buyRequestData);
@@ -94,7 +97,7 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
   
   console.log("[BUY SERVICE] Buy request created successfully:", createdBuyRequest);
   
-  // Create an order for the first item
+  // Create an order for this request
   const orderPayload = {
     reference_id: createdBuyRequest.id,
     user_id: userId,
@@ -116,39 +119,32 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
   
   // Now insert additional items if there are more than one item
   if (values.items.length > 1) {
-    // For additional items, create separate buy requests linked to the same order
+    console.log(`[BUY SERVICE] Adding ${values.items.length - 1} additional items to buy_request_items table`);
+    
+    // For additional items, create buy_request_items entries linked to the main buy_request
     const additionalItems = values.items.slice(1);
-    for (const item of additionalItems) {
-      // Prepare notes with color and size for this item
-      let itemNotesWithDetails = values.notes || "";
-      if (item.color || item.size) {
-        itemNotesWithDetails += `\n\nItem Details:\n`;
-        if (item.color) itemNotesWithDetails += `Color: ${item.color}\n`;
-        if (item.size) itemNotesWithDetails += `Size: ${item.size}\n`;
-      }
-      
-      const additionalItemData = {
-        user_id: userId,
-        product_name: item.productName,
-        product_url: item.productUrl,
-        quantity: parseInt(item.quantity),
-        product_price: item.productPrice ? parseFloat(item.productPrice) : null,
-        notes: itemNotesWithDetails,
-        country_of_purchase: "Default", // Default value required by schema
-        parent_order_id: createdOrder.id,
-        store_name: item.storeName || "Not specified" // Add store name if available
-      };
-      
-      console.log("[BUY SERVICE] Adding additional item:", additionalItemData);
-      
-      const { error: additionalItemError } = await supabase
-        .from("buy_requests")
-        .insert(additionalItemData);
-      
-      if (additionalItemError) {
-        console.error("[BUY SERVICE] Error adding additional item:", additionalItemError);
-        // We won't throw here, just log the error to not disrupt the main flow
-      }
+    const itemsToInsert = additionalItems.map(item => ({
+      buy_request_id: createdBuyRequest.id,
+      product_name: item.productName,
+      product_url: item.productUrl,
+      quantity: parseInt(item.quantity),
+      price: item.productPrice ? parseFloat(item.productPrice) : null,
+      store_name: item.storeName || "Not specified",
+      color: item.color || null,
+      size: item.size || null
+    }));
+    
+    console.log("[BUY SERVICE] Adding additional items:", itemsToInsert);
+    
+    const { error: additionalItemsError } = await supabase
+      .from("buy_request_items")
+      .insert(itemsToInsert);
+    
+    if (additionalItemsError) {
+      console.error("[BUY SERVICE] Error adding additional items:", additionalItemsError);
+      // Log but don't throw - the main request was created successfully
+    } else {
+      console.log("[BUY SERVICE] Additional items added successfully");
     }
   }
   

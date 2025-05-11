@@ -24,6 +24,10 @@ const RequestDetailsDialog = ({
 }: RequestDetailsDialogProps) => {
   if (!request) return null;
 
+  // Debug the request object to see what's coming in
+  console.log("Request details dialog received request:", request);
+  console.log("Request items:", request.items);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
