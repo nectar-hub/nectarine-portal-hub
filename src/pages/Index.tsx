@@ -12,8 +12,13 @@ const Index = () => {
       {/* Navigation Bar */}
       <nav className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link to="/" className="text-2xl font-bold text-nectarine-600">
-            Nectarine Portal
+          <Link to="/" className="flex items-center gap-2">
+            <img 
+              src="/lovable-uploads/6812ca59-9985-4974-8a82-27733d625894.png" 
+              alt="Nectarine Logistics" 
+              className="h-10 w-auto"
+            />
+            <span className="text-2xl font-bold text-nectarine-600">Nectarine Portal</span>
           </Link>
           <div className="flex space-x-2">
             <Link to="/login">
@@ -61,11 +66,12 @@ const Index = () => {
                 </Link>
               </div>
             </div>
-            <div className="hidden md:block">
-              <div className="aspect-video rounded-xl bg-card shadow-lg border border-border p-8 flex items-center justify-center">
-                <div className="text-6xl text-nectarine-500">🍑</div>
-                <p className="text-xl font-medium ml-4">Welcome to Nectarine Portal</p>
-              </div>
+            <div className="hidden md:flex justify-center">
+              <img 
+                src="/lovable-uploads/6812ca59-9985-4974-8a82-27733d625894.png"
+                alt="Nectarine Logistics" 
+                className="h-64 w-auto"
+              />
             </div>
           </div>
         </div>
@@ -173,9 +179,16 @@ const Index = () => {
       <footer className="border-t border-border bg-card py-8">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-4 md:mb-0">
-              <p className="text-lg font-bold text-nectarine-600">Nectarine Portal</p>
-              <p className="text-sm text-muted-foreground">Your Global Shopping Assistant</p>
+            <div className="mb-4 md:mb-0 flex items-center gap-2">
+              <img 
+                src="/lovable-uploads/6812ca59-9985-4974-8a82-27733d625894.png" 
+                alt="Nectarine Logistics" 
+                className="h-8 w-auto"
+              />
+              <div>
+                <p className="text-lg font-bold text-nectarine-600">Nectarine Portal</p>
+                <p className="text-sm text-muted-foreground">Your Global Shopping Assistant</p>
+              </div>
             </div>
             <div className="flex space-x-6">
               <Link to="/" className="text-muted-foreground hover:text-nectarine-600 transition-colors">
