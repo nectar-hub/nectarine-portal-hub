@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -125,7 +126,7 @@ const ShippingAddress = () => {
   const getCountryPhone = (code: string) => {
     const phones = {
       'usa': '+1 631 353 7275',
-      'uk': '+44 20 7123 4567',
+      'uk': '+44(0)7724334014',
       'china': '+86 21 5812 3456',
     };
     return phones[code as keyof typeof phones] || '+1 (000) 000-0000';
@@ -169,16 +170,16 @@ const ShippingAddress = () => {
       id: "uk-id",
       country: "uk",
       countryName: "United Kingdom",
-      reference_code: "NECT-UK67890",
-      address: "456 Orange Road, Unit 7, London, , SW1A 1AA",
+      reference_code: "Nectarine Your Name",
+      address: "Safe Store Ltd, 11 Bilton Road, Bletchley, Milton Keynes, MK1 1HW",
       address_parts: {
-        addressLine1: "456 Orange Road",
-        addressLine2: "Unit 7",
-        city: "London",
-        state: "",
-        zipCode: "SW1A 1AA"
+        addressLine1: "Safe Store Ltd",
+        addressLine2: "11 Bilton Road",
+        city: "Bletchley",
+        state: "Milton Keynes",
+        zipCode: "MK1 1HW"
       },
-      phone: "+44 20 7123 4567",
+      phone: "+44(0)7724334014",
       instructions: null,
       created_at: new Date().toISOString()
     },
