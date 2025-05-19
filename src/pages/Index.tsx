@@ -1,6 +1,8 @@
+
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import IndexHeader from "./IndexHeader";
+import { Facebook, Instagram, Mail, Phone, MapPin } from "lucide-react";
 
 const Index = () => {
   return (
@@ -120,38 +122,70 @@ const Index = () => {
         <div className="container px-4 mx-auto">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-xl font-bold mb-4">Nectarine</h3>
-              <p className="text-gray-400">Your global shopping assistant, making international shopping simple and accessible.</p>
+              <div className="flex items-center gap-2 mb-4">
+                <img src="/lovable-uploads/6812ca59-9985-4974-8a82-27733d625894.png" alt="Nectarine Logo" className="h-8 w-auto" />
+                <h3 className="text-xl font-bold">Nectarine</h3>
+              </div>
+              <p className="text-gray-400 mb-6">Your global shopping assistant, making international shopping simple and accessible.</p>
+              <div className="flex space-x-4 text-gray-400">
+                <a href="https://facebook.com" className="hover:text-white transition-colors">
+                  <Facebook size={20} />
+                </a>
+                <a href="https://instagram.com" className="hover:text-white transition-colors">
+                  <Instagram size={20} />
+                </a>
+                <a href="mailto:info@nectarinelogistics.com" className="hover:text-white transition-colors">
+                  <Mail size={20} />
+                </a>
+              </div>
             </div>
+            
             <div>
               <h4 className="font-semibold mb-4">Services</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><Link to="/dashboard/buy-for-me" className="hover:text-white">Buy For Me</Link></li>
-                <li><Link to="/dashboard/shipping-address" className="hover:text-white">Shipping Address</Link></li>
-                <li><Link to="/dashboard/track-packages" className="hover:text-white">Package Tracking</Link></li>
+                <li><Link to="/dashboard/buy-for-me" className="hover:text-white transition-colors">Buy For Me</Link></li>
+                <li><Link to="/dashboard/shipping-address" className="hover:text-white transition-colors">Shipping Address</Link></li>
+                <li><Link to="/dashboard/track-packages" className="hover:text-white transition-colors">Package Tracking</Link></li>
+                <li><Link to="/dashboard/orders" className="hover:text-white transition-colors">Order History</Link></li>
               </ul>
             </div>
+            
             <div>
               <h4 className="font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><Link to="/about" className="hover:text-white">About Us</Link></li>
-                <li><Link to="/contact" className="hover:text-white">Contact</Link></li>
-                <li><Link to="/terms" className="hover:text-white">Terms of Service</Link></li>
-                <li><Link to="/privacy" className="hover:text-white">Privacy Policy</Link></li>
+                <li><Link to="/about" className="hover:text-white transition-colors">About Us</Link></li>
+                <li><Link to="/contact" className="hover:text-white transition-colors">Contact</Link></li>
+                <li><Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
+                <li><Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
               </ul>
             </div>
+            
             <div>
-              <h4 className="font-semibold mb-4">Connect</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white">Instagram</a></li>
-                <li><a href="#" className="hover:text-white">Twitter</a></li>
-                <li><a href="#" className="hover:text-white">Facebook</a></li>
-                <li><a href="#" className="hover:text-white">Email</a></li>
+              <h4 className="font-semibold mb-4">Contact Us</h4>
+              <ul className="space-y-3 text-gray-400">
+                <li className="flex items-start gap-2">
+                  <MapPin size={18} className="flex-shrink-0 mt-0.5" />
+                  <span>
+                    17401 Nichols LN Unit J,<br />
+                    Huntington Beach, CA 92647
+                  </span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Phone size={18} />
+                  <span>+1 631 353 7275</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Mail size={18} />
+                  <a href="mailto:info@nectarinelogistics.com" className="hover:text-white transition-colors">
+                    info@nectarinelogistics.com
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
+          
           <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500 text-sm">
-            <p>© {new Date().getFullYear()} Nectarine. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} Nectarine Logistics. All rights reserved.</p>
           </div>
         </div>
       </footer>

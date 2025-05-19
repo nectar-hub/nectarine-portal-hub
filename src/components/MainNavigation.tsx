@@ -18,8 +18,8 @@ const MainNavigation = () => {
   const { user, isAdmin } = useAuth();
   
   return (
-    <NavigationMenu>
-      <NavigationMenuList>
+    <NavigationMenu className="flex-1">
+      <NavigationMenuList className="mx-auto">
         <NavigationMenuItem>
           <Link to="/">
             <NavigationMenuLink className={navigationMenuTriggerStyle()}>
@@ -76,16 +76,26 @@ const MainNavigation = () => {
       
       <div className="ml-auto flex items-center space-x-4">
         {user ? (
-          <Button asChild variant="outline" className="flex items-center gap-2">
-            <Link to={isAdmin ? "/admin" : "/dashboard"}>
-              <LayoutDashboard className="h-4 w-4" />
-              Dashboard
-            </Link>
-          </Button>
+          <>
+            <Button asChild variant="outline" className="hidden md:flex items-center gap-2">
+              <Link to="/dashboard/orders">Track Order</Link>
+            </Button>
+            <Button asChild variant="default" className="flex items-center gap-2">
+              <Link to={isAdmin ? "/admin" : "/dashboard"}>
+                <LayoutDashboard className="h-4 w-4" />
+                Dashboard
+              </Link>
+            </Button>
+          </>
         ) : (
-          <Button asChild variant="outline">
-            <Link to="/login">Login</Link>
-          </Button>
+          <>
+            <Button asChild variant="outline">
+              <Link to="/register">Register</Link>
+            </Button>
+            <Button asChild variant="default">
+              <Link to="/login">Login</Link>
+            </Button>
+          </>
         )}
       </div>
     </NavigationMenu>
