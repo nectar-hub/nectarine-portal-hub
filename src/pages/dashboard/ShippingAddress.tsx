@@ -124,7 +124,7 @@ const ShippingAddress = () => {
   // Helper function to get default phone based on country
   const getCountryPhone = (code: string) => {
     const phones = {
-      'usa': '+1 (212) 555-6789',
+      'usa': '+1 631 353 7275',
       'uk': '+44 20 7123 4567',
       'china': '+86 21 5812 3456',
     };
@@ -152,16 +152,16 @@ const ShippingAddress = () => {
       id: "usa-id",
       country: "usa",
       countryName: "United States",
-      reference_code: "NECT-US12345",
-      address: "123 Nectarine Street, Suite 101, New York, NY, 10001",
+      reference_code: "Nectarine Full Name",
+      address: "17401 Nichols LN Unit J, , Huntington Beach, CA, 92647",
       address_parts: {
-        addressLine1: "123 Nectarine Street",
-        addressLine2: "Suite 101",
-        city: "New York",
-        state: "NY",
-        zipCode: "10001"
+        addressLine1: "17401 Nichols LN",
+        addressLine2: "Unit J",
+        city: "Huntington Beach",
+        state: "CA",
+        zipCode: "92647"
       },
-      phone: "+1 (212) 555-6789",
+      phone: "+1 631 353 7275",
       instructions: null,
       created_at: new Date().toISOString()
     },
