@@ -21,56 +21,46 @@ const MainNavigation = () => {
     <NavigationMenu className="flex-1">
       <NavigationMenuList className="mx-auto">
         <NavigationMenuItem>
-          <Link to="/">
-            <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+            <a href="https://nectarinelogistics.com/" target="_blank" rel="noopener noreferrer">
               Home
-            </NavigationMenuLink>
-          </Link>
+            </a>
+          </NavigationMenuLink>
         </NavigationMenuItem>
         <NavigationMenuItem>
-          <NavigationMenuTrigger>Services</NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-              <li className="row-span-3">
-                <NavigationMenuLink asChild>
-                  <a
-                    className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-nectarine-50 to-white p-6 no-underline outline-none focus:shadow-md"
-                    href="/dashboard/buy-for-me"
-                  >
-                    <div className="mb-2 mt-4 text-lg font-medium">
-                      Buy For Me
-                    </div>
-                    <p className="text-sm leading-tight text-muted-foreground">
-                      We purchase products on your behalf from any store in our supported countries
-                    </p>
-                  </a>
-                </NavigationMenuLink>
-              </li>
-              <ListItem href="/dashboard/track-packages" title="Package Tracking">
-                Track your packages as they ship to your location
-              </ListItem>
-              <ListItem href="/dashboard/shipping-address" title="Shipping Address">
-                View your shipping address in our supported countries
-              </ListItem>
-              <ListItem href="/dashboard/orders" title="Orders History">
-                View all your past and current orders
-              </ListItem>
-            </ul>
-          </NavigationMenuContent>
+          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+            <a href="https://nectarinelogistics.com/services" target="_blank" rel="noopener noreferrer">
+              Services
+            </a>
+          </NavigationMenuLink>
         </NavigationMenuItem>
         <NavigationMenuItem>
-          <Link to="/about">
-            <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+            <a href="https://nectarinelogistics.com/about/what-is-nectarine" target="_blank" rel="noopener noreferrer">
               About
-            </NavigationMenuLink>
-          </Link>
+            </a>
+          </NavigationMenuLink>
         </NavigationMenuItem>
         <NavigationMenuItem>
-          <Link to="/contact">
-            <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+            <a href="https://nectarinelogistics.com/help" target="_blank" rel="noopener noreferrer">
+              Help Centre
+            </a>
+          </NavigationMenuLink>
+        </NavigationMenuItem>
+        <NavigationMenuItem>
+          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+            <a href="https://nectarinelogistics.com/shipping-routes" target="_blank" rel="noopener noreferrer">
+              Shipping Routes
+            </a>
+          </NavigationMenuLink>
+        </NavigationMenuItem>
+        <NavigationMenuItem>
+          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+            <a href="https://nectarinelogistics.com/contact" target="_blank" rel="noopener noreferrer">
               Contact
-            </NavigationMenuLink>
-          </Link>
+            </a>
+          </NavigationMenuLink>
         </NavigationMenuItem>
       </NavigationMenuList>
       
