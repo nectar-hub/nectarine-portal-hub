@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import IndexHeader from "./IndexHeader";
-import { Facebook, Instagram, Mail, Phone, MapPin } from "lucide-react";
+import { Facebook, Instagram, Linkedin, Mail, Phone, MapPin } from "lucide-react";
 
 const Index = () => {
   return (
@@ -118,50 +118,54 @@ const Index = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-[#262626] text-white py-12">
         <div className="container px-4 mx-auto">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
+          <div className="grid md:grid-cols-5 gap-8">
+            <div className="md:col-span-2">
               <div className="flex items-center gap-2 mb-4">
                 <img src="/lovable-uploads/6812ca59-9985-4974-8a82-27733d625894.png" alt="Nectarine Logo" className="h-8 w-auto" />
                 <h3 className="text-xl font-bold">Nectarine</h3>
               </div>
-              <p className="text-gray-400 mb-6">Your global shopping assistant, making international shopping simple and accessible.</p>
+              <p className="text-gray-400 mb-6 pr-4">
+                Welcome to Nectarine, your trusted partner for international shopping and shipping solutions. We connect you to global markets by providing seamless access to products from around the world.
+              </p>
               <div className="flex space-x-4 text-gray-400">
-                <a href="https://facebook.com" className="hover:text-white transition-colors">
+                <a href="https://facebook.com" className="hover:text-nectarine-500 transition-colors">
                   <Facebook size={20} />
                 </a>
-                <a href="https://instagram.com" className="hover:text-white transition-colors">
+                <a href="https://instagram.com" className="hover:text-nectarine-500 transition-colors">
                   <Instagram size={20} />
                 </a>
-                <a href="mailto:info@nectarinelogistics.com" className="hover:text-white transition-colors">
-                  <Mail size={20} />
+                <a href="https://linkedin.com" className="hover:text-nectarine-500 transition-colors">
+                  <Linkedin size={20} />
                 </a>
               </div>
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">Services</h4>
+              <h4 className="font-semibold mb-4 text-nectarine-400">Services</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><Link to="/dashboard/buy-for-me" className="hover:text-white transition-colors">Buy For Me</Link></li>
-                <li><Link to="/dashboard/shipping-address" className="hover:text-white transition-colors">Shipping Address</Link></li>
-                <li><Link to="/dashboard/track-packages" className="hover:text-white transition-colors">Package Tracking</Link></li>
-                <li><Link to="/dashboard/orders" className="hover:text-white transition-colors">Order History</Link></li>
+                <li><a href="https://nectarinelogistics.com/services/buy-for-me" className="hover:text-nectarine-500 transition-colors">Buy For Me</a></li>
+                <li><a href="https://nectarinelogistics.com/services/mail-forwarding" className="hover:text-nectarine-500 transition-colors">Mail Forwarding</a></li>
+                <li><a href="https://nectarinelogistics.com/services/shipping-address" className="hover:text-nectarine-500 transition-colors">Shipping Address</a></li>
+                <li><a href="https://nectarinelogistics.com/services/store-consolidation" className="hover:text-nectarine-500 transition-colors">Store Consolidation</a></li>
+                <li><a href="https://nectarinelogistics.com/services/locker" className="hover:text-nectarine-500 transition-colors">Package Locker</a></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">Company</h4>
+              <h4 className="font-semibold mb-4 text-nectarine-400">Company</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><Link to="/about" className="hover:text-white transition-colors">About Us</Link></li>
-                <li><Link to="/contact" className="hover:text-white transition-colors">Contact</Link></li>
-                <li><Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
-                <li><Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><a href="https://nectarinelogistics.com/about/what-is-nectarine" className="hover:text-nectarine-500 transition-colors">About Us</a></li>
+                <li><a href="https://nectarinelogistics.com/about/our-mission" className="hover:text-nectarine-500 transition-colors">Our Mission</a></li>
+                <li><a href="https://nectarinelogistics.com/careers" className="hover:text-nectarine-500 transition-colors">Careers</a></li>
+                <li><a href="https://nectarinelogistics.com/shipping-routes" className="hover:text-nectarine-500 transition-colors">Shipping Routes</a></li>
+                <li><a href="https://nectarinelogistics.com/pricing" className="hover:text-nectarine-500 transition-colors">Pricing</a></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">Contact Us</h4>
+              <h4 className="font-semibold mb-4 text-nectarine-400">Contact Us</h4>
               <ul className="space-y-3 text-gray-400">
                 <li className="flex items-start gap-2">
                   <MapPin size={18} className="flex-shrink-0 mt-0.5" />
@@ -176,7 +180,7 @@ const Index = () => {
                 </li>
                 <li className="flex items-center gap-2">
                   <Mail size={18} />
-                  <a href="mailto:info@nectarinelogistics.com" className="hover:text-white transition-colors">
+                  <a href="mailto:info@nectarinelogistics.com" className="hover:text-nectarine-500 transition-colors">
                     info@nectarinelogistics.com
                   </a>
                 </li>
@@ -184,8 +188,8 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500 text-sm">
-            <p>© {new Date().getFullYear()} Nectarine Logistics. All rights reserved.</p>
+          <div className="border-t border-gray-800 mt-10 pt-8 text-center text-gray-500 text-sm">
+            <p>© {new Date().getFullYear()} Nectarine Logistics Inc. All rights reserved.</p>
           </div>
         </div>
       </footer>
