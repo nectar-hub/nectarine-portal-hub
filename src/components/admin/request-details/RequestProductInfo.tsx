@@ -8,7 +8,7 @@ interface RequestProductInfoProps {
 }
 
 export const RequestProductInfo = ({ request }: RequestProductInfoProps) => {
-  // Fix the logic for checking multiple items
+  // Fix the logic for checking multiple items - items array should have length > 0
   const hasMultipleItems = Array.isArray(request.items) && request.items.length > 0;
   
   console.log("Request items:", request.items);

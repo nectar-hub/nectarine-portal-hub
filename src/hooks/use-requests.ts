@@ -1,207 +1,236 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
-import { Request } from "@/types/request";
-import { useRequestStatus } from "@/hooks/use-request-status";
-import { 
-  fetchBuyRequests,
-  fetchBuyRequestItems,
-  fetchSelfPurchases,
-  fetchUserProfiles,
-  updateRequestStatusInDB,
-} from "@/utils/request-fetchers";
-import {
-  formatBuyRequests,
-  formatSelfPurchases,
-  addUserDetailsToRequests,
-  sortRequestsByDate
-} from "@/utils/request-formatters";
 import { supabase } from "@/integrations/supabase/client";
+import { Request, RequestItem } from "@/types/request";
+import { fetchBuyRequests, fetchSelfPurchases } from "@/utils/request-fetchers";
+import { formatBuyRequestsData, formatSelfPurchasesData } from "@/utils/request-formatters";
 
-export function useRequests(requestType?: string, filter: string = "all") {
+export function useRequests(requestType: string = 'all', statusFilter: string = 'all') {
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { processingId, updateRequestStatus } = useRequestStatus();
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
-  const isBuyRequestsPage = requestType === 'buy_requests';
-  const isSelfPurchasesPage = requestType === 'self_purchases';
-  
-  const fetchRequests = async () => {
+  // Function to fetch buy request items and associate them with their parent request
+  const fetchBuyRequestItems = async (buyRequests: Request[]) => {
+    if (!buyRequests.length) return buyRequests;
+    
+    // Get all buy request IDs
+    const buyRequestIds = buyRequests.map(request => request.id);
+    
+    // Fetch all items for these buy requests in a single query
+    const { data: items, error } = await supabase
+      .from('buy_request_items')
+      .select('*')
+      .in('buy_request_id', buyRequestIds);
+      
+    if (error) {
+      console.error('Error fetching buy request items:', error);
+      return buyRequests; // Return original requests if items can't be fetched
+    }
+    
+    if (!items || items.length === 0) return buyRequests;
+    
+    // Map items to their parent requests
+    return buyRequests.map(request => {
+      const requestItems = items.filter(item => item.buy_request_id === request.id);
+      
+      // If we found items for this request, add them to the request
+      if (requestItems.length > 0) {
+        return {
+          ...request,
+          items: requestItems as RequestItem[]
+        };
+      }
+      
+      return request;
+    });
+  };
+
+  const fetchRequests = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      setLoading(true);
-      setError(null);
+      let fetchedRequests: Request[] = [];
       
-      // Determine which type of requests to fetch based on the current route
-      const shouldFetchBuyRequests = !isSelfPurchasesPage || requestType === undefined;
-      const shouldFetchSelfPurchases = !isBuyRequestsPage || requestType === undefined;
-      
-      console.log("Fetching requests:", { 
-        type: requestType,
-        filter: filter,
-        fetchBuy: shouldFetchBuyRequests,
-        fetchSelf: shouldFetchSelfPurchases
-      });
-      
-      let buyRequestsFormatted: Request[] = [];
-      let selfPurchasesFormatted: Request[] = [];
-      
-      // Fetch buy requests if needed
-      if (shouldFetchBuyRequests) {
-        try {
-          const buyRequests = await fetchBuyRequests(filter);
-          
-          // Always fetch items for buy requests, even if there are none
-          if (buyRequests.length > 0) {
-            const buyRequestIds = buyRequests.map(req => req.id);
-            const buyRequestItems = await fetchBuyRequestItems(buyRequestIds);
-            console.log("Fetched items for buy requests:", buyRequestItems);
-            buyRequestsFormatted = formatBuyRequests(buyRequests, buyRequestItems);
-          }
-          
-          console.log(`Fetched ${buyRequestsFormatted.length} buy requests`);
-        } catch (buyErr: any) {
-          console.error("Error processing buy requests:", buyErr);
-          // Continue to try fetching self-purchases even if buy requests fail
-        }
+      if (requestType === 'all' || requestType === 'buy_request') {
+        const buyRequests = await fetchBuyRequests(statusFilter);
+        
+        // Fetch and associate items with buy requests
+        const buyRequestsWithItems = await fetchBuyRequestItems(buyRequests);
+        fetchedRequests = [...fetchedRequests, ...buyRequestsWithItems];
       }
       
-      // Fetch self purchases if needed
-      if (shouldFetchSelfPurchases) {
-        try {
-          const selfPurchases = await fetchSelfPurchases(filter);
-          selfPurchasesFormatted = formatSelfPurchases(selfPurchases);
-          
-          console.log(`Fetched ${selfPurchasesFormatted.length} self purchases`);
-        } catch (selfErr: any) {
-          console.error("Error processing self purchases:", selfErr);
-          // Continue with whatever data we have
-        }
+      if (requestType === 'all' || requestType === 'self_purchase') {
+        const selfPurchases = await fetchSelfPurchases(statusFilter);
+        fetchedRequests = [...fetchedRequests, ...selfPurchases];
       }
       
-      // Filter requests based on the current page
-      let combinedRequests: Request[] = [];
-      if (isBuyRequestsPage) {
-        combinedRequests = buyRequestsFormatted;
-      } else if (isSelfPurchasesPage) {
-        combinedRequests = selfPurchasesFormatted;
-      } else {
-        combinedRequests = [...buyRequestsFormatted, ...selfPurchasesFormatted];
-      }
+      // Sort all requests by created_at date (newest first)
+      fetchedRequests.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
       
-      console.log(`Combined ${combinedRequests.length} total requests`);
-      
-      // Fetch user details for each request if there are any requests
-      if (combinedRequests.length > 0) {
-        try {
-          const userIds = [...new Set(combinedRequests.map(req => req.user_id))];
-          console.log(`Fetching details for ${userIds.length} unique users`);
-          
-          const users = await fetchUserProfiles(userIds);
-          
-          // Map user details to requests and sort by date
-          const requestsWithUserDetails = addUserDetailsToRequests(combinedRequests, users);
-          const sortedRequests = sortRequestsByDate(requestsWithUserDetails);
-          
-          // Log full data for debugging
-          console.log("Final formatted requests:", sortedRequests);
-          
-          setRequests(sortedRequests);
-        } catch (userError: any) {
-          console.error("Error processing user details:", userError);
-          // Still set the requests even if user details fail
-          setRequests(combinedRequests);
-        }
-      } else {
-        setRequests([]);
-      }
-    } catch (error: any) {
-      console.error("Error in fetchRequests:", error);
-      setError(error.message || "Failed to load requests");
-      toast({
-        title: "Error",
-        description: error.message || "Failed to load requests",
-        variant: "destructive"
-      });
+      setRequests(fetchedRequests);
+    } catch (err) {
+      console.error('Error fetching requests:', err);
+      setError('Failed to load requests. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const deleteRequest = async (requestId: string, requestType: 'buy_request' | 'self_purchase') => {
+  }, [requestType, statusFilter]);
+  
+  const updateRequestStatus = async (
+    requestId: string, 
+    requestType: 'buy_request' | 'self_purchase', 
+    newStatus: string
+  ) => {
+    setProcessingId(requestId);
+    
     try {
-      setDeletingId(requestId);
-      
-      console.log(`Deleting ${requestType} with ID: ${requestId}`);
-      
-      const table = requestType === 'buy_request' ? 'buy_requests' : 'self_purchases';
-      
-      // First, delete associated order if it exists
-      const { error: orderError } = await supabase
-        .from('orders')
-        .delete()
-        .eq('reference_id', requestId);
-      
-      if (orderError) {
-        console.error("Error deleting associated order:", orderError);
-        // Continue with request deletion even if order deletion fails
+      let table = '';
+      if (requestType === 'buy_request') {
+        table = 'buy_requests';
+      } else if (requestType === 'self_purchase') {
+        table = 'self_purchases';
+      } else {
+        throw new Error('Invalid request type');
       }
       
-      // Delete request items if it's a buy request
+      // Update the status in the appropriate table
+      const { error } = await supabase
+        .from(table)
+        .update({ status: newStatus })
+        .eq('id', requestId);
+        
+      if (error) throw error;
+      
+      // Also update the status in the orders table
+      const { error: orderError } = await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('reference_id', requestId);
+        
+      if (orderError) {
+        console.warn('Failed to update order status:', orderError);
+        // Don't throw error here - we still updated the main request
+      }
+      
+      // Update local state
+      setRequests(prev => 
+        prev.map(request => 
+          request.id === requestId 
+            ? { ...request, status: newStatus } 
+            : request
+        )
+      );
+      
+      toast({
+        title: "Status Updated",
+        description: `Request status changed to ${newStatus}`,
+      });
+      
+    } catch (err: any) {
+      console.error('Error updating status:', err);
+      toast({
+        title: "Update Failed",
+        description: err.message || "Failed to update status. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+  
+  const deleteRequest = async (
+    requestId: string, 
+    requestType: 'buy_request' | 'self_purchase'
+  ) => {
+    if (!requestId) return;
+    
+    setProcessingId(requestId);
+    
+    try {
+      let table = '';
+      if (requestType === 'buy_request') {
+        table = 'buy_requests';
+      } else if (requestType === 'self_purchase') {
+        table = 'self_purchases';
+      } else {
+        throw new Error('Invalid request type');
+      }
+      
+      // Delete any associated items if it's a buy_request
       if (requestType === 'buy_request') {
         const { error: itemsError } = await supabase
           .from('buy_request_items')
           .delete()
           .eq('buy_request_id', requestId);
-        
+          
         if (itemsError) {
-          console.error("Error deleting buy request items:", itemsError);
-          // Continue with request deletion even if items deletion fails
+          console.warn('Error deleting associated items:', itemsError);
+          // Continue with deletion anyway
         }
       }
       
-      // Delete the request
-      const { error: requestError } = await supabase
+      // Find and delete associated order first
+      const { data: order, error: findError } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('reference_id', requestId)
+        .single();
+        
+      if (order) {
+        const { error: orderError } = await supabase
+          .from('orders')
+          .delete()
+          .eq('id', order.id);
+          
+        if (orderError) {
+          console.warn('Error deleting associated order:', orderError);
+          // Continue with main request deletion
+        }
+      }
+      
+      // Delete the main request
+      const { error } = await supabase
         .from(table)
         .delete()
         .eq('id', requestId);
+        
+      if (error) throw error;
       
-      if (requestError) {
-        throw requestError;
-      }
-      
-      // Update the local state
-      setRequests(prevRequests => prevRequests.filter(req => req.id !== requestId));
+      // Update local state
+      setRequests(prev => prev.filter(request => request.id !== requestId));
       
       toast({
         title: "Request Deleted",
-        description: "The request has been permanently removed",
-        variant: "default"
+        description: "The request has been deleted successfully",
       });
       
-    } catch (error: any) {
-      console.error("Error deleting request:", error);
+    } catch (err: any) {
+      console.error('Error deleting request:', err);
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete request",
+        title: "Deletion Failed",
+        description: err.message || "Failed to delete request. Please try again.",
         variant: "destructive"
       });
     } finally {
-      setDeletingId(null);
+      setProcessingId(null);
     }
   };
 
   useEffect(() => {
     fetchRequests();
-  }, [filter, requestType]);
+  }, [fetchRequests]);
 
   return {
     requests,
     loading,
     error,
     processingId,
-    deletingId,
     fetchRequests,
     updateRequestStatus,
     deleteRequest
