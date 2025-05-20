@@ -2,42 +2,43 @@
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { updateRequestStatusInDB } from "@/utils/request-fetchers";
-import { Request } from "@/types/request";
 
 export function useRequestStatus() {
-  const [processingId, setProcessingId] = useState<string | null>(null);
-
-  const updateRequestStatus = async (
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isError, setIsError] = useState(false);
+  
+  const updateStatus = async (
     requestId: string, 
     requestType: 'buy_request' | 'self_purchase', 
     newStatus: string
   ) => {
+    setIsUpdating(true);
+    setIsError(false);
+    
     try {
-      setProcessingId(requestId);
-      
       await updateRequestStatusInDB(requestId, requestType, newStatus);
       
       toast({
         title: "Status Updated",
-        description: `Request marked as ${newStatus}`,
+        description: `Request status changed to ${newStatus}`,
       });
       
       return true;
-    } catch (error: any) {
-      console.error("Error updating request status:", error);
+    } catch (error) {
+      console.error('Error updating status:', error);
+      setIsError(true);
+      
       toast({
         title: "Update Failed",
-        description: error.message || "Could not update the request status",
+        description: "Failed to update status. Please try again.",
         variant: "destructive"
       });
+      
       return false;
     } finally {
-      setProcessingId(null);
+      setIsUpdating(false);
     }
   };
-
-  return {
-    processingId,
-    updateRequestStatus
-  };
+  
+  return { isUpdating, isError, updateStatus };
 }

@@ -35,6 +35,10 @@ export function formatBuyRequests(
   });
 }
 
+// Add aliases for the formatBuyRequests and formatSelfPurchases functions
+export const formatBuyRequestsData = formatBuyRequests;
+export const formatSelfPurchasesData = formatSelfPurchases;
+
 export function formatSelfPurchases(selfPurchases: any[]): Request[] {
   return selfPurchases.map(purchase => ({
     id: purchase.id,

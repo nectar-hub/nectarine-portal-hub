@@ -90,18 +90,11 @@ export function useRequests(requestType: string = 'all', statusFilter: string = 
     setProcessingId(requestId);
     
     try {
-      let table = '';
-      if (requestType === 'buy_request') {
-        table = 'buy_requests';
-      } else if (requestType === 'self_purchase') {
-        table = 'self_purchases';
-      } else {
-        throw new Error('Invalid request type');
-      }
+      const tableName = requestType === 'buy_request' ? 'buy_requests' : 'self_purchases';
       
       // Update the status in the appropriate table
       const { error } = await supabase
-        .from(table)
+        .from(tableName)
         .update({ status: newStatus })
         .eq('id', requestId);
         
@@ -153,14 +146,7 @@ export function useRequests(requestType: string = 'all', statusFilter: string = 
     setProcessingId(requestId);
     
     try {
-      let table = '';
-      if (requestType === 'buy_request') {
-        table = 'buy_requests';
-      } else if (requestType === 'self_purchase') {
-        table = 'self_purchases';
-      } else {
-        throw new Error('Invalid request type');
-      }
+      const tableName = requestType === 'buy_request' ? 'buy_requests' : 'self_purchases';
       
       // Delete any associated items if it's a buy_request
       if (requestType === 'buy_request') {
@@ -196,7 +182,7 @@ export function useRequests(requestType: string = 'all', statusFilter: string = 
       
       // Delete the main request
       const { error } = await supabase
-        .from(table)
+        .from(tableName)
         .delete()
         .eq('id', requestId);
         
