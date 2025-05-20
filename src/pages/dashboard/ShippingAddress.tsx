@@ -154,19 +154,19 @@ const ShippingAddress = () => {
 
 SHIPPING MARK
 BY AIR CARGO
-NAME: ${address.reference_code}
+NAME: Nectarine Your Name
 PHONE: 0687029104
 DAR ES SALAAM`;
       } else {
         return `${address.shipping_mark || ""}
 
 广州市白云区石门街石沙路石井工业四横路2号约尼克仓库海运B栋110房 
-[${address.reference_code} 0744484271]
+[Nectarine Your Name 0744484271]
 (18122014351,18122423551,18127901961)
 
 SHIPPING MARK
 BY SEA CARGO
-NAME: ${address.reference_code}
+NAME: Nectarine Your Name
 Phone 0744484271
 Dar es Salaaam`;
       }
@@ -174,7 +174,7 @@ Dar es Salaaam`;
     
     // Regular format for other countries
     const parts = address.address_parts;
-    return `${address.reference_code}\n${parts.addressLine1}\n${parts.addressLine2}\n${parts.city}${
+    return `Nectarine Your Name\n${parts.addressLine1}\n${parts.addressLine2}\n${parts.city}${
       parts.state ? `, ${parts.state}` : ""
     } ${parts.zipCode}\n${address.countryName}`;
   };
@@ -185,7 +185,7 @@ Dar es Salaaam`;
       id: "usa-id",
       country: "usa",
       countryName: "United States",
-      reference_code: "Nectarine Full Name",
+      reference_code: "Nectarine Your Name",
       address: "17401 Nichols LN Unit J, , Huntington Beach, CA, 92647",
       address_parts: {
         addressLine1: "17401 Nichols LN",
@@ -219,7 +219,7 @@ Dar es Salaaam`;
       id: "china-id",
       country: "china",
       countryName: "China",
-      reference_code: "NECT-CN24680",
+      reference_code: "Nectarine Your Name",
       address: "广东省广州市越秀区 梓元岗1号尚峰电商直播基地负一楼0042-1",
       address_parts: {
         addressLine1: "广东省广州市越秀区",
