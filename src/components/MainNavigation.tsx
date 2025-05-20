@@ -18,53 +18,55 @@ const MainNavigation = () => {
   const { user, isAdmin } = useAuth();
   
   return (
-    <NavigationMenu className="flex-1">
-      <NavigationMenuList className="mx-auto">
-        <NavigationMenuItem>
-          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-            <a href="https://nectarinelogistics.com/" target="_blank" rel="noopener noreferrer">
-              Home
-            </a>
-          </NavigationMenuLink>
-        </NavigationMenuItem>
-        <NavigationMenuItem>
-          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-            <a href="https://nectarinelogistics.com/services" target="_blank" rel="noopener noreferrer">
-              Services
-            </a>
-          </NavigationMenuLink>
-        </NavigationMenuItem>
-        <NavigationMenuItem>
-          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-            <a href="https://nectarinelogistics.com/about/what-is-nectarine" target="_blank" rel="noopener noreferrer">
-              About
-            </a>
-          </NavigationMenuLink>
-        </NavigationMenuItem>
-        <NavigationMenuItem>
-          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-            <a href="https://nectarinelogistics.com/help" target="_blank" rel="noopener noreferrer">
-              Help Centre
-            </a>
-          </NavigationMenuLink>
-        </NavigationMenuItem>
-        <NavigationMenuItem>
-          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-            <a href="https://nectarinelogistics.com/shipping-routes" target="_blank" rel="noopener noreferrer">
-              Shipping Routes
-            </a>
-          </NavigationMenuLink>
-        </NavigationMenuItem>
-        <NavigationMenuItem>
-          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-            <a href="https://nectarinelogistics.com/contact" target="_blank" rel="noopener noreferrer">
-              Contact
-            </a>
-          </NavigationMenuLink>
-        </NavigationMenuItem>
-      </NavigationMenuList>
+    <div className="flex w-full items-center">
+      <NavigationMenu className="mx-auto">
+        <NavigationMenuList>
+          <NavigationMenuItem>
+            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+              <a href="https://nectarinelogistics.com/" target="_blank" rel="noopener noreferrer">
+                Home
+              </a>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+          <NavigationMenuItem>
+            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+              <a href="https://nectarinelogistics.com/services" target="_blank" rel="noopener noreferrer">
+                Services
+              </a>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+          <NavigationMenuItem>
+            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+              <a href="https://nectarinelogistics.com/about/what-is-nectarine" target="_blank" rel="noopener noreferrer">
+                About
+              </a>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+          <NavigationMenuItem>
+            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+              <a href="https://nectarinelogistics.com/help" target="_blank" rel="noopener noreferrer">
+                Help Centre
+              </a>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+          <NavigationMenuItem>
+            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+              <a href="https://nectarinelogistics.com/shipping-routes" target="_blank" rel="noopener noreferrer">
+                Shipping Routes
+              </a>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+          <NavigationMenuItem>
+            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+              <a href="https://nectarinelogistics.com/contact" target="_blank" rel="noopener noreferrer">
+                Contact
+              </a>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+        </NavigationMenuList>
+      </NavigationMenu>
       
-      <div className="ml-auto flex items-center space-x-4">
+      <div className="flex items-center space-x-4">
         {user ? (
           <>
             <Button asChild variant="outline" className="hidden md:flex items-center gap-2">
@@ -88,7 +90,7 @@ const MainNavigation = () => {
           </>
         )}
       </div>
-    </NavigationMenu>
+    </div>
   );
 };
 
