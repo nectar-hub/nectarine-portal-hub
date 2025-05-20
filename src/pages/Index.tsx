@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import IndexHeader from "./IndexHeader";
@@ -143,24 +142,26 @@ const Index = () => {
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4 text-nectarine-400">Services</h4>
+              <h4 className="font-semibold mb-4 text-nectarine-400">Quick Links</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="https://nectarinelogistics.com/services/buy-for-me" className="hover:text-nectarine-500 transition-colors">Buy For Me</a></li>
-                <li><a href="https://nectarinelogistics.com/services/mail-forwarding" className="hover:text-nectarine-500 transition-colors">Mail Forwarding</a></li>
-                <li><a href="https://nectarinelogistics.com/services/shipping-address" className="hover:text-nectarine-500 transition-colors">Shipping Address</a></li>
-                <li><a href="https://nectarinelogistics.com/services/store-consolidation" className="hover:text-nectarine-500 transition-colors">Store Consolidation</a></li>
-                <li><a href="https://nectarinelogistics.com/services/locker" className="hover:text-nectarine-500 transition-colors">Package Locker</a></li>
+                <li><a href="https://nectarinelogistics.com/" className="hover:text-nectarine-500 transition-colors">Home</a></li>
+                <li><a href="https://nectarinelogistics.com/services" className="hover:text-nectarine-500 transition-colors">Services</a></li>
+                <li><a href="https://nectarinelogistics.com/about/what-is-nectarine" className="hover:text-nectarine-500 transition-colors">About Us</a></li>
+                <li><a href="https://nectarinelogistics.com/help" className="hover:text-nectarine-500 transition-colors">Help Center</a></li>
+                <li><a href="https://nectarinelogistics.com/shipping-routes" className="hover:text-nectarine-500 transition-colors">Shipping Routes</a></li>
+                <li><a href="https://nectarinelogistics.com/contact" className="hover:text-nectarine-500 transition-colors">Contact Us</a></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4 text-nectarine-400">Company</h4>
+              <h4 className="font-semibold mb-4 text-nectarine-400">Popular Services</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="https://nectarinelogistics.com/about/what-is-nectarine" className="hover:text-nectarine-500 transition-colors">About Us</a></li>
-                <li><a href="https://nectarinelogistics.com/about/our-mission" className="hover:text-nectarine-500 transition-colors">Our Mission</a></li>
-                <li><a href="https://nectarinelogistics.com/careers" className="hover:text-nectarine-500 transition-colors">Careers</a></li>
-                <li><a href="https://nectarinelogistics.com/shipping-routes" className="hover:text-nectarine-500 transition-colors">Shipping Routes</a></li>
-                <li><a href="https://nectarinelogistics.com/pricing" className="hover:text-nectarine-500 transition-colors">Pricing</a></li>
+                <li><a href="https://nectarinelogistics.com/services/door-to-door" className="hover:text-nectarine-500 transition-colors">Door-to-Door Delivery</a></li>
+                <li><a href="https://nectarinelogistics.com/services/online-purchase" className="hover:text-nectarine-500 transition-colors">Online Purchase</a></li>
+                <li><a href="https://nectarinelogistics.com/services/sea-air-freight" className="hover:text-nectarine-500 transition-colors">Sea & Air Freight</a></li>
+                <li><a href="https://nectarinelogistics.com/services/buy-for-me" className="hover:text-nectarine-500 transition-colors">Buy For Me</a></li>
+                <li><a href="https://nectarinelogistics.com/services/customs-brokerage" className="hover:text-nectarine-500 transition-colors">Customs Brokerage</a></li>
+                <li><a href="https://nectarinelogistics.com/services/warehousing" className="hover:text-nectarine-500 transition-colors">Warehousing</a></li>
               </ul>
             </div>
             
