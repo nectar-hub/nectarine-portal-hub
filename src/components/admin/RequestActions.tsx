@@ -1,75 +1,127 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, X, Package } from "lucide-react";
+import { Check, X, Package, Trash2 } from "lucide-react";
 import { Request } from "@/types/request";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface RequestActionsProps {
   request: Request;
   processingId: string | null;
   onUpdate: (requestId: string, requestType: 'buy_request' | 'self_purchase', newStatus: string) => void;
+  onDelete?: (requestId: string, requestType: 'buy_request' | 'self_purchase') => void;
   onClose?: () => void;
 }
 
-const RequestActions = ({ request, processingId, onUpdate, onClose }: RequestActionsProps) => {
+const RequestActions = ({ request, processingId, onUpdate, onDelete, onClose }: RequestActionsProps) => {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  
   const handleUpdateStatus = (newStatus: string) => {
     onUpdate(request.id, request.request_type, newStatus);
     if (onClose) onClose();
   };
 
-  if (request.status === 'pending') {
-    return (
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete(request.id, request.request_type);
+      if (onClose) onClose();
+    }
+    setIsDeleteDialogOpen(false);
+  };
+
+  return (
+    <>
       <div className="space-x-2">
+        {request.status === 'pending' && (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleUpdateStatus('processing')}
+              disabled={processingId === request.id}
+            >
+              <Check className="h-4 w-4 text-green-500 mr-1" />
+              Approve
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleUpdateStatus('cancelled')}
+              disabled={processingId === request.id}
+            >
+              <X className="h-4 w-4 text-red-500 mr-1" />
+              Reject
+            </Button>
+          </>
+        )}
+        
+        {request.status === 'processing' && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleUpdateStatus('in_transit')}
+            disabled={processingId === request.id}
+          >
+            <Package className="h-4 w-4 text-blue-500 mr-1" />
+            Ship
+          </Button>
+        )}
+        
+        {request.status === 'in_transit' && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleUpdateStatus('completed')}
+            disabled={processingId === request.id}
+          >
+            <Check className="h-4 w-4 text-green-500 mr-1" />
+            Complete
+          </Button>
+        )}
+        
         <Button
           variant="outline"
           size="sm"
-          onClick={() => handleUpdateStatus('processing')}
+          className="border-red-200 hover:bg-red-50 hover:text-red-600"
+          onClick={() => setIsDeleteDialogOpen(true)}
           disabled={processingId === request.id}
         >
-          <Check className="h-4 w-4 text-green-500 mr-1" />
-          Approve
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleUpdateStatus('cancelled')}
-          disabled={processingId === request.id}
-        >
-          <X className="h-4 w-4 text-red-500 mr-1" />
-          Reject
+          <Trash2 className="h-4 w-4 text-red-500 mr-1" />
+          Delete
         </Button>
       </div>
-    );
-  }
-  
-  if (request.status === 'processing') {
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => handleUpdateStatus('in_transit')}
-        disabled={processingId === request.id}
-      >
-        <Package className="h-4 w-4 text-blue-500 mr-1" />
-        Ship
-      </Button>
-    );
-  }
-  
-  if (request.status === 'in_transit') {
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => handleUpdateStatus('completed')}
-        disabled={processingId === request.id}
-      >
-        <Check className="h-4 w-4 text-green-500 mr-1" />
-        Complete
-      </Button>
-    );
-  }
-  
-  return null;
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the order
+              and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              className="bg-red-500 hover:bg-red-600" 
+              onClick={handleDelete}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
 };
 
 export default RequestActions;

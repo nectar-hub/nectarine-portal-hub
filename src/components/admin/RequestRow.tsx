@@ -12,6 +12,7 @@ interface RequestRowProps {
   processingId: string | null;
   onUpdateStatus: (requestId: string, requestType: 'buy_request' | 'self_purchase', newStatus: string) => void;
   onViewDetails: (request: Request) => void;
+  onDeleteRequest?: (requestId: string, requestType: 'buy_request' | 'self_purchase') => void;
 }
 
 const RequestRow = ({ 
@@ -19,7 +20,8 @@ const RequestRow = ({
   showType = false,
   processingId,
   onUpdateStatus,
-  onViewDetails
+  onViewDetails,
+  onDeleteRequest
 }: RequestRowProps) => {
   return (
     <TableRow
@@ -69,6 +71,7 @@ const RequestRow = ({
             request={request}
             processingId={processingId}
             onUpdate={onUpdateStatus}
+            onDelete={onDeleteRequest}
           />
           <Button
             variant="ghost"

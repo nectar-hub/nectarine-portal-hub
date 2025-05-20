@@ -13,6 +13,7 @@ interface RequestDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdateStatus: (requestId: string, requestType: 'buy_request' | 'self_purchase', newStatus: string) => void;
+  onDeleteRequest?: (requestId: string, requestType: 'buy_request' | 'self_purchase') => void;
 }
 
 const RequestDetailsDialog = ({
@@ -20,7 +21,8 @@ const RequestDetailsDialog = ({
   processingId,
   open,
   onOpenChange,
-  onUpdateStatus
+  onUpdateStatus,
+  onDeleteRequest
 }: RequestDetailsDialogProps) => {
   if (!request) return null;
 
@@ -62,6 +64,7 @@ const RequestDetailsDialog = ({
               request={request}
               processingId={processingId}
               onUpdate={onUpdateStatus}
+              onDelete={onDeleteRequest}
               onClose={() => onOpenChange(false)}
             />
           </div>

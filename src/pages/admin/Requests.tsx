@@ -32,7 +32,8 @@ const Requests = () => {
     error, 
     processingId, 
     fetchRequests, 
-    updateRequestStatus 
+    updateRequestStatus,
+    deleteRequest
   } = useRequests(requestType, filter);
 
   if (!isAdmin) {
@@ -98,6 +99,7 @@ const Requests = () => {
                 showType={!isBuyRequestsPage && !isSelfPurchasesPage}
                 processingId={processingId}
                 onUpdateStatus={updateRequestStatus}
+                onDeleteRequest={deleteRequest}
               />
             ) : (
               <EmptyState 

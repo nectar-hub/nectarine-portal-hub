@@ -10,9 +10,16 @@ interface RequestsTableProps {
   showType?: boolean;
   processingId: string | null;
   onUpdateStatus: (requestId: string, requestType: 'buy_request' | 'self_purchase', newStatus: string) => void;
+  onDeleteRequest?: (requestId: string, requestType: 'buy_request' | 'self_purchase') => void;
 }
 
-const RequestsTable = ({ requests, showType = false, processingId, onUpdateStatus }: RequestsTableProps) => {
+const RequestsTable = ({ 
+  requests, 
+  showType = false, 
+  processingId, 
+  onUpdateStatus,
+  onDeleteRequest
+}: RequestsTableProps) => {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   
   const handleRowClick = (request: Request) => {
@@ -48,6 +55,7 @@ const RequestsTable = ({ requests, showType = false, processingId, onUpdateStatu
               processingId={processingId}
               onUpdateStatus={onUpdateStatus}
               onViewDetails={handleRowClick}
+              onDeleteRequest={onDeleteRequest}
             />
           ))}
         </TableBody>
@@ -59,6 +67,7 @@ const RequestsTable = ({ requests, showType = false, processingId, onUpdateStatu
         open={!!selectedRequest}
         onOpenChange={(open) => !open && handleCloseDialog()}
         onUpdateStatus={onUpdateStatus}
+        onDeleteRequest={onDeleteRequest}
       />
     </>
   );

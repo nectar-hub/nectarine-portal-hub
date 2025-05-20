@@ -7,7 +7,8 @@ import {
   fetchBuyRequests,
   fetchBuyRequestItems,
   fetchSelfPurchases,
-  fetchUserProfiles 
+  fetchUserProfiles,
+  updateRequestStatusInDB,
 } from "@/utils/request-fetchers";
 import {
   formatBuyRequests,
@@ -15,12 +16,14 @@ import {
   addUserDetailsToRequests,
   sortRequestsByDate
 } from "@/utils/request-formatters";
+import { supabase } from "@/integrations/supabase/client";
 
 export function useRequests(requestType?: string, filter: string = "all") {
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { processingId, updateRequestStatus } = useRequestStatus();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const isBuyRequestsPage = requestType === 'buy_requests';
   const isSelfPurchasesPage = requestType === 'self_purchases';
@@ -126,6 +129,69 @@ export function useRequests(requestType?: string, filter: string = "all") {
     }
   };
 
+  const deleteRequest = async (requestId: string, requestType: 'buy_request' | 'self_purchase') => {
+    try {
+      setDeletingId(requestId);
+      
+      console.log(`Deleting ${requestType} with ID: ${requestId}`);
+      
+      const table = requestType === 'buy_request' ? 'buy_requests' : 'self_purchases';
+      
+      // First, delete associated order if it exists
+      const { error: orderError } = await supabase
+        .from('orders')
+        .delete()
+        .eq('reference_id', requestId);
+      
+      if (orderError) {
+        console.error("Error deleting associated order:", orderError);
+        // Continue with request deletion even if order deletion fails
+      }
+      
+      // Delete request items if it's a buy request
+      if (requestType === 'buy_request') {
+        const { error: itemsError } = await supabase
+          .from('buy_request_items')
+          .delete()
+          .eq('buy_request_id', requestId);
+        
+        if (itemsError) {
+          console.error("Error deleting buy request items:", itemsError);
+          // Continue with request deletion even if items deletion fails
+        }
+      }
+      
+      // Delete the request
+      const { error: requestError } = await supabase
+        .from(table)
+        .delete()
+        .eq('id', requestId);
+      
+      if (requestError) {
+        throw requestError;
+      }
+      
+      // Update the local state
+      setRequests(prevRequests => prevRequests.filter(req => req.id !== requestId));
+      
+      toast({
+        title: "Request Deleted",
+        description: "The request has been permanently removed",
+        variant: "default"
+      });
+      
+    } catch (error: any) {
+      console.error("Error deleting request:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete request",
+        variant: "destructive"
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   useEffect(() => {
     fetchRequests();
   }, [filter, requestType]);
@@ -135,7 +201,9 @@ export function useRequests(requestType?: string, filter: string = "all") {
     loading,
     error,
     processingId,
+    deletingId,
     fetchRequests,
-    updateRequestStatus
+    updateRequestStatus,
+    deleteRequest
   };
 }
