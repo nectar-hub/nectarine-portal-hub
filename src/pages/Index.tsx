@@ -190,7 +190,12 @@ const Index = () => {
           </div>
           
           <div className="border-t border-gray-800 mt-10 pt-8 text-center text-gray-500 text-sm">
-            <p>© {new Date().getFullYear()} Nectarine Logistics Inc. All rights reserved.</p>
+            <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 mb-2">
+              <p>© {new Date().getFullYear()} Nectarine Logistics Inc. All rights reserved.</p>
+              <a href="https://nectarinelogistics.com/help/terms" className="hover:text-nectarine-500 transition-colors">Terms & Conditions</a>
+              <a href="https://nectarinelogistics.com/help/privacy-policy" className="hover:text-nectarine-500 transition-colors">Privacy Policy</a>
+              <a href="https://nectarinelogistics.com/help/payment-policy" className="hover:text-nectarine-500 transition-colors">Payment Policy</a>
+            </div>
           </div>
         </div>
       </footer>
