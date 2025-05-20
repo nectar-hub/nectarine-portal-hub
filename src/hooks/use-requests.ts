@@ -1,8 +1,9 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Request, RequestItem } from "@/types/request";
-import { fetchBuyRequests, fetchSelfPurchases } from "@/utils/request-fetchers";
+import { fetchBuyRequests, fetchSelfPurchases, updateRequestStatusInDB } from "@/utils/request-fetchers";
 import { formatBuyRequests, formatSelfPurchases } from "@/utils/request-formatters";
 
 export function useRequests(requestType: string = 'all', statusFilter: string = 'all') {
@@ -86,26 +87,7 @@ export function useRequests(requestType: string = 'all', statusFilter: string = 
     setProcessingId(requestId);
     
     try {
-      const tableName = requestType === 'buy_request' ? 'buy_requests' : 'self_purchases';
-      
-      // Update the status in the appropriate table
-      const { error } = await supabase
-        .from(tableName)
-        .update({ status: newStatus })
-        .eq('id', requestId);
-        
-      if (error) throw error;
-      
-      // Also update the status in the orders table
-      const { error: orderError } = await supabase
-        .from('orders')
-        .update({ status: newStatus })
-        .eq('reference_id', requestId);
-        
-      if (orderError) {
-        console.warn('Failed to update order status:', orderError);
-        // Don't throw error here - we still updated the main request
-      }
+      await updateRequestStatusInDB(requestId, requestType, newStatus);
       
       // Update local state
       setRequests(prev => 
