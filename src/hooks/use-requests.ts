@@ -1,10 +1,9 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Request, RequestItem } from "@/types/request";
 import { fetchBuyRequests, fetchSelfPurchases } from "@/utils/request-fetchers";
-import { formatBuyRequestsData, formatSelfPurchasesData } from "@/utils/request-formatters";
+import { formatBuyRequests, formatSelfPurchases } from "@/utils/request-formatters";
 
 export function useRequests(requestType: string = 'all', statusFilter: string = 'all') {
   const [requests, setRequests] = useState<Request[]>([]);
@@ -57,10 +56,7 @@ export function useRequests(requestType: string = 'all', statusFilter: string = 
       
       if (requestType === 'all' || requestType === 'buy_request') {
         const buyRequests = await fetchBuyRequests(statusFilter);
-        
-        // Fetch and associate items with buy requests
-        const buyRequestsWithItems = await fetchBuyRequestItems(buyRequests);
-        fetchedRequests = [...fetchedRequests, ...buyRequestsWithItems];
+        fetchedRequests = [...fetchedRequests, ...buyRequests];
       }
       
       if (requestType === 'all' || requestType === 'self_purchase') {

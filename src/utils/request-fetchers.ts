@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { formatBuyRequestsData, formatSelfPurchasesData } from "./request-formatters";
+import { formatBuyRequests, formatSelfPurchases } from "./request-formatters";
+import { Request, RequestItem } from "@/types/request";
 
 export async function fetchBuyRequests(statusFilter = 'all') {
   try {
@@ -26,8 +27,33 @@ export async function fetchBuyRequests(statusFilter = 'all') {
     
     if (error) throw error;
     
-    // Format the data
-    return formatBuyRequestsData(buyRequests || []);
+    // Once we have the buy requests, fetch all associated items
+    const buyRequestIds = buyRequests?.map(req => req.id) || [];
+    
+    let buyRequestItems: Record<string, RequestItem[]> = {};
+    
+    if (buyRequestIds.length > 0) {
+      const { data: items, error: itemsError } = await supabase
+        .from('buy_request_items')
+        .select('*')
+        .in('buy_request_id', buyRequestIds);
+      
+      if (itemsError) {
+        console.error("Error fetching buy request items:", itemsError);
+      } else if (items) {
+        // Group items by buy_request_id
+        buyRequestItems = items.reduce((acc, item) => {
+          if (!acc[item.buy_request_id]) {
+            acc[item.buy_request_id] = [];
+          }
+          acc[item.buy_request_id].push(item);
+          return acc;
+        }, {} as Record<string, RequestItem[]>);
+      }
+    }
+    
+    // Format the data with items included
+    return formatBuyRequests(buyRequests || [], buyRequestItems);
   } catch (error) {
     console.error("Error fetching buy requests:", error);
     throw error;
@@ -59,7 +85,7 @@ export async function fetchSelfPurchases(statusFilter = 'all') {
     if (error) throw error;
     
     // Format the data
-    return formatSelfPurchasesData(selfPurchases || []);
+    return formatSelfPurchases(selfPurchases || []);
   } catch (error) {
     console.error("Error fetching self purchases:", error);
     throw error;

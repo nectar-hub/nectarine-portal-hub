@@ -30,7 +30,10 @@ export function formatBuyRequests(
       screenshot_url: req.screenshot_url,
       delivery_deadline: req.delivery_deadline,
       // Important fix: Always include items array, even if empty
-      items: items
+      items: items,
+      // Add user details from profiles join
+      user_email: req.profiles?.email || 'Unknown',
+      user_name: req.profiles?.full_name || 'Unknown'
     };
   });
 }
@@ -56,7 +59,10 @@ export function formatSelfPurchases(selfPurchases: any[]): Request[] {
     tracking_number: purchase.tracking_number,
     courier: purchase.courier,
     // Add empty items array for consistency
-    items: []
+    items: [],
+    // Add user details from profiles join
+    user_email: purchase.profiles?.email || 'Unknown',
+    user_name: purchase.profiles?.full_name || 'Unknown'
   }));
 }
 
