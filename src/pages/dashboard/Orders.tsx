@@ -121,6 +121,72 @@ const Orders = () => {
     };
 
     fetchOrders();
+
+    // Set up real-time subscriptions for client orders
+    if (!user) return;
+
+    console.log('[CLIENT REALTIME] Setting up subscriptions for user orders');
+    
+    // Subscribe to orders table changes for this user
+    const ordersChannel = supabase
+      .channel('user_orders_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('[CLIENT REALTIME] Order change detected:', payload);
+          fetchOrders();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to buy_requests changes for this user
+    const buyRequestsChannel = supabase
+      .channel('user_buy_requests_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'buy_requests',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('[CLIENT REALTIME] Buy request change detected:', payload);
+          fetchOrders();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to self_purchases changes for this user
+    const selfPurchasesChannel = supabase
+      .channel('user_self_purchases_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'self_purchases',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('[CLIENT REALTIME] Self purchase change detected:', payload);
+          fetchOrders();
+        }
+      )
+      .subscribe();
+
+    // Cleanup function
+    return () => {
+      supabase.removeChannel(ordersChannel);
+      supabase.removeChannel(buyRequestsChannel);
+      supabase.removeChannel(selfPurchasesChannel);
+    };
   }, [user, orderType, status]);
 
   return (

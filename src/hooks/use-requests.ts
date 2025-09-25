@@ -78,6 +78,90 @@ export function useRequests(requestType: string = 'all', statusFilter: string = 
       setLoading(false);
     }
   }, [requestType, statusFilter]);
+
+  // Real-time subscription effect
+  useEffect(() => {
+    let buyRequestsChannel: any;
+    let selfPurchasesChannel: any;
+    let buyRequestItemsChannel: any;
+
+    const setupRealtimeSubscriptions = () => {
+      console.log('[REALTIME] Setting up subscriptions for requestType:', requestType);
+
+      // Subscribe to buy_requests changes
+      if (requestType === 'all' || requestType === 'buy_request') {
+        buyRequestsChannel = supabase
+          .channel('buy_requests_changes')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'buy_requests'
+            },
+            (payload) => {
+              console.log('[REALTIME] Buy request change detected:', payload);
+              // Refetch data to get the latest state
+              fetchRequests();
+            }
+          )
+          .subscribe();
+
+        // Subscribe to buy_request_items changes
+        buyRequestItemsChannel = supabase
+          .channel('buy_request_items_changes')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'buy_request_items'
+            },
+            (payload) => {
+              console.log('[REALTIME] Buy request item change detected:', payload);
+              // Refetch data to get the latest state
+              fetchRequests();
+            }
+          )
+          .subscribe();
+      }
+
+      // Subscribe to self_purchases changes
+      if (requestType === 'all' || requestType === 'self_purchase') {
+        selfPurchasesChannel = supabase
+          .channel('self_purchases_changes')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'self_purchases'
+            },
+            (payload) => {
+              console.log('[REALTIME] Self purchase change detected:', payload);
+              // Refetch data to get the latest state
+              fetchRequests();
+            }
+          )
+          .subscribe();
+      }
+    };
+
+    setupRealtimeSubscriptions();
+
+    // Cleanup subscriptions on unmount or when requestType changes
+    return () => {
+      if (buyRequestsChannel) {
+        supabase.removeChannel(buyRequestsChannel);
+      }
+      if (selfPurchasesChannel) {
+        supabase.removeChannel(selfPurchasesChannel);
+      }
+      if (buyRequestItemsChannel) {
+        supabase.removeChannel(buyRequestItemsChannel);
+      }
+    };
+  }, [requestType, fetchRequests]);
   
   const updateRequestStatus = async (
     requestId: string, 

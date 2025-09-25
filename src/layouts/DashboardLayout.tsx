@@ -2,6 +2,7 @@
 import { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 import { Button } from '@/components/ui/button';
 import {
   User,
@@ -27,6 +28,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Initialize real-time notifications for all dashboard users
+  useRealtimeNotifications();
 
   useEffect(() => {
     // Close mobile menu when location changes

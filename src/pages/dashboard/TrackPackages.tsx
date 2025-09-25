@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -48,7 +48,6 @@ const TrackPackages = () => {
     },
   });
 
-  // Fetch self purchases for this user
   const { data: selfPurchases, refetch } = useQuery({
     queryKey: ['self_purchases'],
     queryFn: async () => {
@@ -64,6 +63,34 @@ const TrackPackages = () => {
     },
     enabled: !!user
   });
+
+  // Set up real-time subscriptions for self purchases
+  useEffect(() => {
+    if (!user) return;
+
+    console.log('[CLIENT REALTIME] Setting up self purchases subscription');
+    
+    const selfPurchasesChannel = supabase
+      .channel('user_self_purchases_realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'self_purchases',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('[CLIENT REALTIME] Self purchase change detected in TrackPackages:', payload);
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(selfPurchasesChannel);
+    };
+  }, [user, refetch]);
 
   const handleTrack = (e: React.FormEvent) => {
     e.preventDefault();
