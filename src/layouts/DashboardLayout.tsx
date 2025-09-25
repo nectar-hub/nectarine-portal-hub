@@ -16,7 +16,8 @@ import {
   X,
   Home,
   Users,
-  ShoppingBag
+  ShoppingBag,
+  BarChart3
 } from 'lucide-react';
 
 type DashboardLayoutProps = {
@@ -48,9 +49,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   const adminNavItems = [
     { name: 'Dashboard', href: '/admin', icon: Home },
-    { name: 'Users', href: '/admin/users', icon: Users },
+    { name: 'All Requests', href: '/admin/requests', icon: ClipboardList },
     { name: 'Buy For Me Requests', href: '/admin/buy-requests', icon: ShoppingBag },
     { name: 'Self Purchases', href: '/admin/self-purchases', icon: Package },
+    { name: 'Users', href: '/admin/users', icon: Users },
+    { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
     { name: 'Shipping Addresses', href: '/admin/shipping-addresses', icon: MapPin },
     { name: 'Settings', href: '/admin/settings', icon: Settings },
   ];
