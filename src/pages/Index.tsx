@@ -123,19 +123,19 @@ const Index = () => {
             <div className="md:col-span-2">
               <div className="flex items-center gap-2 mb-4">
                 <img src="/lovable-uploads/6812ca59-9985-4974-8a82-27733d625894.png" alt="Nectarine Logo" className="h-8 w-auto" />
-                <h3 className="text-xl font-bold">Nectarine</h3>
+                <h3 className="text-xl font-bold text-nectarine-400">Nectarine Logistics</h3>
               </div>
               <p className="text-gray-400 mb-6 pr-4">
-                Welcome to Nectarine, your trusted partner for international shopping and shipping solutions. We connect you to global markets by providing seamless access to products from around the world.
+                Your trusted partner for international shipping and logistics solutions. We connect you to global markets by providing seamless access to products from around the world with 10,000+ satisfied customers.
               </p>
               <div className="flex space-x-4 text-gray-400">
-                <a href="https://facebook.com" className="hover:text-nectarine-500 transition-colors">
+                <a href="https://facebook.com/nectarinelogistics" className="hover:text-nectarine-400 transition-colors">
                   <Facebook size={20} />
                 </a>
-                <a href="https://instagram.com" className="hover:text-nectarine-500 transition-colors">
+                <a href="https://instagram.com/nectarinelogistics" className="hover:text-nectarine-400 transition-colors">
                   <Instagram size={20} />
                 </a>
-                <a href="https://linkedin.com" className="hover:text-nectarine-500 transition-colors">
+                <a href="https://linkedin.com/company/nectarine-logistics" className="hover:text-nectarine-400 transition-colors">
                   <Linkedin size={20} />
                 </a>
               </div>
@@ -144,24 +144,24 @@ const Index = () => {
             <div>
               <h4 className="font-semibold mb-4 text-nectarine-400">Quick Links</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="https://nectarinelogistics.com/" className="hover:text-nectarine-500 transition-colors">Home</a></li>
-                <li><a href="https://nectarinelogistics.com/services" className="hover:text-nectarine-500 transition-colors">Services</a></li>
-                <li><a href="https://nectarinelogistics.com/about/what-is-nectarine" className="hover:text-nectarine-500 transition-colors">About Us</a></li>
-                <li><a href="https://nectarinelogistics.com/help" className="hover:text-nectarine-500 transition-colors">Help Center</a></li>
-                <li><a href="https://nectarinelogistics.com/shipping-routes" className="hover:text-nectarine-500 transition-colors">Shipping Routes</a></li>
-                <li><a href="https://nectarinelogistics.com/contact" className="hover:text-nectarine-500 transition-colors">Contact Us</a></li>
+                <li><a href="https://nectarinelogistics.com/" className="hover:text-nectarine-400 transition-colors">Home</a></li>
+                <li><a href="https://nectarinelogistics.com/services" className="hover:text-nectarine-400 transition-colors">Services</a></li>
+                <li><a href="https://nectarinelogistics.com/about/what-is-nectarine" className="hover:text-nectarine-400 transition-colors">About Us</a></li>
+                <li><a href="https://nectarinelogistics.com/help" className="hover:text-nectarine-400 transition-colors">Help Center</a></li>
+                <li><a href="https://nectarinelogistics.com/shipping-routes" className="hover:text-nectarine-400 transition-colors">Shipping Routes</a></li>
+                <li><a href="https://nectarinelogistics.com/contact" className="hover:text-nectarine-400 transition-colors">Contact Us</a></li>
               </ul>
             </div>
             
             <div>
               <h4 className="font-semibold mb-4 text-nectarine-400">Popular Services</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="https://nectarinelogistics.com/services/door-to-door" className="hover:text-nectarine-500 transition-colors">Door-to-Door Delivery</a></li>
-                <li><a href="https://nectarinelogistics.com/services/online-purchase" className="hover:text-nectarine-500 transition-colors">Online Purchase</a></li>
-                <li><a href="https://nectarinelogistics.com/services/sea-air-freight" className="hover:text-nectarine-500 transition-colors">Sea & Air Freight</a></li>
-                <li><a href="https://nectarinelogistics.com/services/buy-for-me" className="hover:text-nectarine-500 transition-colors">Buy For Me</a></li>
-                <li><a href="https://nectarinelogistics.com/services/customs-brokerage" className="hover:text-nectarine-500 transition-colors">Customs Brokerage</a></li>
-                <li><a href="https://nectarinelogistics.com/services/warehousing" className="hover:text-nectarine-500 transition-colors">Warehousing</a></li>
+                <li><a href="https://nectarinelogistics.com/services/door-to-door" className="hover:text-nectarine-400 transition-colors">Door-to-Door Delivery</a></li>
+                <li><a href="https://nectarinelogistics.com/services/online-purchase" className="hover:text-nectarine-400 transition-colors">Online Purchase</a></li>
+                <li><a href="https://nectarinelogistics.com/services/sea-air-freight" className="hover:text-nectarine-400 transition-colors">Sea & Air Freight</a></li>
+                <li><a href="https://nectarinelogistics.com/services/buy-for-me" className="hover:text-nectarine-400 transition-colors">Buy For Me</a></li>
+                <li><a href="https://nectarinelogistics.com/services/customs-brokerage" className="hover:text-nectarine-400 transition-colors">Customs Brokerage</a></li>
+                <li><a href="https://nectarinelogistics.com/services/warehousing" className="hover:text-nectarine-400 transition-colors">Warehousing</a></li>
               </ul>
             </div>
             
@@ -171,21 +171,36 @@ const Index = () => {
                 <li className="flex items-start gap-2">
                   <MapPin size={18} className="flex-shrink-0 mt-0.5" />
                   <span>
-                    17401 Nichols LN Unit J,<br />
-                    Huntington Beach, CA 92647
+                    Unit 1, 7th Floor, Tanzanite Park,<br />
+                    Ursiro Street, Victoria,<br />
+                    Dar es Salaam, Tanzania
                   </span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Phone size={18} />
-                  <span>+1 631 353 7275</span>
+                  <div className="flex flex-col">
+                    <span>+255 744 484 271</span>
+                    <span>+44 20 3286 5810</span>
+                    <span>+1 (657) 464-4914</span>
+                  </div>
                 </li>
                 <li className="flex items-center gap-2">
                   <Mail size={18} />
-                  <a href="mailto:info@nectarinelogistics.com" className="hover:text-nectarine-500 transition-colors">
-                    info@nectarinelogistics.com
-                  </a>
+                  <div className="flex flex-col">
+                    <a href="mailto:info@nectarinelogistics.com" className="hover:text-nectarine-400 transition-colors">
+                      info@nectarinelogistics.com
+                    </a>
+                    <a href="mailto:sales@nectarinelogistics.com" className="hover:text-nectarine-400 transition-colors">
+                      sales@nectarinelogistics.com
+                    </a>
+                  </div>
                 </li>
               </ul>
+              <div className="mt-4">
+                <p className="text-sm text-gray-500 mb-2">Office Hours:</p>
+                <p className="text-sm text-gray-400">Monday - Friday: 9:00 AM - 5:00 PM</p>
+                <p className="text-sm text-gray-400">Saturday & Sunday: Closed</p>
+              </div>
             </div>
           </div>
           
@@ -195,9 +210,9 @@ const Index = () => {
                 <p>© {new Date().getFullYear()} Nectarine Logistics Inc. All rights reserved.</p>
               </div>
               <div className="flex flex-wrap gap-x-5 gap-y-2">
-                <a href="https://nectarinelogistics.com/help/terms" className="hover:text-nectarine-500 transition-colors">Terms & Conditions</a>
-                <a href="https://nectarinelogistics.com/help/privacy-policy" className="hover:text-nectarine-500 transition-colors">Privacy Policy</a>
-                <a href="https://nectarinelogistics.com/help/payment-policy" className="hover:text-nectarine-500 transition-colors">Payment Policy</a>
+                <a href="https://nectarinelogistics.com/help/terms" className="hover:text-nectarine-400 transition-colors">Terms & Conditions</a>
+                <a href="https://nectarinelogistics.com/help/privacy-policy" className="hover:text-nectarine-400 transition-colors">Privacy Policy</a>
+                <a href="https://nectarinelogistics.com/help/payment-policy" className="hover:text-nectarine-400 transition-colors">Payment Policy</a>
               </div>
             </div>
           </div>
