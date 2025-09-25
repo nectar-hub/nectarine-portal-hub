@@ -78,34 +78,34 @@ const Footer = () => {
             <h3 className="text-lg font-semibold mb-4 text-nectarine-300">Quick Links</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/" className="text-gray-300 hover:text-nectarine-400 transition-colors">
+                <a href="https://nectarinelogistics.com/" className="text-gray-300 hover:text-nectarine-400 transition-colors">
                   Home
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/services" className="text-gray-300 hover:text-nectarine-400 transition-colors">
+                <a href="https://nectarinelogistics.com/services" className="text-gray-300 hover:text-nectarine-400 transition-colors">
                   Services
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/about/what-is-nectarine" className="text-gray-300 hover:text-nectarine-400 transition-colors">
+                <a href="https://nectarinelogistics.com/about/what-is-nectarine" className="text-gray-300 hover:text-nectarine-400 transition-colors">
                   About Us
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/help" className="text-gray-300 hover:text-nectarine-400 transition-colors">
+                <a href="https://nectarinelogistics.com/help" className="text-gray-300 hover:text-nectarine-400 transition-colors">
                   Help Center
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/shipping-routes" className="text-gray-300 hover:text-nectarine-400 transition-colors">
+                <a href="https://nectarinelogistics.com/shipping-routes" className="text-gray-300 hover:text-nectarine-400 transition-colors">
                   Shipping Routes
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/contact" className="text-gray-300 hover:text-nectarine-400 transition-colors">
+                <a href="https://nectarinelogistics.com/contact" className="text-gray-300 hover:text-nectarine-400 transition-colors">
                   Contact Us
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -115,34 +115,34 @@ const Footer = () => {
             <h3 className="text-lg font-semibold mb-4 text-nectarine-300">Popular Services</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/services/door-to-door" className="text-gray-300 hover:text-nectarine-400 transition-colors">
+                <a href="https://nectarinelogistics.com/services/door-to-door" className="text-gray-300 hover:text-nectarine-400 transition-colors">
                   Door-to-Door Delivery
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/services/online-purchase" className="text-gray-300 hover:text-nectarine-400 transition-colors">
+                <a href="https://nectarinelogistics.com/services/online-purchase" className="text-gray-300 hover:text-nectarine-400 transition-colors">
                   Online Purchase
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/services/sea-air-freight" className="text-gray-300 hover:text-nectarine-400 transition-colors">
+                <a href="https://nectarinelogistics.com/services/sea-air-freight" className="text-gray-300 hover:text-nectarine-400 transition-colors">
                   Sea & Air Freight
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/services/buy-for-me" className="text-gray-300 hover:text-nectarine-400 transition-colors">
+                <a href="https://nectarinelogistics.com/services/buy-for-me" className="text-gray-300 hover:text-nectarine-400 transition-colors">
                   Buy For Me
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/services/customs-brokerage" className="text-gray-300 hover:text-nectarine-400 transition-colors">
+                <a href="https://nectarinelogistics.com/services/customs-brokerage" className="text-gray-300 hover:text-nectarine-400 transition-colors">
                   Customs Brokerage
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/services/warehousing" className="text-gray-300 hover:text-nectarine-400 transition-colors">
+                <a href="https://nectarinelogistics.com/services/warehousing" className="text-gray-300 hover:text-nectarine-400 transition-colors">
                   Warehousing
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -174,7 +174,7 @@ const Footer = () => {
                 className="bg-nectarine-500 hover:bg-nectarine-600 w-full"
                 asChild
               >
-                <Link to="/get-quote">Get a Quote</Link>
+                <a href="https://nectarinelogistics.com/get-quote">Get a Quote</a>
               </Button>
             </div>
           </div>
@@ -187,15 +187,15 @@ const Footer = () => {
               &copy; {new Date().getFullYear()} Nectarine Logistics. All rights reserved.
             </p>
             <div className="flex flex-wrap justify-center space-x-4 text-sm text-gray-400">
-              <Link to="/help/terms" className="hover:text-nectarine-400 transition-colors mb-2 md:mb-0">
+              <a href="https://nectarinelogistics.com/help/terms" className="hover:text-nectarine-400 transition-colors mb-2 md:mb-0">
                 Terms & Conditions
-              </Link>
-              <Link to="/help/privacy-policy" className="hover:text-nectarine-400 transition-colors mb-2 md:mb-0">
+              </a>
+              <a href="https://nectarinelogistics.com/help/privacy-policy" className="hover:text-nectarine-400 transition-colors mb-2 md:mb-0">
                 Privacy Policy
-              </Link>
-              <Link to="/help/payment-policy" className="hover:text-nectarine-400 transition-colors mb-2 md:mb-0">
+              </a>
+              <a href="https://nectarinelogistics.com/help/payment-policy" className="hover:text-nectarine-400 transition-colors mb-2 md:mb-0">
                 Payment Policy
-              </Link>
+              </a>
             </div>
           </div>
         </div>
