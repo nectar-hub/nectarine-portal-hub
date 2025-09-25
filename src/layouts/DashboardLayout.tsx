@@ -41,9 +41,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const userNavItems = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Buy For Me', href: '/dashboard/buy-for-me', icon: ShoppingCart },
-    { name: 'My Shipping Address', href: '/dashboard/shipping-address', icon: MapPin },
     { name: 'My Orders', href: '/dashboard/orders', icon: ClipboardList },
-    { name: 'Track My Packages', href: '/dashboard/track-packages', icon: Package },
+    { name: 'Self Purchases', href: '/dashboard/track-packages', icon: Package },
+    { name: 'My Shipping Address', href: '/dashboard/shipping-address', icon: MapPin },
     { name: 'My Account', href: '/dashboard/account', icon: Settings },
   ];
 

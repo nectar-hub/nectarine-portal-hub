@@ -115,7 +115,7 @@ const Dashboard = () => {
               <CardContent>
                 <div className="text-3xl font-bold mb-2">{stats.userPackagesInTransit}</div>
                 <Link to="/dashboard/track-packages">
-                  <Button variant="outline" className="w-full">Track Packages</Button>
+                  <Button variant="outline" className="w-full">View Self Purchases</Button>
                 </Link>
               </CardContent>
             </Card>

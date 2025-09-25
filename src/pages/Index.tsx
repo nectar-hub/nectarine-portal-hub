@@ -24,7 +24,7 @@ const Index = () => {
                   <Link to="/dashboard/buy-for-me">Shop Now</Link>
                 </Button>
                 <Button asChild variant="outline" size="lg" className="px-8">
-                  <Link to="/dashboard/track-packages">Track Package</Link>
+                  <Link to="/dashboard/track-packages">Add Self Purchase</Link>
                 </Button>
               </div>
             </div>
