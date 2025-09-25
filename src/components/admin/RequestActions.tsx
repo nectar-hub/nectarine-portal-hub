@@ -41,51 +41,109 @@ const RequestActions = ({ request, processingId, onUpdate, onDelete, onClose }: 
   return (
     <>
       <div className="space-x-2">
-        {request.status === 'pending' && (
+        {/* Self Purchase Status Flow */}
+        {request.request_type === 'self_purchase' && (
           <>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleUpdateStatus('processing')}
-              disabled={processingId === request.id}
-            >
-              <Check className="h-4 w-4 text-green-500 mr-1" />
-              Approve
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleUpdateStatus('cancelled')}
-              disabled={processingId === request.id}
-            >
-              <X className="h-4 w-4 text-red-500 mr-1" />
-              Reject
-            </Button>
+            {request.status === 'pending' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleUpdateStatus('received')}
+                disabled={processingId === request.id}
+              >
+                <Check className="h-4 w-4 text-green-500 mr-1" />
+                Mark Received
+              </Button>
+            )}
+            
+            {request.status === 'received' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleUpdateStatus('in_transit')}
+                disabled={processingId === request.id}
+              >
+                <Package className="h-4 w-4 text-blue-500 mr-1" />
+                In Transit
+              </Button>
+            )}
+            
+            {request.status === 'in_transit' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleUpdateStatus('arrived')}
+                disabled={processingId === request.id}
+              >
+                <Package className="h-4 w-4 text-orange-500 mr-1" />
+                Mark Arrived
+              </Button>
+            )}
+            
+            {request.status === 'arrived' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleUpdateStatus('collected')}
+                disabled={processingId === request.id}
+              >
+                <Check className="h-4 w-4 text-green-500 mr-1" />
+                Mark Collected
+              </Button>
+            )}
           </>
         )}
-        
-        {request.status === 'processing' && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleUpdateStatus('in_transit')}
-            disabled={processingId === request.id}
-          >
-            <Package className="h-4 w-4 text-blue-500 mr-1" />
-            Ship
-          </Button>
-        )}
-        
-        {request.status === 'in_transit' && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleUpdateStatus('completed')}
-            disabled={processingId === request.id}
-          >
-            <Check className="h-4 w-4 text-green-500 mr-1" />
-            Complete
-          </Button>
+
+        {/* Buy Request Status Flow */}
+        {request.request_type === 'buy_request' && (
+          <>
+            {request.status === 'pending' && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleUpdateStatus('processing')}
+                  disabled={processingId === request.id}
+                >
+                  <Check className="h-4 w-4 text-green-500 mr-1" />
+                  Approve
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleUpdateStatus('cancelled')}
+                  disabled={processingId === request.id}
+                >
+                  <X className="h-4 w-4 text-red-500 mr-1" />
+                  Reject
+                </Button>
+              </>
+            )}
+            
+            {request.status === 'processing' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleUpdateStatus('in_transit')}
+                disabled={processingId === request.id}
+              >
+                <Package className="h-4 w-4 text-blue-500 mr-1" />
+                Ship
+              </Button>
+            )}
+            
+            {request.status === 'in_transit' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleUpdateStatus('completed')}
+                disabled={processingId === request.id}
+              >
+                <Check className="h-4 w-4 text-green-500 mr-1" />
+                Complete
+              </Button>
+            )}
+          </>
         )}
         
         <Button

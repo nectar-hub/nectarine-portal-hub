@@ -431,10 +431,13 @@ const TrackPackages = () => {
                       <div className="text-sm mt-1">
                         <span className={`px-2 py-1 rounded-full text-xs 
                         ${purchase.status === 'pending' ? 'bg-amber-100 text-amber-800' : 
-                          purchase.status === 'approved' ? 'bg-green-100 text-green-800' : 
-                          purchase.status === 'rejected' ? 'bg-red-100 text-red-800' : 
+                          purchase.status === 'received' ? 'bg-blue-100 text-blue-800' :
+                          purchase.status === 'in_transit' ? 'bg-purple-100 text-purple-800' : 
+                          purchase.status === 'arrived' ? 'bg-orange-100 text-orange-800' :
+                          purchase.status === 'collected' ? 'bg-green-100 text-green-800' : 
                           'bg-gray-100 text-gray-800'}`}>
-                          {purchase.status.charAt(0).toUpperCase() + purchase.status.slice(1)}
+                          {purchase.status === 'in_transit' ? 'In Transit' : 
+                           purchase.status.charAt(0).toUpperCase() + purchase.status.slice(1)}
                         </span>
                       </div>
                     </div>
