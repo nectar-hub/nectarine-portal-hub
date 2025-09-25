@@ -64,6 +64,7 @@ export async function fetchBuyRequests(statusFilter = 'all') {
     // Format the data with items included
     const formattedRequests = formatBuyRequests(buyRequests || [], buyRequestItems);
     console.log('[FETCH] Formatted buy requests:', formattedRequests.length, 'requests');
+    console.log('[FETCH] Sample formatted request:', formattedRequests[0]);
     
     return formattedRequests;
   } catch (error) {

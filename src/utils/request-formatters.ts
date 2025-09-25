@@ -9,7 +9,26 @@ export function formatBuyRequests(
     // Check if this request has multiple items
     const items = buyRequestItems[req.id] || [];
     
-    console.log(`Request ${req.id} has ${items.length} items`);
+    console.log(`[FORMAT] Request ${req.id} has ${items.length} additional items`);
+    console.log(`[FORMAT] Additional items for ${req.id}:`, items);
+    
+    // Create the main item from the buy_request record
+    const mainItem: RequestItem = {
+      id: `main-${req.id}`,
+      buy_request_id: req.id,
+      product_name: req.product_name,
+      product_url: req.product_url,
+      quantity: req.quantity,
+      price: req.product_price,
+      color: req.color,
+      size: req.size,
+      store_name: req.store_name
+    };
+    
+    // Combine main item with additional items
+    const allItems = [mainItem, ...items];
+    
+    console.log(`[FORMAT] Total items for request ${req.id}:`, allItems.length);
     
     return {
       id: req.id,
@@ -29,8 +48,8 @@ export function formatBuyRequests(
       notes: req.notes,
       screenshot_url: req.screenshot_url,
       delivery_deadline: req.delivery_deadline,
-      // Important fix: Always include items array, even if empty
-      items: items,
+      // Critical fix: Include ALL items (main + additional)
+      items: allItems,
       // Add user details from profiles join
       user_email: req.profiles?.email || 'Unknown',
       user_name: req.profiles?.full_name || 'Unknown'
