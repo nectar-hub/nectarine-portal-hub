@@ -1,0 +1,69 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
+
+const MobileNav = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="lg:hidden">
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon">
+            <Menu className="h-6 w-6" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="right" className="w-80">
+          <div className="flex flex-col space-y-4 mt-4">
+            <Link 
+              to="/" 
+              className="text-lg font-medium hover:text-nectarine-500 transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              Home
+            </Link>
+            <Link 
+              to="/services" 
+              className="text-lg font-medium hover:text-nectarine-500 transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              Services
+            </Link>
+            <Link 
+              to="/about" 
+              className="text-lg font-medium hover:text-nectarine-500 transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              About Us
+            </Link>
+            <Link 
+              to="/help" 
+              className="text-lg font-medium hover:text-nectarine-500 transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              Help Center
+            </Link>
+            <Link 
+              to="/shipping-routes" 
+              className="text-lg font-medium hover:text-nectarine-500 transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              Shipping From
+            </Link>
+            <Link 
+              to="/contact" 
+              className="text-lg font-medium hover:text-nectarine-500 transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              Contact Us
+            </Link>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+};
+
+export default MobileNav;
