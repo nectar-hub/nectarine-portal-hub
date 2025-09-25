@@ -77,6 +77,7 @@ export function formatSelfPurchases(selfPurchases: any[]): Request[] {
     invoice_url: purchase.invoice_url,
     tracking_number: purchase.tracking_number,
     courier: purchase.courier,
+    product_type: purchase.product_type, // Include the product type from database
     // Add empty items array for consistency
     items: [],
     // Add user details from profiles join

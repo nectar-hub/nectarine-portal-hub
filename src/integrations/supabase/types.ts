@@ -206,6 +206,7 @@ export type Database = {
           id: string
           invoice_url: string | null
           notes: string | null
+          product_type: string | null
           quantity: number
           status: string
           store_name: string
@@ -221,6 +222,7 @@ export type Database = {
           id?: string
           invoice_url?: string | null
           notes?: string | null
+          product_type?: string | null
           quantity?: number
           status?: string
           store_name: string
@@ -236,6 +238,7 @@ export type Database = {
           id?: string
           invoice_url?: string | null
           notes?: string | null
+          product_type?: string | null
           quantity?: number
           status?: string
           store_name?: string

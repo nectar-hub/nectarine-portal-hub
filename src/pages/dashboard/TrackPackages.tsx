@@ -11,12 +11,13 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
-// Update the schema to reflect the required fields according to the database
+// Schema for self purchase with product type categories
 const selfPurchaseSchema = z.object({
-  description: z.string().min(1, "Product description is required"),
+  product_type: z.string().min(1, "Product type is required"),
   store_name: z.string().min(1, "Store name is required"),
   quantity: z.number().int().positive("Quantity must be a positive number"),
   estimated_value: z.number().positive("Value must be positive").optional(),
@@ -24,6 +25,20 @@ const selfPurchaseSchema = z.object({
   courier: z.string().min(1, "Courier is required"),
   notes: z.string().optional(),
 });
+
+// Product type options for the dropdown
+const PRODUCT_TYPES = [
+  "Cosmetics",
+  "Electronics", 
+  "Clothing & Fashion",
+  "Books & Media",
+  "Home & Garden",
+  "Sports & Outdoors",
+  "Health & Wellness",
+  "Toys & Games",
+  "Food & Beverages",
+  "Other"
+];
 
 type SelfPurchaseValues = z.infer<typeof selfPurchaseSchema>;
 
@@ -38,7 +53,7 @@ const TrackPackages = () => {
   const form = useForm<SelfPurchaseValues>({
     resolver: zodResolver(selfPurchaseSchema),
     defaultValues: {
-      description: "",
+      product_type: "",
       store_name: "",
       quantity: 1,
       estimated_value: undefined,
@@ -127,12 +142,13 @@ const TrackPackages = () => {
         return;
       }
 
-      // Insert the self purchase first
+      // Insert the self purchase first  
       const { data: createdSelfPurchase, error } = await supabase
         .from('self_purchases')
         .insert({
           user_id: user.id,
-          description: values.description,
+          product_type: values.product_type,
+          description: values.product_type, // Use product_type as description for compatibility
           store_name: values.store_name,
           quantity: values.quantity,
           estimated_value: values.estimated_value,
@@ -210,13 +226,24 @@ const TrackPackages = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="description"
+                      name="product_type"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Product Description</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter product description" {...field} />
-                          </FormControl>
+                          <FormLabel>Type of Products</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select product type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {PRODUCT_TYPES.map((type) => (
+                                <SelectItem key={type} value={type}>
+                                  {type}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -227,7 +254,7 @@ const TrackPackages = () => {
                       name="store_name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Store Name</FormLabel>
+                          <FormLabel>Store/Shop/Supplier Name</FormLabel>
                           <FormControl>
                             <Input placeholder="Enter store name" {...field} />
                           </FormControl>
@@ -392,10 +419,15 @@ const TrackPackages = () => {
                 <div className="space-y-3">
                   {selfPurchases.slice(0, 5).map((purchase) => (
                     <div key={purchase.id} className="p-3 border rounded-md">
-                      <div className="font-medium">{purchase.description}</div>
+                      <div className="font-medium">{purchase.product_type || purchase.description}</div>
                       <div className="text-sm text-muted-foreground">
                         {purchase.store_name} • {purchase.quantity} {purchase.quantity > 1 ? 'items' : 'item'}
                       </div>
+                      {purchase.tracking_number && (
+                        <div className="text-sm text-muted-foreground">
+                          Tracking: {purchase.tracking_number}
+                        </div>
+                      )}
                       <div className="text-sm mt-1">
                         <span className={`px-2 py-1 rounded-full text-xs 
                         ${purchase.status === 'pending' ? 'bg-amber-100 text-amber-800' : 

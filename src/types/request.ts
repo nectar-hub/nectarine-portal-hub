@@ -32,6 +32,7 @@ export interface Request {
   invoice_url?: string;
   tracking_number?: string;
   courier?: string;
+  product_type?: string; // For self_purchases - type of products (Cosmetics, Electronics, etc.)
   items?: RequestItem[];
   user_email?: string;
   user_name?: string;

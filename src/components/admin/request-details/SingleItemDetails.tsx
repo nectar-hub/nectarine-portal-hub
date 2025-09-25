@@ -86,6 +86,14 @@ export const SingleItemDetails = ({ request }: SingleItemDetailsProps) => {
 
       {request.request_type === 'self_purchase' && (
         <>
+          {request.product_type && (
+            <RequestPropertyItem 
+              icon={Package} 
+              label="Product Type" 
+              value={request.product_type} 
+            />
+          )}
+          
           {request.tracking_number && (
             <RequestPropertyItem 
               icon={Hash} 
