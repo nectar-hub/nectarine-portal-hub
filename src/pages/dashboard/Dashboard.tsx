@@ -5,9 +5,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Package, ClipboardList, Users, BarChart2, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { LoadingSpinner } from "@/components/dashboard/LoadingSpinner";
 
 const Dashboard = () => {
   const { user, profile, isAdmin } = useAuth();
+  const { stats, loading } = useDashboardStats(isAdmin ? undefined : user?.id);
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-[60vh]">
+          <LoadingSpinner />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -33,7 +46,7 @@ const Dashboard = () => {
                 <CardDescription>Registered users in the system</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold mb-2">-</div>
+                <div className="text-3xl font-bold mb-2">{stats.totalUsers}</div>
                 <Link to="/admin/users">
                   <Button variant="outline" className="w-full">Manage Users</Button>
                 </Link>
@@ -49,7 +62,7 @@ const Dashboard = () => {
                 <CardDescription>Waiting for your approval</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold mb-2">-</div>
+                <div className="text-3xl font-bold mb-2">{stats.pendingRequests}</div>
                 <Link to="/admin/requests">
                   <Button variant="outline" className="w-full">View Requests</Button>
                 </Link>
@@ -65,7 +78,7 @@ const Dashboard = () => {
                 <CardDescription>Performance and metrics</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold mb-2">-</div>
+                <div className="text-sm text-muted-foreground mb-2">Total Orders: {stats.userTotalOrders}</div>
                 <Link to="/admin/analytics">
                   <Button variant="outline" className="w-full">View Analytics</Button>
                 </Link>
@@ -84,7 +97,7 @@ const Dashboard = () => {
                 <CardDescription>Your pending purchase requests</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold mb-2">-</div>
+                <div className="text-3xl font-bold mb-2">{stats.userBuyRequests}</div>
                 <Link to="/dashboard/buy-for-me">
                   <Button variant="outline" className="w-full">Create New Request</Button>
                 </Link>
@@ -100,7 +113,7 @@ const Dashboard = () => {
                 <CardDescription>Packages on the way to you</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold mb-2">-</div>
+                <div className="text-3xl font-bold mb-2">{stats.userPackagesInTransit}</div>
                 <Link to="/dashboard/track-packages">
                   <Button variant="outline" className="w-full">Track Packages</Button>
                 </Link>
@@ -116,7 +129,7 @@ const Dashboard = () => {
                 <CardDescription>All your orders with us</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold mb-2">-</div>
+                <div className="text-3xl font-bold mb-2">{stats.userTotalOrders}</div>
                 <Link to="/dashboard/orders">
                   <Button variant="outline" className="w-full">View Orders</Button>
                 </Link>

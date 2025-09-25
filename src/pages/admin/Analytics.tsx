@@ -26,52 +26,14 @@ import {
   Legend,
   Cell
 } from "recharts";
-import { BarChart2, PieChart as PieChartIcon, TrendingUp } from "lucide-react";
+import { BarChart2, PieChart as PieChartIcon, TrendingUp, Users, ShoppingCart, Package, DollarSign } from "lucide-react";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { LoadingSpinner } from "@/components/dashboard/LoadingSpinner";
 
 const Analytics = () => {
   const { isAdmin } = useAuth();
   const [timeRange, setTimeRange] = useState("month");
-
-  // Mock data for charts
-  const orderData = [
-    { name: "Jan", value: 12 },
-    { name: "Feb", value: 19 },
-    { name: "Mar", value: 15 },
-    { name: "Apr", value: 27 },
-    { name: "May", value: 29 },
-    { name: "Jun", value: 35 },
-    { name: "Jul", value: 40 },
-    { name: "Aug", value: 37 },
-    { name: "Sep", value: 45 },
-    { name: "Oct", value: 50 },
-    { name: "Nov", value: 42 },
-    { name: "Dec", value: 48 },
-  ];
-
-  const categoryData = [
-    { name: "Electronics", value: 35 },
-    { name: "Clothing", value: 25 },
-    { name: "Books", value: 15 },
-    { name: "Home Goods", value: 20 },
-    { name: "Other", value: 5 },
-  ];
-
-  const countryData = [
-    { name: "USA", value: 45 },
-    { name: "UK", value: 28 },
-    { name: "China", value: 15 },
-    { name: "Germany", value: 7 },
-    { name: "Other", value: 5 },
-  ];
-
-  const revenueData = [
-    { name: "Jan", revenue: 1200, profit: 350 },
-    { name: "Feb", revenue: 1900, profit: 480 },
-    { name: "Mar", revenue: 1500, profit: 420 },
-    { name: "Apr", revenue: 2700, profit: 890 },
-    { name: "May", revenue: 2900, profit: 980 },
-    { name: "Jun", revenue: 3500, profit: 1100 },
-  ];
+  const { data: analyticsData, loading, error } = useAnalytics(timeRange);
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -87,6 +49,36 @@ const Analytics = () => {
       </DashboardLayout>
     );
   }
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-[60vh]">
+          <LoadingSpinner />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error || !analyticsData) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center h-[60vh]">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Error Loading Analytics</h1>
+          <p className="text-gray-600 text-center max-w-md">
+            {error || "Failed to load analytics data. Please try again later."}
+          </p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(value);
+  };
 
   return (
     <DashboardLayout>
@@ -113,51 +105,65 @@ const Analytics = () => {
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[
-            {
-              title: "Total Orders",
-              value: "248",
-              change: "+12%",
-              isPositive: true,
-              description: "vs previous period",
-            },
-            {
-              title: "Active Users",
-              value: "3,427",
-              change: "+8%",
-              isPositive: true,
-              description: "vs previous period",
-            },
-            {
-              title: "Revenue",
-              value: "$24,312",
-              change: "+17%",
-              isPositive: true,
-              description: "vs previous period",
-            },
-            {
-              title: "Avg. Order Value",
-              value: "$98.12",
-              change: "-2%",
-              isPositive: false,
-              description: "vs previous period",
-            },
-          ].map((metric, i) => (
-            <Card key={i}>
-              <CardHeader className="pb-2">
-                <CardDescription>{metric.title}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{metric.value}</div>
-                <div className={`text-sm flex items-center ${
-                  metric.isPositive ? "text-green-600" : "text-red-600"
-                }`}>
-                  <span>{metric.change}</span>
-                  <span className="text-muted-foreground ml-2">{metric.description}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription className="flex items-center">
+                <ShoppingCart className="mr-2 h-4 w-4" />
+                Total Orders
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analyticsData.totalOrders}</div>
+              <div className="text-sm text-muted-foreground">
+                {analyticsData.completedOrders} completed
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription className="flex items-center">
+                <Users className="mr-2 h-4 w-4" />
+                Active Users
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analyticsData.totalUsers}</div>
+              <div className="text-sm text-muted-foreground">
+                registered users
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription className="flex items-center">
+                <DollarSign className="mr-2 h-4 w-4" />
+                Total Revenue
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(analyticsData.totalRevenue)}</div>
+              <div className="text-sm text-muted-foreground">
+                estimated value
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription className="flex items-center">
+                <Package className="mr-2 h-4 w-4" />
+                Pending Requests
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analyticsData.pendingRequests}</div>
+              <div className="text-sm text-muted-foreground">
+                awaiting processing
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Charts */}
@@ -171,7 +177,7 @@ const Analytics = () => {
             </CardHeader>
             <CardContent className="h-80">
               <AreaChart
-                data={orderData}
+                data={analyticsData.ordersOverTime}
                 width={500}
                 height={300}
                 margin={{
@@ -199,44 +205,14 @@ const Analytics = () => {
           <Card>
             <CardHeader>
               <div className="flex items-center">
-                <TrendingUp className="mr-2 h-5 w-5 text-muted-foreground" />
-                <CardTitle>Revenue & Profit</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="h-80">
-              <RechartsLineChart
-                width={500}
-                height={300}
-                data={revenueData}
-                margin={{
-                  top: 5,
-                  right: 30,
-                  left: 20,
-                  bottom: 5,
-                }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="revenue" stroke="#8884d8" activeDot={{ r: 8 }} />
-                <Line type="monotone" dataKey="profit" stroke="#82ca9d" />
-              </RechartsLineChart>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="flex items-center">
                 <PieChartIcon className="mr-2 h-5 w-5 text-muted-foreground" />
-                <CardTitle>Orders by Category</CardTitle>
+                <CardTitle>Orders by Status</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="h-80">
               <RechartsPieChart width={500} height={300}>
                 <Pie
-                  data={categoryData}
+                  data={analyticsData.ordersByStatus}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -245,7 +221,7 @@ const Analytics = () => {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {categoryData.map((entry, index) => (
+                  {analyticsData.ordersByStatus.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -265,7 +241,7 @@ const Analytics = () => {
               <RechartsBarChart
                 width={500}
                 height={300}
-                data={countryData}
+                data={analyticsData.ordersByCountry}
                 margin={{
                   top: 5,
                   right: 30,
@@ -280,6 +256,38 @@ const Analytics = () => {
                 <Legend />
                 <Bar dataKey="value" fill="#8884d8" />
               </RechartsBarChart>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center">
+                <TrendingUp className="mr-2 h-5 w-5 text-muted-foreground" />
+                <CardTitle>Recent Activity</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="h-80">
+              <div className="space-y-4 overflow-y-auto max-h-72">
+                {analyticsData.recentActivity.length > 0 ? (
+                  analyticsData.recentActivity.map((activity) => (
+                    <div key={activity.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <div>
+                        <p className="font-medium">{activity.description}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {activity.type === 'buy_request' ? 'Buy Request' : 'Self Purchase'}
+                        </p>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {new Date(activity.timestamp).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex items-center justify-center py-8 text-muted-foreground">
+                    No recent activity
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
