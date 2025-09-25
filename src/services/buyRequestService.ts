@@ -13,21 +13,7 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
       const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       const filePath = `${userId}/buy-requests/${fileName}`;
       
-      // Create storage bucket if it doesn't exist
-      const { data: bucketExists } = await supabase
-        .storage
-        .getBucket('buy-request-screenshots');
-        
-      if (!bucketExists) {
-        await supabase
-          .storage
-          .createBucket('buy-request-screenshots', {
-            public: false,
-            fileSizeLimit: 10485760, // 10MB
-          });
-      }
-      
-      // Upload the file to Supabase Storage
+      // Upload the file to Supabase Storage (bucket already exists with proper policies)
       const { data, error } = await supabase.storage
         .from("buy-request-screenshots")
         .upload(filePath, file);
