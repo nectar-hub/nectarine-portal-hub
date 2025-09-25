@@ -172,6 +172,7 @@ const SelfPurchases = () => {
   };
 
   const handlePurchaseClick = (purchase: any) => {
+    console.log('[UI] Self purchase clicked', purchase?.id, purchase);
     setSelectedPurchase(purchase);
     setIsDetailsDialogOpen(true);
   };
@@ -401,7 +402,11 @@ const SelfPurchases = () => {
       <SelfPurchaseDetailsDialog
         purchase={selectedPurchase}
         open={isDetailsDialogOpen}
-        onOpenChange={setIsDetailsDialogOpen}
+        onOpenChange={(open) => {
+          console.log('[UI] Details dialog open change:', open);
+          setIsDetailsDialogOpen(open);
+          if (!open) setSelectedPurchase(null);
+        }}
       />
     </DashboardLayout>
   );
