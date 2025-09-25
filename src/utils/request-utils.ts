@@ -12,7 +12,7 @@ export const getPageDescriptionByPath = (path: string) => {
 };
 
 export const getRequestTypeByPath = (path: string) => {
-  if (path.includes('/buy-requests')) return "buy_requests";
-  if (path.includes('/self-purchases')) return "self_purchases";
-  return undefined;
+  if (path.includes('/buy-requests')) return "buy_request";
+  if (path.includes('/self-purchases')) return "self_purchase";
+  return "all";
 };
