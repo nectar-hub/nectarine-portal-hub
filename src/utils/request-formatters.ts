@@ -78,6 +78,9 @@ export function formatSelfPurchases(selfPurchases: any[]): Request[] {
     tracking_number: purchase.tracking_number,
     courier: purchase.courier,
     product_type: purchase.product_type, // Include the product type from database
+    admin_notes: purchase.admin_notes, // Include admin notes
+    status_updated_at: purchase.status_updated_at, // Include status update timestamp
+    status_updated_by: purchase.status_updated_by, // Include who updated status
     // Add empty items array for consistency
     items: [],
     // Add user details from profiles join

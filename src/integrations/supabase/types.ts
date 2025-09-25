@@ -199,6 +199,7 @@ export type Database = {
       }
       self_purchases: {
         Row: {
+          admin_notes: string | null
           courier: string
           created_at: string
           description: string
@@ -209,12 +210,15 @@ export type Database = {
           product_type: string | null
           quantity: number
           status: string
+          status_updated_at: string | null
+          status_updated_by: string | null
           store_name: string
           tracking_number: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          admin_notes?: string | null
           courier: string
           created_at?: string
           description: string
@@ -225,12 +229,15 @@ export type Database = {
           product_type?: string | null
           quantity?: number
           status?: string
+          status_updated_at?: string | null
+          status_updated_by?: string | null
           store_name: string
           tracking_number: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          admin_notes?: string | null
           courier?: string
           created_at?: string
           description?: string
@@ -241,6 +248,8 @@ export type Database = {
           product_type?: string | null
           quantity?: number
           status?: string
+          status_updated_at?: string | null
+          status_updated_by?: string | null
           store_name?: string
           tracking_number?: string
           updated_at?: string

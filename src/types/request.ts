@@ -36,4 +36,7 @@ export interface Request {
   items?: RequestItem[];
   user_email?: string;
   user_name?: string;
+  admin_notes?: string; // Admin-specific notes
+  status_updated_at?: string; // When status was last updated
+  status_updated_by?: string; // Who updated the status
 }
