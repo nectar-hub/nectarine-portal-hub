@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import IndexHeader from "./IndexHeader";
-import { Facebook, Instagram, Linkedin, Mail, Phone, MapPin } from "lucide-react";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   return (
@@ -116,108 +116,7 @@ const Index = () => {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-[#262626] text-white py-12">
-        <div className="container px-4 mx-auto">
-          <div className="grid md:grid-cols-5 gap-8">
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <img src="/lovable-uploads/6812ca59-9985-4974-8a82-27733d625894.png" alt="Nectarine Logo" className="h-8 w-auto" />
-                <h3 className="text-xl font-bold text-nectarine-400">Nectarine Logistics</h3>
-              </div>
-              <p className="text-gray-400 mb-6 pr-4">
-                Your trusted partner for international shipping and logistics solutions. We connect you to global markets by providing seamless access to products from around the world with 10,000+ satisfied customers.
-              </p>
-              <div className="flex space-x-4 text-gray-400">
-                <a href="https://facebook.com/nectarinelogistics" className="hover:text-nectarine-400 transition-colors">
-                  <Facebook size={20} />
-                </a>
-                <a href="https://instagram.com/nectarinelogistics" className="hover:text-nectarine-400 transition-colors">
-                  <Instagram size={20} />
-                </a>
-                <a href="https://linkedin.com/company/nectarine-logistics" className="hover:text-nectarine-400 transition-colors">
-                  <Linkedin size={20} />
-                </a>
-              </div>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4 text-nectarine-400">Quick Links</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="https://nectarinelogistics.com/" className="hover:text-nectarine-400 transition-colors">Home</a></li>
-                <li><a href="https://nectarinelogistics.com/services" className="hover:text-nectarine-400 transition-colors">Services</a></li>
-                <li><a href="https://nectarinelogistics.com/about/what-is-nectarine" className="hover:text-nectarine-400 transition-colors">About Us</a></li>
-                <li><a href="https://nectarinelogistics.com/help" className="hover:text-nectarine-400 transition-colors">Help Center</a></li>
-                <li><a href="https://nectarinelogistics.com/shipping-routes" className="hover:text-nectarine-400 transition-colors">Shipping Routes</a></li>
-                <li><a href="https://nectarinelogistics.com/contact" className="hover:text-nectarine-400 transition-colors">Contact Us</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4 text-nectarine-400">Popular Services</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="https://nectarinelogistics.com/services/door-to-door" className="hover:text-nectarine-400 transition-colors">Door-to-Door Delivery</a></li>
-                <li><a href="https://nectarinelogistics.com/services/online-purchase" className="hover:text-nectarine-400 transition-colors">Online Purchase</a></li>
-                <li><a href="https://nectarinelogistics.com/services/sea-air-freight" className="hover:text-nectarine-400 transition-colors">Sea & Air Freight</a></li>
-                <li><a href="https://nectarinelogistics.com/services/buy-for-me" className="hover:text-nectarine-400 transition-colors">Buy For Me</a></li>
-                <li><a href="https://nectarinelogistics.com/services/customs-brokerage" className="hover:text-nectarine-400 transition-colors">Customs Brokerage</a></li>
-                <li><a href="https://nectarinelogistics.com/services/warehousing" className="hover:text-nectarine-400 transition-colors">Warehousing</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4 text-nectarine-400">Contact Us</h4>
-              <ul className="space-y-3 text-gray-400">
-                <li className="flex items-start gap-2">
-                  <MapPin size={18} className="flex-shrink-0 mt-0.5" />
-                  <span>
-                    Unit 1, 7th Floor, Tanzanite Park,<br />
-                    Ursiro Street, Victoria,<br />
-                    Dar es Salaam, Tanzania
-                  </span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Phone size={18} />
-                  <div className="flex flex-col">
-                    <span>+255 744 484 271</span>
-                    <span>+44 20 3286 5810</span>
-                    <span>+1 (657) 464-4914</span>
-                  </div>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Mail size={18} />
-                  <div className="flex flex-col">
-                    <a href="mailto:info@nectarinelogistics.com" className="hover:text-nectarine-400 transition-colors">
-                      info@nectarinelogistics.com
-                    </a>
-                    <a href="mailto:sales@nectarinelogistics.com" className="hover:text-nectarine-400 transition-colors">
-                      sales@nectarinelogistics.com
-                    </a>
-                  </div>
-                </li>
-              </ul>
-              <div className="mt-4">
-                <p className="text-sm text-gray-500 mb-2">Office Hours:</p>
-                <p className="text-sm text-gray-400">Monday - Friday: 9:00 AM - 5:00 PM</p>
-                <p className="text-sm text-gray-400">Saturday & Sunday: Closed</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="border-t border-gray-800 mt-10 pt-8 text-sm text-gray-500">
-            <div className="flex flex-wrap justify-between items-center">
-              <div>
-                <p>© {new Date().getFullYear()} Nectarine Logistics Inc. All rights reserved.</p>
-              </div>
-              <div className="flex flex-wrap gap-x-5 gap-y-2">
-                <a href="https://nectarinelogistics.com/help/terms" className="hover:text-nectarine-400 transition-colors">Terms & Conditions</a>
-                <a href="https://nectarinelogistics.com/help/privacy-policy" className="hover:text-nectarine-400 transition-colors">Privacy Policy</a>
-                <a href="https://nectarinelogistics.com/help/payment-policy" className="hover:text-nectarine-400 transition-colors">Payment Policy</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
