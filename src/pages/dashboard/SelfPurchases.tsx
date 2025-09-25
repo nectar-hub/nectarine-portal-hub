@@ -14,6 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { SelfPurchaseDetailsDialog } from "@/components/dashboard/SelfPurchaseDetailsDialog";
 
 // Schema for self purchase with product type categories
 const selfPurchaseSchema = z.object({
@@ -46,6 +47,8 @@ const SelfPurchases = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [isAddingPurchase, setIsAddingPurchase] = useState(false);
+  const [selectedPurchase, setSelectedPurchase] = useState(null);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
 
   const form = useForm<SelfPurchaseValues>({
     resolver: zodResolver(selfPurchaseSchema),
@@ -166,6 +169,11 @@ const SelfPurchases = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handlePurchaseClick = (purchase: any) => {
+    setSelectedPurchase(purchase);
+    setIsDetailsDialogOpen(true);
   };
 
   return (
@@ -349,7 +357,11 @@ const SelfPurchases = () => {
             {selfPurchases && selfPurchases.length > 0 ? (
                 <div className="space-y-3">
                   {selfPurchases.slice(0, 5).map((purchase) => (
-                    <div key={purchase.id} className="p-3 border rounded-md">
+                     <div 
+                       key={purchase.id} 
+                       className="p-3 border rounded-md cursor-pointer hover:bg-muted/50 transition-colors" 
+                       onClick={() => handlePurchaseClick(purchase)}
+                     >
                       <div className="font-medium">{purchase.product_type || purchase.description}</div>
                       <div className="text-sm text-muted-foreground">
                         {purchase.store_name} • {purchase.quantity} {purchase.quantity > 1 ? 'items' : 'item'}
@@ -385,6 +397,12 @@ const SelfPurchases = () => {
             </CardContent>
           </Card>
       </div>
+
+      <SelfPurchaseDetailsDialog
+        purchase={selectedPurchase}
+        open={isDetailsDialogOpen}
+        onOpenChange={setIsDetailsDialogOpen}
+      />
     </DashboardLayout>
   );
 };
