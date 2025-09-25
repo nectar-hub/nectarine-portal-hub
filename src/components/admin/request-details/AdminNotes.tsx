@@ -7,11 +7,12 @@ import { toast } from "@/hooks/use-toast";
 
 interface AdminNotesProps {
   requestId: string;
+  requestType: 'buy_request' | 'self_purchase';
   adminNotes?: string;
   onNotesUpdated: (newNotes: string) => void;
 }
 
-export const AdminNotes = ({ requestId, adminNotes, onNotesUpdated }: AdminNotesProps) => {
+export const AdminNotes = ({ requestId, requestType, adminNotes, onNotesUpdated }: AdminNotesProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [notes, setNotes] = useState(adminNotes || "");
   const [isSaving, setIsSaving] = useState(false);
@@ -19,8 +20,9 @@ export const AdminNotes = ({ requestId, adminNotes, onNotesUpdated }: AdminNotes
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      const tableName = requestType === 'buy_request' ? 'buy_requests' : 'self_purchases';
       const { error } = await supabase
-        .from('self_purchases')
+        .from(tableName)
         .update({ admin_notes: notes || null })
         .eq('id', requestId);
 

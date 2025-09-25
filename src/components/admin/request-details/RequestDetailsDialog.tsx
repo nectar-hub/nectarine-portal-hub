@@ -54,20 +54,17 @@ const RequestDetailsDialog = ({
           
           {currentRequest.notes && <RequestNotes notes={currentRequest.notes} />}
           
-          {currentRequest.request_type === 'self_purchase' && (
-            <>
-              <AdminNotes 
-                requestId={currentRequest.id}
-                adminNotes={currentRequest.admin_notes}
-                onNotesUpdated={handleNotesUpdated}
-              />
-              <StatusUpdateInfo 
-                status={currentRequest.status}
-                statusUpdatedAt={currentRequest.status_updated_at}
-                statusUpdatedBy={currentRequest.status_updated_by}
-              />
-            </>
-          )}
+          <AdminNotes 
+            requestId={currentRequest.id}
+            requestType={currentRequest.request_type}
+            adminNotes={currentRequest.admin_notes}
+            onNotesUpdated={handleNotesUpdated}
+          />
+          <StatusUpdateInfo 
+            status={currentRequest.status}
+            statusUpdatedAt={currentRequest.status_updated_at}
+            statusUpdatedBy={currentRequest.status_updated_by}
+          />
           
           <RequestMedia 
             requestType={currentRequest.request_type}

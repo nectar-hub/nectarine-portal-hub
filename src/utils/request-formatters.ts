@@ -50,6 +50,10 @@ export function formatBuyRequests(
       delivery_deadline: req.delivery_deadline,
       // Critical fix: Include ALL items (main + additional)
       items: allItems,
+      // Add admin notes and status tracking fields
+      admin_notes: req.admin_notes,
+      status_updated_at: req.status_updated_at,
+      status_updated_by: req.status_updated_by,
       // Add user details from profiles join
       user_email: req.profiles?.email || 'Unknown',
       user_name: req.profiles?.full_name || 'Unknown'

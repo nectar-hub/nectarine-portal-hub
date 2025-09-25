@@ -66,6 +66,7 @@ export type Database = {
       }
       buy_requests: {
         Row: {
+          admin_notes: string | null
           color: string | null
           country_of_purchase: string
           created_at: string
@@ -79,11 +80,14 @@ export type Database = {
           screenshot_url: string | null
           size: string | null
           status: string
+          status_updated_at: string | null
+          status_updated_by: string | null
           store_name: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          admin_notes?: string | null
           color?: string | null
           country_of_purchase: string
           created_at?: string
@@ -97,11 +101,14 @@ export type Database = {
           screenshot_url?: string | null
           size?: string | null
           status?: string
+          status_updated_at?: string | null
+          status_updated_by?: string | null
           store_name?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          admin_notes?: string | null
           color?: string | null
           country_of_purchase?: string
           created_at?: string
@@ -115,6 +122,8 @@ export type Database = {
           screenshot_url?: string | null
           size?: string | null
           status?: string
+          status_updated_at?: string | null
+          status_updated_by?: string | null
           store_name?: string | null
           updated_at?: string
           user_id?: string

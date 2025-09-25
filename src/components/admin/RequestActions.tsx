@@ -98,49 +98,74 @@ const RequestActions = ({ request, processingId, onUpdate, onDelete, onClose }: 
         {request.request_type === 'buy_request' && (
           <>
             {request.status === 'pending' && (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleUpdateStatus('processing')}
-                  disabled={processingId === request.id}
-                >
-                  <Check className="h-4 w-4 text-green-500 mr-1" />
-                  Approve
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleUpdateStatus('cancelled')}
-                  disabled={processingId === request.id}
-                >
-                  <X className="h-4 w-4 text-red-500 mr-1" />
-                  Reject
-                </Button>
-              </>
-            )}
-            
-            {request.status === 'processing' && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleUpdateStatus('in_transit')}
-                disabled={processingId === request.id}
-              >
-                <Package className="h-4 w-4 text-blue-500 mr-1" />
-                Ship
-              </Button>
-            )}
-            
-            {request.status === 'in_transit' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleUpdateStatus('completed')}
+                onClick={() => handleUpdateStatus('order_received')}
                 disabled={processingId === request.id}
               >
                 <Check className="h-4 w-4 text-green-500 mr-1" />
-                Complete
+                Order Received
+              </Button>
+            )}
+            
+            {request.status === 'order_received' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleUpdateStatus('order_placed')}
+                disabled={processingId === request.id}
+              >
+                <Package className="h-4 w-4 text-blue-500 mr-1" />
+                Order Placed
+              </Button>
+            )}
+            
+            {request.status === 'order_placed' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleUpdateStatus('order_delivered')}
+                disabled={processingId === request.id}
+              >
+                <Check className="h-4 w-4 text-green-500 mr-1" />
+                Order Delivered
+              </Button>
+            )}
+            
+            {request.status === 'order_delivered' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleUpdateStatus('order_in_transit')}
+                disabled={processingId === request.id}
+              >
+                <Package className="h-4 w-4 text-blue-500 mr-1" />
+                Order in Transit
+              </Button>
+            )}
+            
+            {request.status === 'order_in_transit' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleUpdateStatus('order_arrived')}
+                disabled={processingId === request.id}
+              >
+                <Package className="h-4 w-4 text-orange-500 mr-1" />
+                Order Arrived
+              </Button>
+            )}
+            
+            {request.status === 'order_arrived' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleUpdateStatus('order_collected')}
+                disabled={processingId === request.id}
+              >
+                <Check className="h-4 w-4 text-green-500 mr-1" />
+                Order Collected
               </Button>
             )}
           </>
