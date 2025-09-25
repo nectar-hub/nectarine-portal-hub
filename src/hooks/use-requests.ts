@@ -49,6 +49,7 @@ export function useRequests(requestType: string = 'all', statusFilter: string = 
   };
 
   const fetchRequests = useCallback(async () => {
+    console.log('[USE-REQUESTS] Starting fetch with requestType:', requestType, 'statusFilter:', statusFilter);
     setLoading(true);
     setError(null);
     
@@ -56,12 +57,16 @@ export function useRequests(requestType: string = 'all', statusFilter: string = 
       let fetchedRequests: Request[] = [];
       
       if (requestType === 'all' || requestType === 'buy_request') {
+        console.log('[USE-REQUESTS] Fetching buy requests...');
         const buyRequests = await fetchBuyRequests(statusFilter);
+        console.log('[USE-REQUESTS] Buy requests fetched:', buyRequests.length);
         fetchedRequests = [...fetchedRequests, ...buyRequests];
       }
       
       if (requestType === 'all' || requestType === 'self_purchase') {
+        console.log('[USE-REQUESTS] Fetching self purchases...');
         const selfPurchases = await fetchSelfPurchases(statusFilter);
+        console.log('[USE-REQUESTS] Self purchases fetched:', selfPurchases.length);
         fetchedRequests = [...fetchedRequests, ...selfPurchases];
       }
       
@@ -70,9 +75,10 @@ export function useRequests(requestType: string = 'all', statusFilter: string = 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
       
+      console.log('[USE-REQUESTS] Final requests count:', fetchedRequests.length);
       setRequests(fetchedRequests);
     } catch (err) {
-      console.error('Error fetching requests:', err);
+      console.error('[USE-REQUESTS] Error fetching requests:', err);
       setError('Failed to load requests. Please try again.');
     } finally {
       setLoading(false);

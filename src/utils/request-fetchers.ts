@@ -5,6 +5,8 @@ import { Request, RequestItem } from "@/types/request";
 
 export async function fetchBuyRequests(statusFilter = 'all') {
   try {
+    console.log('[FETCH] Starting to fetch buy requests with filter:', statusFilter);
+    
     // Build query for buy requests
     let query = supabase
       .from('buy_requests')
@@ -22,10 +24,17 @@ export async function fetchBuyRequests(statusFilter = 'all') {
       query = query.eq('status', statusFilter);
     }
     
+    console.log('[FETCH] Executing buy requests query...');
+    
     // Execute query
     const { data: buyRequests, error } = await query;
     
-    if (error) throw error;
+    if (error) {
+      console.error('[FETCH] Error fetching buy requests:', error);
+      throw error;
+    }
+    
+    console.log('[FETCH] Buy requests fetched successfully:', buyRequests?.length || 0, 'requests');
     
     // Once we have the buy requests, fetch all associated items
     const buyRequestIds = buyRequests?.map(req => req.id) || [];
@@ -53,9 +62,12 @@ export async function fetchBuyRequests(statusFilter = 'all') {
     }
     
     // Format the data with items included
-    return formatBuyRequests(buyRequests || [], buyRequestItems);
+    const formattedRequests = formatBuyRequests(buyRequests || [], buyRequestItems);
+    console.log('[FETCH] Formatted buy requests:', formattedRequests.length, 'requests');
+    
+    return formattedRequests;
   } catch (error) {
-    console.error("Error fetching buy requests:", error);
+    console.error("[FETCH] Error fetching buy requests:", error);
     throw error;
   }
 }

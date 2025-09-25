@@ -50,6 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Load user profile from Supabase
   const loadUserProfile = async (userId: string) => {
+    console.log('[AUTH] Loading profile for user:', userId);
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -58,13 +59,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
 
       if (error) {
-        console.error('Error loading user profile:', error);
+        console.error('[AUTH] Error loading user profile:', error);
         return;
       }
 
+      console.log('[AUTH] Profile loaded successfully:', data);
       setProfile(data);
     } catch (error) {
-      console.error('Error in loadUserProfile:', error);
+      console.error('[AUTH] Error in loadUserProfile:', error);
     }
   };
 
@@ -237,6 +239,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const isAdmin = !!profile?.is_admin;
+  
+  console.log('[AUTH] Current auth state:', {
+    user: user?.id,
+    profile: profile?.id,
+    isAdmin,
+    profileIsAdmin: profile?.is_admin
+  });
 
   return (
     <AuthContext.Provider 
