@@ -12,6 +12,7 @@ interface Order {
   status: string;
   created_at: string;
   updated_at: string;
+  reference_id: string;
   details: {
     product_name?: string;
     tracking_number?: string;
@@ -19,14 +20,16 @@ interface Order {
     country_of_purchase?: string;
     quantity: number;
     price?: number;
+    product_type?: string;
   }
 }
 
 interface OrdersTableProps {
   orders: Order[];
+  onOrderClick: (order: Order) => void;
 }
 
-export const OrdersTable = ({ orders }: OrdersTableProps) => {
+export const OrdersTable = ({ orders, onOrderClick }: OrdersTableProps) => {
   return (
     <Card>
       <CardContent className="p-0">
@@ -44,7 +47,11 @@ export const OrdersTable = ({ orders }: OrdersTableProps) => {
           </TableHeader>
           <TableBody>
             {orders.map((order) => (
-              <TableRow key={order.id}>
+              <TableRow 
+                key={order.id}
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => onOrderClick(order)}
+              >
                 <TableCell className="font-mono text-xs">
                   {order.id.split('-')[0]}...
                 </TableCell>

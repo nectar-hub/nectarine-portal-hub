@@ -9,6 +9,7 @@ import { OrderFilters } from "@/components/dashboard/OrderFilters";
 import { OrdersTable } from "@/components/dashboard/OrdersTable";
 import { OrdersEmptyState } from "@/components/dashboard/OrdersEmptyState";
 import { LoadingSpinner } from "@/components/dashboard/LoadingSpinner";
+import { OrderDetailsDialog } from "@/components/dashboard/OrderDetailsDialog";
 
 type Order = {
   id: string;
@@ -16,6 +17,7 @@ type Order = {
   status: string;
   created_at: string;
   updated_at: string;
+  reference_id: string;
   details: {
     product_name?: string;
     tracking_number?: string;
@@ -23,6 +25,7 @@ type Order = {
     country_of_purchase?: string;
     quantity: number;
     price?: number;
+    product_type?: string;
   }
 };
 
@@ -32,6 +35,14 @@ const Orders = () => {
   const [loading, setLoading] = useState(true);
   const [orderType, setOrderType] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
+
+  const handleOrderClick = (order: Order) => {
+    console.log('[UI] Order clicked:', order.id, order);
+    setSelectedOrder(order);
+    setIsOrderDialogOpen(true);
+  };
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -101,6 +112,7 @@ const Orders = () => {
               return {
                 ...order,
                 order_type: order.order_type as 'buy_request' | 'self_purchase',
+                reference_id: order.reference_id,
                 details
               } as Order;
             })
@@ -209,11 +221,21 @@ const Orders = () => {
         {loading ? (
           <LoadingSpinner />
         ) : orders.length > 0 ? (
-          <OrdersTable orders={orders} />
+          <OrdersTable orders={orders} onOrderClick={handleOrderClick} />
         ) : (
           <OrdersEmptyState />
         )}
       </div>
+
+      <OrderDetailsDialog
+        order={selectedOrder}
+        open={isOrderDialogOpen}
+        onOpenChange={(open) => {
+          console.log('[UI] Order dialog open change:', open);
+          setIsOrderDialogOpen(open);
+          if (!open) setSelectedOrder(null);
+        }}
+      />
     </DashboardLayout>
   );
 };
