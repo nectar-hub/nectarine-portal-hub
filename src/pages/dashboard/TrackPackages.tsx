@@ -100,8 +100,8 @@ const TrackPackages = () => {
         return;
       }
 
-      // Ensure we're sending all required fields to match the database schema
-      const { error } = await supabase
+      // Insert the self purchase first
+      const { data: createdSelfPurchase, error } = await supabase
         .from('self_purchases')
         .insert({
           user_id: user.id,
@@ -112,9 +112,27 @@ const TrackPackages = () => {
           tracking_number: values.tracking_number,
           courier: values.courier,
           notes: values.notes,
-        });
+        })
+        .select('id')
+        .single();
 
       if (error) throw error;
+
+      // Create an order for this self purchase
+      if (createdSelfPurchase?.id) {
+        const { error: orderError } = await supabase
+          .from('orders')
+          .insert({
+            reference_id: createdSelfPurchase.id,
+            user_id: user.id,
+            order_type: 'self_purchase'
+          });
+
+        if (orderError) {
+          console.warn('Failed to create order for self purchase:', orderError);
+          // Don't throw here since the main self purchase was successful
+        }
+      }
 
       toast({
         title: "Success",
