@@ -4,7 +4,7 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Truck, Package, Plus, ShoppingBag } from "lucide-react";
+import { Package, Plus, ShoppingBag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { z } from "zod";
@@ -42,12 +42,9 @@ const PRODUCT_TYPES = [
 
 type SelfPurchaseValues = z.infer<typeof selfPurchaseSchema>;
 
-const TrackPackages = () => {
+const SelfPurchases = () => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [trackingNumber, setTrackingNumber] = useState("");
-  const [courier, setCourier] = useState("");
-  const [loading, setLoading] = useState(false);
   const [isAddingPurchase, setIsAddingPurchase] = useState(false);
 
   const form = useForm<SelfPurchaseValues>({
@@ -106,30 +103,6 @@ const TrackPackages = () => {
       supabase.removeChannel(selfPurchasesChannel);
     };
   }, [user, refetch]);
-
-  const handleTrack = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!trackingNumber || !courier) {
-      toast({
-        title: "Error",
-        description: "Please enter both tracking number and courier",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
-    
-    // In a real app, this would call an API to track the package
-    setTimeout(() => {
-      toast({
-        title: "Tracking Information",
-        description: `Tracking ${trackingNumber} with ${courier}. This is a placeholder for actual tracking functionality.`,
-      });
-      setLoading(false);
-    }, 1500);
-  };
 
   const onSubmitSelfPurchase = async (values: SelfPurchaseValues) => {
     try {
@@ -201,7 +174,7 @@ const TrackPackages = () => {
         <div className="flex flex-wrap justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Self Purchases</h1>
-            <p className="text-muted-foreground mt-1">Add and track your self purchases</p>
+            <p className="text-muted-foreground mt-1">Add and manage your self-purchased items</p>
           </div>
           <Button onClick={() => setIsAddingPurchase(!isAddingPurchase)} className="mt-2 md:mt-0">
             <Plus className="mr-2 h-4 w-4" />
@@ -364,58 +337,16 @@ const TrackPackages = () => {
           </Card>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Truck className="mr-2 h-5 w-5 text-nectarine-600" />
-                Package Tracking
-              </CardTitle>
-              <CardDescription>Enter your tracking information</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleTrack} className="space-y-4">
-                <div>
-                  <label htmlFor="trackingNumber" className="block text-sm font-medium text-gray-700 mb-1">
-                    Tracking Number
-                  </label>
-                  <Input
-                    id="trackingNumber"
-                    value={trackingNumber}
-                    onChange={(e) => setTrackingNumber(e.target.value)}
-                    placeholder="Enter tracking number"
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="courier" className="block text-sm font-medium text-gray-700 mb-1">
-                    Courier
-                  </label>
-                  <Input
-                    id="courier" 
-                    value={courier}
-                    onChange={(e) => setCourier(e.target.value)}
-                    placeholder="Enter courier name (DHL, FedEx, etc.)"
-                  />
-                </div>
-                
-                <Button type="submit" disabled={loading} className="w-full">
-                  {loading ? "Tracking..." : "Track Package"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Package className="mr-2 h-5 w-5 text-nectarine-600" />
-                Recent Purchases
-              </CardTitle>
-              <CardDescription>Your self purchases</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {selfPurchases && selfPurchases.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Package className="mr-2 h-5 w-5 text-nectarine-600" />
+              Recent Purchases
+            </CardTitle>
+            <CardDescription>Your self purchases</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {selfPurchases && selfPurchases.length > 0 ? (
                 <div className="space-y-3">
                   {selfPurchases.slice(0, 5).map((purchase) => (
                     <div key={purchase.id} className="p-3 border rounded-md">
@@ -453,10 +384,9 @@ const TrackPackages = () => {
               )}
             </CardContent>
           </Card>
-        </div>
       </div>
     </DashboardLayout>
   );
 };
 
-export default TrackPackages;
+export default SelfPurchases;
