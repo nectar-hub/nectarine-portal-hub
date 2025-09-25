@@ -35,14 +35,18 @@ type RegisterData = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
+  console.log('[AUTH] useAuth hook called');
   const context = useContext(AuthContext);
-  if (!context) {
+  console.log('[AUTH] useAuth context value:', context);
+  if (context === undefined) {
+    console.error('[AUTH] useAuth called outside of AuthProvider!');
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  console.log('[AUTH] AuthProvider initializing...');
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -247,6 +251,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isAdmin,
     profileIsAdmin: profile?.is_admin
   });
+
+  console.log('[AUTH] AuthProvider rendering with context value');
 
   return (
     <AuthContext.Provider 
