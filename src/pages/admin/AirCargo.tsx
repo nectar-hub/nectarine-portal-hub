@@ -3,6 +3,7 @@ import DashboardLayout from '@/layouts/DashboardLayout';
 import AirCargoClients from '@/components/air-cargo/AirCargoClients';
 import AirCargoSheet from '@/components/air-cargo/AirCargoSheet';
 import ConsignmentsList from '@/components/air-cargo/ConsignmentsList';
+import ReportsView from '@/components/air-cargo/ReportsView';
 import PageHeader from '@/components/admin/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -24,10 +25,11 @@ const AirCargo = () => {
         />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="consignments">Consignments</TabsTrigger>
             <TabsTrigger value="clients">Clients</TabsTrigger>
             <TabsTrigger value="sheet">Shipments</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
           </TabsList>
 
           <TabsContent value="consignments" className="mt-6">
@@ -43,6 +45,10 @@ const AirCargo = () => {
 
           <TabsContent value="sheet" className="mt-6">
             <AirCargoSheet consignmentId={selectedConsignmentId} />
+          </TabsContent>
+
+          <TabsContent value="reports" className="mt-6">
+            <ReportsView />
           </TabsContent>
         </Tabs>
       </div>
