@@ -75,7 +75,11 @@ const ConsignmentFormDialog = ({ open, onOpenChange }: ConsignmentFormDialogProp
               id="consignment_name"
               value={formData.consignment_name}
               onChange={(e) =>
-                setFormData({ ...formData, consignment_name: e.target.value })
+                setFormData({ 
+                  ...formData, 
+                  consignment_name: e.target.value,
+                  consignment_number: e.target.value 
+                })
               }
               required
             />
