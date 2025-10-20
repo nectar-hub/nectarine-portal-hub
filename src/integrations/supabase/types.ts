@@ -14,6 +14,119 @@ export type Database = {
   }
   public: {
     Tables: {
+      air_cargo_clients: {
+        Row: {
+          client_name: string
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          phone_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_name: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          phone_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          phone_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      air_cargo_shipments: {
+        Row: {
+          account_code: string | null
+          chargeable_weight_kg: number | null
+          client_id: string
+          created_at: string
+          created_by: string | null
+          date_received: string
+          dead_weight_kg: number | null
+          destination: string | null
+          dims_notes: string | null
+          height_cm: number | null
+          id: string
+          invoice_no: string | null
+          length_cm: number | null
+          packed_in: string | null
+          pieces: number | null
+          remarks: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+          volumetric_weight_kg: number | null
+          volumetric_weight_locked: boolean | null
+          width_cm: number | null
+        }
+        Insert: {
+          account_code?: string | null
+          chargeable_weight_kg?: number | null
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          date_received?: string
+          dead_weight_kg?: number | null
+          destination?: string | null
+          dims_notes?: string | null
+          height_cm?: number | null
+          id?: string
+          invoice_no?: string | null
+          length_cm?: number | null
+          packed_in?: string | null
+          pieces?: number | null
+          remarks?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          volumetric_weight_kg?: number | null
+          volumetric_weight_locked?: boolean | null
+          width_cm?: number | null
+        }
+        Update: {
+          account_code?: string | null
+          chargeable_weight_kg?: number | null
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          date_received?: string
+          dead_weight_kg?: number | null
+          destination?: string | null
+          dims_notes?: string | null
+          height_cm?: number | null
+          id?: string
+          invoice_no?: string | null
+          length_cm?: number | null
+          packed_in?: string | null
+          pieces?: number | null
+          remarks?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          volumetric_weight_kg?: number | null
+          volumetric_weight_locked?: boolean | null
+          width_cm?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "air_cargo_shipments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "air_cargo_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buy_request_items: {
         Row: {
           buy_request_id: string
