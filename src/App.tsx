@@ -19,6 +19,7 @@ import Users from "./pages/admin/Users";
 import Requests from "./pages/admin/Requests";
 import Analytics from "./pages/admin/Analytics";
 import Settings from "./pages/admin/Settings";
+import AirCargo from "./pages/admin/AirCargo";
 import NotFound from "./pages/NotFound";
 import MainLayout from "./layouts/MainLayout";
 
@@ -142,6 +143,14 @@ const App = () => (
               element={
                 <MainLayout requireAuth adminOnly>
                   <Settings />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/admin/air-cargo"
+              element={
+                <MainLayout requireAuth adminOnly>
+                  <AirCargo />
                 </MainLayout>
               }
             />
