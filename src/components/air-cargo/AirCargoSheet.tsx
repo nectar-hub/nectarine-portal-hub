@@ -39,7 +39,11 @@ type Client = {
   client_name: string;
 };
 
-const AirCargoSheet = () => {
+interface AirCargoSheetProps {
+  consignmentId?: string;
+}
+
+const AirCargoSheet = ({ consignmentId }: AirCargoSheetProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -65,13 +69,19 @@ const AirCargoSheet = () => {
   });
 
   const { data: shipments = [], isLoading } = useQuery({
-    queryKey: ['air-cargo-shipments'],
+    queryKey: ['air-cargo-shipments', consignmentId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('air_cargo_shipments')
         .select('*')
         .order('date_received', { ascending: false })
         .order('created_at', { ascending: false });
+
+      if (consignmentId) {
+        query = query.eq('consignment_id', consignmentId);
+      }
+
+      const { data, error } = await query;
       
       if (error) throw error;
       return data as Shipment[];
@@ -268,6 +278,7 @@ const AirCargoSheet = () => {
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
           clients={clients}
+          consignmentId={consignmentId}
         />
       </CardContent>
     </Card>

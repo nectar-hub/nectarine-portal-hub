@@ -44,11 +44,48 @@ export type Database = {
         }
         Relationships: []
       }
+      air_cargo_consignments: {
+        Row: {
+          consignment_name: string
+          consignment_number: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          consignment_name: string
+          consignment_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          consignment_name?: string
+          consignment_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       air_cargo_shipments: {
         Row: {
           account_code: string | null
           chargeable_weight_kg: number | null
           client_id: string
+          consignment_id: string | null
           created_at: string
           created_by: string | null
           date_received: string
@@ -73,6 +110,7 @@ export type Database = {
           account_code?: string | null
           chargeable_weight_kg?: number | null
           client_id: string
+          consignment_id?: string | null
           created_at?: string
           created_by?: string | null
           date_received?: string
@@ -97,6 +135,7 @@ export type Database = {
           account_code?: string | null
           chargeable_weight_kg?: number | null
           client_id?: string
+          consignment_id?: string | null
           created_at?: string
           created_by?: string | null
           date_received?: string
@@ -123,6 +162,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "air_cargo_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "air_cargo_shipments_consignment_id_fkey"
+            columns: ["consignment_id"]
+            isOneToOne: false
+            referencedRelation: "air_cargo_consignments"
             referencedColumns: ["id"]
           },
         ]

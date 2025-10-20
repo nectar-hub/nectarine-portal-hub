@@ -85,9 +85,10 @@ type ShipmentFormDialogProps = {
   onOpenChange: (open: boolean) => void;
   clients: Client[];
   shipment?: Shipment | null;
+  consignmentId?: string;
 };
 
-const ShipmentFormDialog = ({ open, onOpenChange, clients, shipment }: ShipmentFormDialogProps) => {
+const ShipmentFormDialog = ({ open, onOpenChange, clients, shipment, consignmentId }: ShipmentFormDialogProps) => {
   const queryClient = useQueryClient();
 
   const form = useForm<ShipmentFormData>({
@@ -139,9 +140,13 @@ const ShipmentFormDialog = ({ open, onOpenChange, clients, shipment }: ShipmentF
           .eq('id', shipment.id);
         if (error) throw error;
       } else {
+        const shipmentData = {
+          ...data,
+          ...(consignmentId && { consignment_id: consignmentId }),
+        };
         const { error } = await supabase
           .from('air_cargo_shipments')
-          .insert([data as any]);
+          .insert([shipmentData as any]);
         if (error) throw error;
       }
     },
