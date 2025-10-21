@@ -26,7 +26,22 @@ const SelfPurchases = () => {
       if (!user) return [];
       const { data, error } = await supabase
         .from('self_purchases')
-        .select('*')
+        .select(`
+          id,
+          product_type,
+          description,
+          store_name,
+          quantity,
+          estimated_value,
+          tracking_number,
+          courier,
+          notes,
+          invoice_url,
+          status,
+          created_at,
+          updated_at,
+          status_updated_at
+        `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
         

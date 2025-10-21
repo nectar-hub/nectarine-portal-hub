@@ -226,18 +226,6 @@ export const BuyRequestDetailsDialog = ({
             </Card>
           )}
 
-          {/* Admin Notes */}
-          {request.admin_notes && (
-            <Card>
-              <CardContent className="p-4">
-                <h4 className="font-medium mb-3 flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-primary" />
-                  Admin Notes
-                </h4>
-                <p className="text-sm text-muted-foreground">{request.admin_notes}</p>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Timeline */}
           <Card>

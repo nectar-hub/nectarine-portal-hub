@@ -74,7 +74,21 @@ const BuyForMe = () => {
       const { data, error } = await supabase
         .from('buy_requests')
         .select(`
-          *,
+          id,
+          product_name,
+          product_url,
+          store_name,
+          quantity,
+          product_price,
+          color,
+          size,
+          country_of_purchase,
+          delivery_deadline,
+          notes,
+          status,
+          created_at,
+          updated_at,
+          status_updated_at,
           items:buy_request_items(*)
         `)
         .eq('user_id', user.id)
