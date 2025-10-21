@@ -185,10 +185,10 @@ const MainNavigation = () => {
       {/* Mobile Navigation */}
       <MobileNav />
       
-      <div className="flex items-center space-x-4">
+      <div className="hidden lg:flex items-center space-x-4">
         {user ? (
           <>
-            <Button asChild variant="outline" className="hidden md:flex items-center gap-2">
+            <Button asChild variant="outline" className="items-center gap-2">
               <Link to="/dashboard/orders">Track Order</Link>
             </Button>
             <Button asChild variant="default" className="flex items-center gap-2">

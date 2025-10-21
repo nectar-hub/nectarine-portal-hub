@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
+import { Menu, LayoutDashboard } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const MobileNav = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, isAdmin } = useAuth();
 
   return (
     <div className="lg:hidden">
@@ -59,6 +61,37 @@ const MobileNav = () => {
             >
               Contact Us
             </a>
+            
+            <div className="pt-4 mt-4 border-t border-border space-y-3">
+              {user ? (
+                <>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link to="/dashboard/orders" onClick={() => setIsOpen(false)}>
+                      Track Order
+                    </Link>
+                  </Button>
+                  <Button asChild variant="default" className="w-full">
+                    <Link to={isAdmin ? "/admin" : "/dashboard"} onClick={() => setIsOpen(false)}>
+                      <LayoutDashboard className="h-4 w-4 mr-2" />
+                      Dashboard
+                    </Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link to="/register" onClick={() => setIsOpen(false)}>
+                      Register
+                    </Link>
+                  </Button>
+                  <Button asChild variant="default" className="w-full">
+                    <Link to="/login" onClick={() => setIsOpen(false)}>
+                      Login
+                    </Link>
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </SheetContent>
       </Sheet>
