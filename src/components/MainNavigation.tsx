@@ -25,9 +25,9 @@ const MainNavigation = () => {
   };
 
   return (
-    <div className="flex w-full items-center">
+    <div className="flex items-center justify-end flex-1 gap-4">
       {/* Desktop Navigation */}
-      <nav className="hidden lg:flex items-center space-x-8 mx-auto">
+      <nav className="hidden lg:flex items-center space-x-6 mr-auto">
             <a href="https://nectarinelogistics.com/" className="font-medium hover:text-nectarine-500 transition-colors">
               Home
             </a>
