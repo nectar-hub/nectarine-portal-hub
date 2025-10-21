@@ -2,46 +2,15 @@
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Package, Plus, ShoppingBag } from "lucide-react";
+import { Package, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { SelfPurchaseDetailsDialog } from "@/components/dashboard/SelfPurchaseDetailsDialog";
+import { SelfPurchaseForm } from "@/components/forms/SelfPurchaseForm";
 
-// Schema for self purchase with product type categories
-const selfPurchaseSchema = z.object({
-  product_type: z.string().min(1, "Product type is required"),
-  store_name: z.string().min(1, "Store name is required"),
-  quantity: z.number().int().positive("Quantity must be a positive number"),
-  estimated_value: z.number().positive("Value must be positive").optional(),
-  tracking_number: z.string().min(1, "Tracking number is required"),
-  courier: z.string().min(1, "Courier is required"),
-  notes: z.string().optional(),
-});
-
-// Product type options for the dropdown
-const PRODUCT_TYPES = [
-  "Cosmetics",
-  "Electronics", 
-  "Clothing & Fashion",
-  "Books & Media",
-  "Home & Garden",
-  "Sports & Outdoors",
-  "Health & Wellness",
-  "Toys & Games",
-  "Food & Beverages",
-  "Other"
-];
-
-type SelfPurchaseValues = z.infer<typeof selfPurchaseSchema>;
 
 const SelfPurchases = () => {
   const { toast } = useToast();
@@ -49,19 +18,7 @@ const SelfPurchases = () => {
   const [isAddingPurchase, setIsAddingPurchase] = useState(false);
   const [selectedPurchase, setSelectedPurchase] = useState(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
-
-  const form = useForm<SelfPurchaseValues>({
-    resolver: zodResolver(selfPurchaseSchema),
-    defaultValues: {
-      product_type: "",
-      store_name: "",
-      quantity: 1,
-      estimated_value: undefined,
-      tracking_number: "",
-      courier: "",
-      notes: "",
-    },
-  });
+  const [editingPurchase, setEditingPurchase] = useState<any>(null);
 
   const { data: selfPurchases, refetch } = useQuery({
     queryKey: ['self_purchases'],
@@ -107,68 +64,15 @@ const SelfPurchases = () => {
     };
   }, [user, refetch]);
 
-  const onSubmitSelfPurchase = async (values: SelfPurchaseValues) => {
-    try {
-      if (!user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to add a self purchase",
-          variant: "destructive",
-        });
-        return;
-      }
+  const handleFormSuccess = () => {
+    setIsAddingPurchase(false);
+    setEditingPurchase(null);
+    refetch();
+  };
 
-      // Insert the self purchase first  
-      const { data: createdSelfPurchase, error } = await supabase
-        .from('self_purchases')
-        .insert({
-          user_id: user.id,
-          product_type: values.product_type,
-          description: values.product_type, // Use product_type as description for compatibility
-          store_name: values.store_name,
-          quantity: values.quantity,
-          estimated_value: values.estimated_value,
-          tracking_number: values.tracking_number,
-          courier: values.courier,
-          notes: values.notes,
-        })
-        .select('id')
-        .single();
-
-      if (error) throw error;
-
-      // Create an order for this self purchase
-      if (createdSelfPurchase?.id) {
-        const { error: orderError } = await supabase
-          .from('orders')
-          .insert({
-            reference_id: createdSelfPurchase.id,
-            user_id: user.id,
-            order_type: 'self_purchase'
-          });
-
-        if (orderError) {
-          console.warn('Failed to create order for self purchase:', orderError);
-          // Don't throw here since the main self purchase was successful
-        }
-      }
-
-      toast({
-        title: "Success",
-        description: "Self purchase added successfully",
-      });
-
-      // Reset form and hide form
-      form.reset();
-      setIsAddingPurchase(false);
-      refetch();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to add self purchase",
-        variant: "destructive",
-      });
-    }
+  const handleFormCancel = () => {
+    setIsAddingPurchase(false);
+    setEditingPurchase(null);
   };
 
   const handlePurchaseClick = (purchase: any) => {
@@ -177,173 +81,60 @@ const SelfPurchases = () => {
     setIsDetailsDialogOpen(true);
   };
 
+  const handleEditPurchase = (purchase: any) => {
+    setEditingPurchase(purchase);
+    setIsAddingPurchase(true);
+    setIsDetailsDialogOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex flex-wrap justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Self Purchases</h1>
-            <p className="text-muted-foreground mt-1">Add and manage your self-purchased items</p>
+            <h1 className="text-3xl font-bold text-foreground">
+              {editingPurchase ? "Edit Self Purchase" : "Self Purchases"}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              {editingPurchase 
+                ? "Update your self purchase details below"
+                : "Add and manage your self-purchased items"
+              }
+            </p>
+            {editingPurchase && (
+              <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-md flex items-center justify-between">
+                <span className="text-sm text-blue-700 dark:text-blue-300">
+                  Editing: {editingPurchase.product_type}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setEditingPurchase(null);
+                    setIsAddingPurchase(false);
+                  }}
+                  className="text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100"
+                >
+                  Cancel Edit
+                </Button>
+              </div>
+            )}
           </div>
-          <Button onClick={() => setIsAddingPurchase(!isAddingPurchase)} className="mt-2 md:mt-0">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Self Purchase
-          </Button>
+          {!editingPurchase && (
+            <Button onClick={() => setIsAddingPurchase(!isAddingPurchase)} className="mt-2 md:mt-0">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Self Purchase
+            </Button>
+          )}
         </div>
 
         {isAddingPurchase && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <ShoppingBag className="mr-2 h-5 w-5 text-nectarine-600" />
-                Add Self Purchase
-              </CardTitle>
-              <CardDescription>
-                Record items you purchased yourself that need to be shipped
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmitSelfPurchase)} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="product_type"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Type of Products</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select product type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {PRODUCT_TYPES.map((type) => (
-                                <SelectItem key={type} value={type}>
-                                  {type}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="store_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Store/Shop/Supplier Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter store name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="quantity"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Quantity</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              placeholder="Enter quantity" 
-                              {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                              min={1}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="estimated_value"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Estimated Value (optional)</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              placeholder="Enter estimated value" 
-                              {...field}
-                              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                              step={0.01}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="tracking_number"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tracking Number</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter tracking number" required {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="courier"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Courier</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter courier name" required {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Additional Notes (optional)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Any additional notes" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="flex justify-end gap-2 pt-2">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => setIsAddingPurchase(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button type="submit">
-                      Submit Self Purchase
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
+          <SelfPurchaseForm
+            editingPurchase={editingPurchase}
+            onSuccess={handleFormSuccess}
+            onCancel={handleFormCancel}
+          />
         )}
 
         <Card>
@@ -407,6 +198,7 @@ const SelfPurchases = () => {
           setIsDetailsDialogOpen(open);
           if (!open) setSelectedPurchase(null);
         }}
+        onEdit={handleEditPurchase}
       />
     </DashboardLayout>
   );

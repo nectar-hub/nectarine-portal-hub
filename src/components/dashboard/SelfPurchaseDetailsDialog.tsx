@@ -1,8 +1,9 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Package, Store, Truck, Calendar, FileText, DollarSign, Hash } from "lucide-react";
+import { Package, Store, Truck, Calendar, FileText, DollarSign, Hash, Edit } from "lucide-react";
 import { format } from "date-fns";
 
 interface SelfPurchase {
@@ -25,6 +26,7 @@ interface SelfPurchaseDetailsDialogProps {
   purchase: SelfPurchase | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEdit?: (purchase: SelfPurchase) => void;
 }
 
 const getStatusColor = (status: string) => {
@@ -57,17 +59,33 @@ export const SelfPurchaseDetailsDialog = ({
   purchase,
   open,
   onOpenChange,
+  onEdit,
 }: SelfPurchaseDetailsDialogProps) => {
   if (!purchase) return null;
+
+  const canEdit = purchase.status === 'pending';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-primary" />
-            Self Purchase Details
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-primary" />
+              Self Purchase Details
+            </DialogTitle>
+            {canEdit && onEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEdit(purchase)}
+                className="flex items-center gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                Edit Purchase
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
         <div className="space-y-6">
