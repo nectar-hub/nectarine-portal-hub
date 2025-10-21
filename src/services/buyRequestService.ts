@@ -136,3 +136,107 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
   
   return createdOrder.id;
 }
+
+export async function updateBuyRequest(
+  buyRequestId: string,
+  values: BuyRequestFormValues,
+  userId: string
+) {
+  let screenshotUrl = null;
+  
+  // Handle file upload if there's a new screenshot
+  if (values.screenshot && values.screenshot.length > 0) {
+    try {
+      const file = values.screenshot[0];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `${userId}/buy-requests/${fileName}`;
+      
+      const { data, error } = await supabase.storage
+        .from("buy-request-screenshots")
+        .upload(filePath, file);
+      
+      if (error) throw error;
+      
+      if (data) {
+        const { data: urlData } = supabase
+          .storage
+          .from("buy-request-screenshots")
+          .getPublicUrl(filePath);
+          
+        screenshotUrl = urlData.publicUrl;
+      }
+    } catch (error) {
+      console.error("Screenshot upload failed:", error);
+    }
+  }
+
+  console.log("[BUY SERVICE] Updating buy request:", buyRequestId);
+  
+  const firstItem = values.items[0];
+  
+  let notesWithDetails = values.notes || "";
+  if (firstItem.color || firstItem.size) {
+    notesWithDetails += `\n\nItem Details:\n`;
+    if (firstItem.color) notesWithDetails += `Color: ${firstItem.color}\n`;
+    if (firstItem.size) notesWithDetails += `Size: ${firstItem.size}\n`;
+  }
+  
+  const updateData: any = {
+    product_name: firstItem.productName,
+    product_url: firstItem.productUrl,
+    quantity: parseInt(firstItem.quantity),
+    product_price: firstItem.productPrice ? parseFloat(firstItem.productPrice) : null,
+    notes: notesWithDetails,
+    country_of_purchase: values.country || "Default",
+    store_name: firstItem.storeName || "Not specified",
+    color: firstItem.color || null,
+    size: firstItem.size || null
+  };
+  
+  if (screenshotUrl) {
+    updateData.screenshot_url = screenshotUrl;
+  }
+  
+  const { error: updateError } = await supabase
+    .from("buy_requests")
+    .update(updateData)
+    .eq('id', buyRequestId)
+    .eq('user_id', userId);
+
+  if (updateError) {
+    console.error("[BUY SERVICE] Buy request update error:", updateError);
+    throw new Error(`Update error: ${updateError.message || "Unknown error occurred"}`);
+  }
+  
+  // Delete all existing additional items
+  await supabase
+    .from("buy_request_items")
+    .delete()
+    .eq('buy_request_id', buyRequestId);
+  
+  // Insert new additional items if there are more than one item
+  if (values.items.length > 1) {
+    const additionalItems = values.items.slice(1);
+    const itemsToInsert = additionalItems.map(item => ({
+      buy_request_id: buyRequestId,
+      product_name: item.productName,
+      product_url: item.productUrl,
+      quantity: parseInt(item.quantity),
+      price: item.productPrice ? parseFloat(item.productPrice) : null,
+      store_name: item.storeName || "Not specified",
+      color: item.color || null,
+      size: item.size || null
+    }));
+    
+    const { error: itemsError } = await supabase
+      .from("buy_request_items")
+      .insert(itemsToInsert);
+    
+    if (itemsError) {
+      console.error("[BUY SERVICE] Error updating items:", itemsError);
+    }
+  }
+  
+  console.log("[BUY SERVICE] Buy request updated successfully");
+}

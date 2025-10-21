@@ -1,7 +1,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { ShoppingCart, Store, Globe, Calendar, FileText, DollarSign, Hash, Palette, Ruler, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ShoppingCart, Store, Globe, Calendar, FileText, DollarSign, Hash, Palette, Ruler, ExternalLink, Edit } from "lucide-react";
 import { format } from "date-fns";
 
 interface BuyRequest {
@@ -21,12 +22,23 @@ interface BuyRequest {
   updated_at: string;
   status_updated_at?: string;
   admin_notes?: string;
+  items?: Array<{
+    id: string;
+    product_name: string;
+    product_url?: string;
+    store_name?: string;
+    quantity: number;
+    price?: number;
+    color?: string;
+    size?: string;
+  }>;
 }
 
 interface BuyRequestDetailsDialogProps {
   request: BuyRequest | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEdit?: (request: BuyRequest) => void;
 }
 
 const getStatusColor = (status: string) => {
@@ -56,17 +68,33 @@ export const BuyRequestDetailsDialog = ({
   request,
   open,
   onOpenChange,
+  onEdit,
 }: BuyRequestDetailsDialogProps) => {
   if (!request) return null;
+
+  const canEdit = request.status === 'pending';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5 text-primary" />
-            Buy Request Details
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5 text-primary" />
+              Buy Request Details
+            </DialogTitle>
+            {canEdit && onEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEdit(request)}
+                className="flex items-center gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                Edit Request
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
         <div className="space-y-6">

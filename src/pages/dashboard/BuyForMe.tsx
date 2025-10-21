@@ -8,8 +8,10 @@ import { BuyRequestForm } from "@/components/forms/BuyRequestForm";
 import { BuyRequestDetailsDialog } from "@/components/dashboard/BuyRequestDetailsDialog";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ShoppingCart, Calendar, Store } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "@/hooks/use-toast";
 
 interface BuyRequest {
   id: string;
@@ -28,6 +30,16 @@ interface BuyRequest {
   updated_at: string;
   status_updated_at?: string;
   admin_notes?: string;
+  items?: Array<{
+    id: string;
+    product_name: string;
+    product_url?: string;
+    store_name?: string;
+    quantity: number;
+    price?: number;
+    color?: string;
+    size?: string;
+  }>;
 }
 
 const getStatusColor = (status: string) => {
@@ -53,6 +65,7 @@ const BuyForMe = () => {
   const { user } = useAuth();
   const [selectedRequest, setSelectedRequest] = useState<BuyRequest | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [editingRequest, setEditingRequest] = useState<BuyRequest | null>(null);
 
   const { data: buyRequests, refetch } = useQuery({
     queryKey: ['buy_requests'],
@@ -60,7 +73,10 @@ const BuyForMe = () => {
       if (!user) return [];
       const { data, error } = await supabase
         .from('buy_requests')
-        .select('*')
+        .select(`
+          *,
+          items:buy_request_items(*)
+        `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(5);
@@ -105,17 +121,56 @@ const BuyForMe = () => {
     setIsDetailsDialogOpen(true);
   };
 
+  const handleEditRequest = (request: BuyRequest) => {
+    setEditingRequest(request);
+    setIsDetailsDialogOpen(false);
+    // Scroll to form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleEditComplete = () => {
+    setEditingRequest(null);
+    refetch();
+    toast({
+      title: "Success",
+      description: "Your request has been updated"
+    });
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Buy For Me Request</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            {editingRequest ? "Edit Buy Request" : "Buy For Me Request"}
+          </h1>
           <p className="text-muted-foreground mt-1">
-            Fill in the form below to request us to purchase items for you. You can add multiple items to a single order.
+            {editingRequest 
+              ? "Update your request details below. You can modify items, quantities, and other information."
+              : "Fill in the form below to request us to purchase items for you. You can add multiple items to a single order."
+            }
           </p>
+          {editingRequest && (
+            <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-md flex items-center justify-between">
+              <span className="text-sm text-blue-700 dark:text-blue-300">
+                Editing request: {editingRequest.product_name}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditingRequest(null)}
+                className="text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100"
+              >
+                Cancel Edit
+              </Button>
+            </div>
+          )}
         </div>
 
-        <BuyRequestForm />
+        <BuyRequestForm 
+          editingRequest={editingRequest || undefined} 
+          onEditComplete={handleEditComplete}
+        />
 
         {/* Recent Buy Requests */}
         <Card>
@@ -181,6 +236,7 @@ const BuyForMe = () => {
           setIsDetailsDialogOpen(open);
           if (!open) setSelectedRequest(null);
         }}
+        onEdit={handleEditRequest}
       />
     </DashboardLayout>
   );

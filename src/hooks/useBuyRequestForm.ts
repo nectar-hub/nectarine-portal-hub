@@ -7,8 +7,9 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
 import { BuyRequestFormValues, BuyRequestItem } from "@/types/buyRequest";
-import { createBuyRequest } from "@/services/buyRequestService";
+import { createBuyRequest, updateBuyRequest } from "@/services/buyRequestService";
 import { useAuth } from "@/context/AuthContext";
+import { useEffect } from "react";
 
 // Define the form schema to match what BuyRequestOrderDetails expects
 const formSchema = z.object({
@@ -17,7 +18,34 @@ const formSchema = z.object({
   country: z.string().optional(), // Add country field to the schema
 });
 
-export function useBuyRequestForm() {
+interface UseBuyRequestFormProps {
+  editingRequest?: {
+    id: string;
+    product_name: string;
+    product_url?: string;
+    store_name?: string;
+    quantity: number;
+    product_price?: number;
+    color?: string;
+    size?: string;
+    country_of_purchase: string;
+    notes?: string;
+    screenshot_url?: string;
+    items?: Array<{
+      id: string;
+      product_name: string;
+      product_url?: string;
+      store_name?: string;
+      quantity: number;
+      price?: number;
+      color?: string;
+      size?: string;
+    }>;
+  };
+  onEditComplete?: () => void;
+}
+
+export function useBuyRequestForm({ editingRequest, onEditComplete }: UseBuyRequestFormProps = {}) {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,11 +73,59 @@ export function useBuyRequestForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      notes: "",
+      notes: editingRequest?.notes || "",
       screenshot: undefined,
-      country: "Default", // Add default country value
+      country: editingRequest?.country_of_purchase || "Default",
     },
   });
+
+  // Load editing data when editingRequest changes
+  useEffect(() => {
+    if (editingRequest) {
+      // Build items array from the main request and additional items
+      const allItems: BuyRequestItem[] = [
+        {
+          id: uuidv4(),
+          productName: editingRequest.product_name,
+          productUrl: editingRequest.product_url || "",
+          quantity: String(editingRequest.quantity),
+          productPrice: editingRequest.product_price ? String(editingRequest.product_price) : "",
+          color: editingRequest.color || "",
+          size: editingRequest.size || "",
+          storeName: editingRequest.store_name || ""
+        }
+      ];
+
+      if (editingRequest.items && editingRequest.items.length > 0) {
+        editingRequest.items.forEach(item => {
+          allItems.push({
+            id: uuidv4(),
+            productName: item.product_name,
+            productUrl: item.product_url || "",
+            quantity: String(item.quantity),
+            productPrice: item.price ? String(item.price) : "",
+            color: item.color || "",
+            size: item.size || "",
+            storeName: item.store_name || ""
+          });
+        });
+      }
+
+      setItems(allItems);
+      
+      // Open the first item by default
+      const openState: Record<string, boolean> = {};
+      openState[allItems[0].id] = true;
+      setOpenItems(openState);
+
+      // Update form values
+      form.reset({
+        notes: editingRequest.notes || "",
+        screenshot: undefined,
+        country: editingRequest.country_of_purchase || "Default"
+      });
+    }
+  }, [editingRequest]);
 
   const addNewItem = () => {
     const newItemId = uuidv4();
@@ -175,30 +251,46 @@ export function useBuyRequestForm() {
         items,
         notes: values.notes,
         screenshot: values.screenshot,
-        country: values.country // Include country in the form values
+        country: values.country
       };
       
-      await createBuyRequest(fullFormValues, user.id);
-      
-      toast({
-        title: "Request submitted",
-        description: "Your 'Buy For Me' request has been submitted successfully."
-      });
-      
-      // Reset form after successful submission
-      form.reset();
-      setItems([{
-        id: uuidv4(),
-        productName: "",
-        productUrl: "",
-        quantity: "1",
-        productPrice: "",
-        color: "",
-        size: ""
-      }]);
-      
-      // Redirect to dashboard
-      navigate("/dashboard/orders");
+      if (editingRequest) {
+        // Update existing request
+        await updateBuyRequest(editingRequest.id, fullFormValues, user.id);
+        
+        toast({
+          title: "Request updated",
+          description: "Your 'Buy For Me' request has been updated successfully."
+        });
+        
+        if (onEditComplete) {
+          onEditComplete();
+        }
+      } else {
+        // Create new request
+        await createBuyRequest(fullFormValues, user.id);
+        
+        toast({
+          title: "Request submitted",
+          description: "Your 'Buy For Me' request has been submitted successfully."
+        });
+        
+        // Reset form after successful submission
+        form.reset();
+        setItems([{
+          id: uuidv4(),
+          productName: "",
+          productUrl: "",
+          quantity: "1",
+          productPrice: "",
+          color: "",
+          size: "",
+          storeName: ""
+        }]);
+        
+        // Redirect to dashboard
+        navigate("/dashboard/orders");
+      }
       
     } catch (error: any) {
       console.error("[BUY REQUEST FORM] Error submitting form:", error);
