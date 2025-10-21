@@ -21,36 +21,36 @@ const Footer = () => {
     <footer className="bg-gray-900 text-white pt-16 pb-8">
       <div className="container">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 md:gap-8">
           {/* Company Info - Updated to place text next to logo */}
           <div className="lg:col-span-2">
-            <div className="flex items-start gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row items-start gap-4 mb-6">
               <img 
                 src="/lovable-uploads/fb9c7a09-84af-4223-aa99-d2c960cbdd8f.png" 
                 alt="Nectarine Logistics" 
-                className="h-auto w-[100px] object-contain"
+                className="h-auto w-[100px] sm:w-[100px] object-contain flex-shrink-0"
               />
-              <p className="text-gray-300">
+              <p className="text-gray-300 text-sm sm:text-base">
                 Your trusted partner for global logistics solutions. We connect businesses 
                 and people across borders with reliable, efficient shipping services.
               </p>
             </div>
             <div className="space-y-3">
-              <div className="flex items-center space-x-3">
-                <MapPin size={18} className="text-nectarine-400" />
-                <span className="text-gray-300">Unit 1, 7th Floor, Tanzanite Park, Ursiro Street, Victoria, Dar es Salaam, Tanzania</span>
+              <div className="flex items-start space-x-3">
+                <MapPin size={18} className="text-nectarine-400 flex-shrink-0 mt-1" />
+                <span className="text-gray-300 text-sm">Unit 1, 7th Floor, Tanzanite Park, Ursiro Street, Victoria, Dar es Salaam, Tanzania</span>
               </div>
               <div className="flex items-center space-x-3">
-                <Phone size={18} className="text-nectarine-400" />
-                <span className="text-gray-300">+255 744 484 271</span>
+                <Phone size={18} className="text-nectarine-400 flex-shrink-0" />
+                <span className="text-gray-300 text-sm">+255 744 484 271</span>
               </div>
               <div className="flex items-center space-x-3">
-                <Mail size={18} className="text-nectarine-400" />
-                <span className="text-gray-300">info@nectarinelogistics.com</span>
+                <Mail size={18} className="text-nectarine-400 flex-shrink-0" />
+                <span className="text-gray-300 text-sm break-all">info@nectarinelogistics.com</span>
               </div>
               <div className="flex items-center space-x-3">
-                <Mail size={18} className="text-nectarine-400" />
-                <span className="text-gray-300">sales@nectarinelogistics.com</span>
+                <Mail size={18} className="text-nectarine-400 flex-shrink-0" />
+                <span className="text-gray-300 text-sm break-all">sales@nectarinelogistics.com</span>
               </div>
             </div>
             <div className="mt-6 flex space-x-4">

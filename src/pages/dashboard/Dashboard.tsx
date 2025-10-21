@@ -24,10 +24,10 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6 p-4 sm:p-0">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Welcome, {profile?.full_name || user?.email?.split('@')[0] || 'User'}!</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Welcome, {profile?.full_name || user?.email?.split('@')[0] || 'User'}!</h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             {isAdmin 
               ? "Admin dashboard - Manage all system operations from here."
               : "Manage your shipping and purchasing requests all in one place."}
@@ -36,7 +36,7 @@ const Dashboard = () => {
 
         {isAdmin ? (
           // Admin dashboard view
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <Card className="bg-gradient-to-br from-blue-50 to-white">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center text-lg">
@@ -87,7 +87,7 @@ const Dashboard = () => {
           </div>
         ) : (
           // Regular user dashboard view 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <Card className="bg-gradient-to-br from-nectarine-50 to-white">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center text-lg">
@@ -138,7 +138,7 @@ const Dashboard = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {isAdmin ? (
             // Admin specific content
             <>
