@@ -134,13 +134,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const register = async (userData: RegisterData) => {
     setLoading(true);
     try {
+      // Check if email already exists
+      const { data: existingEmailUser, error: emailCheckError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', userData.email)
+        .maybeSingle();
+
+      if (emailCheckError && emailCheckError.code !== 'PGRST116') {
+        throw emailCheckError;
+      }
+
+      if (existingEmailUser) {
+        throw new Error('An account with this email already exists');
+      }
+
+      // Check if phone already exists
+      const { data: existingPhoneUser, error: phoneCheckError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('phone', userData.phone)
+        .maybeSingle();
+
+      if (phoneCheckError && phoneCheckError.code !== 'PGRST116') {
+        throw phoneCheckError;
+      }
+
+      if (existingPhoneUser) {
+        throw new Error('An account with this phone number already exists');
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
-            full_name: userData.fullName,
+            fullName: userData.fullName,
             phone: userData.phone,
           },
         },
