@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Package } from 'lucide-react';
+import { Plus, Package, Pencil } from 'lucide-react';
 import ConsignmentFormDialog from './ConsignmentFormDialog';
 import { Badge } from '@/components/ui/badge';
 
@@ -14,6 +14,7 @@ interface ConsignmentsListProps {
 
 const ConsignmentsList = ({ onSelectConsignment, selectedConsignmentId }: ConsignmentsListProps) => {
   const [showDialog, setShowDialog] = useState(false);
+  const [editingConsignment, setEditingConsignment] = useState<any>(null);
 
   const { data: consignments, isLoading, refetch } = useQuery({
     queryKey: ['air-cargo-consignments'],
@@ -112,39 +113,69 @@ const ConsignmentsList = ({ onSelectConsignment, selectedConsignmentId }: Consig
           {consignments.map((consignment) => (
             <Card
               key={consignment.id}
-              className={`p-4 cursor-pointer transition-colors hover:bg-accent ${
+              className={`p-4 transition-colors ${
                 selectedConsignmentId === consignment.id ? 'border-primary' : ''
               }`}
-              onClick={() => onSelectConsignment(consignment.id)}
             >
               <div className="space-y-2">
                 <div className="flex items-start justify-between">
-                  <h3 className="font-semibold">{consignment.consignment_name}</h3>
-                  <Badge variant={consignment.status === 'OPEN' ? 'default' : 'secondary'}>
-                    {consignment.status}
-                  </Badge>
+                  <h3 
+                    className="font-semibold cursor-pointer hover:text-primary flex-1"
+                    onClick={() => onSelectConsignment(consignment.id)}
+                  >
+                    {consignment.consignment_name}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingConsignment(consignment);
+                        setShowDialog(true);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Badge variant={consignment.status === 'OPEN' ? 'default' : 'secondary'}>
+                      {consignment.status}
+                    </Badge>
+                  </div>
                 </div>
-                {consignment.consignment_number && (
-                  <p className="text-sm text-muted-foreground">
-                    #{consignment.consignment_number}
-                  </p>
-                )}
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Package className="h-4 w-4" />
-                  <span>{shipmentCounts?.[consignment.id] || 0} shipments</span>
+                <div 
+                  className="cursor-pointer"
+                  onClick={() => onSelectConsignment(consignment.id)}
+                >
+                  {consignment.consignment_number && (
+                    <p className="text-sm text-muted-foreground">
+                      #{consignment.consignment_number}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Package className="h-4 w-4" />
+                    <span>{shipmentCounts?.[consignment.id] || 0} shipments</span>
+                  </div>
+                  {consignment.notes && (
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {consignment.notes}
+                    </p>
+                  )}
                 </div>
-                {consignment.notes && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {consignment.notes}
-                  </p>
-                )}
               </div>
             </Card>
           ))}
         </div>
       )}
 
-      <ConsignmentFormDialog open={showDialog} onOpenChange={setShowDialog} />
+      <ConsignmentFormDialog 
+        open={showDialog} 
+        onOpenChange={(open) => {
+          setShowDialog(open);
+          if (!open) setEditingConsignment(null);
+        }}
+        consignment={editingConsignment}
+      />
     </div>
   );
 };

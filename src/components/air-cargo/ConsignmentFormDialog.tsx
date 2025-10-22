@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -16,33 +16,72 @@ import { Textarea } from '@/components/ui/textarea';
 interface ConsignmentFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  consignment?: {
+    id: string;
+    consignment_name: string;
+    consignment_number: string | null;
+    notes: string | null;
+  } | null;
 }
 
-const ConsignmentFormDialog = ({ open, onOpenChange }: ConsignmentFormDialogProps) => {
+const ConsignmentFormDialog = ({ open, onOpenChange, consignment }: ConsignmentFormDialogProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    consignment_name: '',
-    consignment_number: '',
-    notes: '',
+    consignment_name: consignment?.consignment_name || '',
+    consignment_number: consignment?.consignment_number || '',
+    notes: consignment?.notes || '',
   });
+
+  // Update form data when consignment prop changes
+  useEffect(() => {
+    if (consignment) {
+      setFormData({
+        consignment_name: consignment.consignment_name,
+        consignment_number: consignment.consignment_number || '',
+        notes: consignment.notes || '',
+      });
+    } else {
+      setFormData({
+        consignment_name: '',
+        consignment_number: '',
+        notes: '',
+      });
+    }
+  }, [consignment]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { error } = await supabase
-        .from('air_cargo_consignments')
-        .insert([formData]);
+      if (consignment) {
+        // Update existing consignment
+        const { error } = await supabase
+          .from('air_cargo_consignments')
+          .update(formData)
+          .eq('id', consignment.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: 'Success',
-        description: 'Consignment created successfully',
-      });
+        toast({
+          title: 'Success',
+          description: 'Consignment updated successfully',
+        });
+      } else {
+        // Create new consignment
+        const { error } = await supabase
+          .from('air_cargo_consignments')
+          .insert([formData]);
+
+        if (error) throw error;
+
+        toast({
+          title: 'Success',
+          description: 'Consignment created successfully',
+        });
+      }
 
       queryClient.invalidateQueries({ queryKey: ['air-cargo-consignments'] });
       onOpenChange(false);
@@ -66,7 +105,7 @@ const ConsignmentFormDialog = ({ open, onOpenChange }: ConsignmentFormDialogProp
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Consignment</DialogTitle>
+          <DialogTitle>{consignment ? 'Edit Consignment' : 'Create New Consignment'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -116,7 +155,7 @@ const ConsignmentFormDialog = ({ open, onOpenChange }: ConsignmentFormDialogProp
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Consignment'}
+              {loading ? (consignment ? 'Updating...' : 'Creating...') : (consignment ? 'Update Consignment' : 'Create Consignment')}
             </Button>
           </div>
         </form>
