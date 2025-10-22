@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Lock, LockOpen } from 'lucide-react';
+import { Lock, LockOpen, Check, ChevronsUpDown } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -33,6 +33,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 
 const shipmentSchema = z.object({
   date_received: z.string(),
@@ -90,6 +93,7 @@ type ShipmentFormDialogProps = {
 
 const ShipmentFormDialog = ({ open, onOpenChange, clients, shipment, consignmentId }: ShipmentFormDialogProps) => {
   const queryClient = useQueryClient();
+  const [clientSearchOpen, setClientSearchOpen] = useState(false);
 
   const form = useForm<ShipmentFormData>({
     resolver: zodResolver(shipmentSchema),
@@ -198,22 +202,57 @@ const ShipmentFormDialog = ({ open, onOpenChange, clients, shipment, consignment
                 control={form.control}
                 name="client_id"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Client *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select client" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {clients.map((client) => (
-                          <SelectItem key={client.id} value={client.id}>
-                            {client.client_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={clientSearchOpen} onOpenChange={setClientSearchOpen}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                              "w-full justify-between",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value
+                              ? clients.find((client) => client.id === field.value)?.client_name
+                              : "Search client..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput placeholder="Search client..." />
+                          <CommandList>
+                            <CommandEmpty>No client found.</CommandEmpty>
+                            <CommandGroup>
+                              {clients.map((client) => (
+                                <CommandItem
+                                  key={client.id}
+                                  value={client.client_name}
+                                  onSelect={() => {
+                                    form.setValue("client_id", client.id);
+                                    setClientSearchOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      client.id === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {client.client_name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
