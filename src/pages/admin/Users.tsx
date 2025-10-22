@@ -41,6 +41,29 @@ const Users = () => {
   useEffect(() => {
     if (isAdmin) {
       fetchUsers();
+
+      // Set up real-time subscription for user changes
+      const channel = supabase
+        .channel('profiles-changes')
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'profiles' },
+          () => {
+            console.log('Profiles changed, refetching...');
+            fetchUsers();
+          }
+        )
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'user_roles' },
+          () => {
+            console.log('User roles changed, refetching...');
+            fetchUsers();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [isAdmin]);
 
