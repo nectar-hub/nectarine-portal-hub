@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
@@ -15,7 +15,7 @@ interface ConsignmentsListProps {
 const ConsignmentsList = ({ onSelectConsignment, selectedConsignmentId }: ConsignmentsListProps) => {
   const [showDialog, setShowDialog] = useState(false);
 
-  const { data: consignments, isLoading } = useQuery({
+  const { data: consignments, isLoading, refetch } = useQuery({
     queryKey: ['air-cargo-consignments'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -28,7 +28,7 @@ const ConsignmentsList = ({ onSelectConsignment, selectedConsignmentId }: Consig
     },
   });
 
-  const { data: shipmentCounts } = useQuery({
+  const { data: shipmentCounts, refetch: refetchCounts } = useQuery({
     queryKey: ['air-cargo-shipments-counts'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -47,6 +47,48 @@ const ConsignmentsList = ({ onSelectConsignment, selectedConsignmentId }: Consig
       return counts;
     },
   });
+
+  // Real-time subscriptions
+  useEffect(() => {
+    console.log('[CONSIGNMENTS REALTIME] Setting up subscriptions');
+
+    const consignmentsChannel = supabase
+      .channel('consignments_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'air_cargo_consignments'
+        },
+        (payload) => {
+          console.log('[CONSIGNMENTS REALTIME] Consignment change detected:', payload);
+          refetch();
+        }
+      )
+      .subscribe();
+
+    const shipmentsChannel = supabase
+      .channel('consignments_shipments_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'air_cargo_shipments'
+        },
+        (payload) => {
+          console.log('[CONSIGNMENTS REALTIME] Shipment change detected:', payload);
+          refetchCounts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(consignmentsChannel);
+      supabase.removeChannel(shipmentsChannel);
+    };
+  }, [refetch, refetchCounts]);
 
   return (
     <div className="space-y-4">

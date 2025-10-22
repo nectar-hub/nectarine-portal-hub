@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,7 +68,7 @@ const AirCargoSheet = ({ consignmentId }: AirCargoSheetProps) => {
     },
   });
 
-  const { data: shipments = [], isLoading } = useQuery({
+  const { data: shipments = [], isLoading, refetch } = useQuery({
     queryKey: ['air-cargo-shipments', consignmentId],
     queryFn: async () => {
       let query = supabase
@@ -87,6 +87,31 @@ const AirCargoSheet = ({ consignmentId }: AirCargoSheetProps) => {
       return data as Shipment[];
     },
   });
+
+  // Real-time subscription
+  useEffect(() => {
+    console.log('[SHIPMENTS REALTIME] Setting up subscription');
+
+    const shipmentsChannel = supabase
+      .channel('shipments_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'air_cargo_shipments'
+        },
+        (payload) => {
+          console.log('[SHIPMENTS REALTIME] Shipment change detected:', payload);
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(shipmentsChannel);
+    };
+  }, [refetch]);
 
   const filteredShipments = useMemo(() => {
     return shipments.filter(shipment => {

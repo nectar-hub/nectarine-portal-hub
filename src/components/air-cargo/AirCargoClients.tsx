@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,7 @@ const AirCargoClients = () => {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const queryClient = useQueryClient();
 
-  const { data: clients = [], isLoading } = useQuery({
+  const { data: clients = [], isLoading, refetch } = useQuery({
     queryKey: ['air-cargo-clients'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -42,6 +42,31 @@ const AirCargoClients = () => {
       return data as Client[];
     },
   });
+
+  // Real-time subscription
+  useEffect(() => {
+    console.log('[CLIENTS REALTIME] Setting up subscription');
+
+    const clientsChannel = supabase
+      .channel('clients_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'air_cargo_clients'
+        },
+        (payload) => {
+          console.log('[CLIENTS REALTIME] Client change detected:', payload);
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(clientsChannel);
+    };
+  }, [refetch]);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
