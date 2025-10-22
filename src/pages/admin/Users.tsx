@@ -78,12 +78,35 @@ const Users = () => {
   const toggleAdminStatus = async (userId: string, currentStatus: boolean) => {
     try {
       setIsUpdating(true);
-      const { error } = await supabase
+      
+      // Update profiles table
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({ is_admin: !currentStatus })
         .eq('id', userId);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Update user_roles table
+      if (!currentStatus) {
+        // Adding admin role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({ user_id: userId, role: 'admin' });
+        
+        if (roleError && roleError.code !== '23505') { // Ignore duplicate key error
+          throw roleError;
+        }
+      } else {
+        // Removing admin role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', userId)
+          .eq('role', 'admin');
+        
+        if (roleError) throw roleError;
+      }
 
       // Update local state
       setUsers(users.map(user => 
