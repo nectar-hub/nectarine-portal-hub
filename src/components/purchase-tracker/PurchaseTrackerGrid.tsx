@@ -150,10 +150,11 @@ const PurchaseTrackerGrid = ({
       width: 120,
       resizable: true,
       renderCell: ({ row }) => {
-        const currency = REGION_CURRENCIES[row.from_region];
+        const currency = REGION_CURRENCIES[row.from_region as keyof typeof REGION_CURRENCIES];
+        const symbol = currency?.symbol ?? '';
         return (
           <span>
-            {currency.symbol}
+            {symbol}
             {Number(row.amount ?? 0).toFixed(2)}
           </span>
         );
@@ -189,7 +190,7 @@ const PurchaseTrackerGrid = ({
       width: 130,
       resizable: true,
       renderCell: ({ row }) => (
-        <Badge className={`${PURCHASE_STATUS_COLORS[row.status]} text-white`}>
+        <Badge className={`${PURCHASE_STATUS_COLORS[row.status as keyof typeof PURCHASE_STATUS_COLORS] ?? ''} text-white`}>
           {row.status}
         </Badge>
       ),
