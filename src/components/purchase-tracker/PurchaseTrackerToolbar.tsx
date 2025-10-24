@@ -118,11 +118,11 @@ const PurchaseTrackerToolbar = ({
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4">
           <Select
-            value={filters.region || ''}
+            value={filters.region || 'all'}
             onValueChange={(value) =>
               onFiltersChange({
                 ...filters,
-                region: value as any,
+                region: value === 'all' ? undefined : (value as any),
               })
             }
           >
@@ -130,7 +130,7 @@ const PurchaseTrackerToolbar = ({
               <SelectValue placeholder="All Regions" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Regions</SelectItem>
+              <SelectItem value="all">All Regions</SelectItem>
               <SelectItem value="UK">UK</SelectItem>
               <SelectItem value="US">US</SelectItem>
               <SelectItem value="UAE">UAE</SelectItem>
@@ -141,11 +141,11 @@ const PurchaseTrackerToolbar = ({
           </Select>
 
           <Select
-            value={filters.status || ''}
+            value={filters.status || 'all'}
             onValueChange={(value) =>
               onFiltersChange({
                 ...filters,
-                status: value as any,
+                status: value === 'all' ? undefined : (value as any),
               })
             }
           >
@@ -153,7 +153,7 @@ const PurchaseTrackerToolbar = ({
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Status</SelectItem>
+              <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="PENDING">PENDING</SelectItem>
               <SelectItem value="ORDERED">ORDERED</SelectItem>
               <SelectItem value="RECEIVED">RECEIVED</SelectItem>
