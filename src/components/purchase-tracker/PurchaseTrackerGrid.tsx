@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { DataGrid } from 'react-data-grid';
 import type { Column } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
@@ -154,7 +154,7 @@ const PurchaseTrackerGrid = ({
         return (
           <span>
             {currency.symbol}
-            {row.amount?.toFixed(2) || '0.00'}
+            {Number(row.amount ?? 0).toFixed(2)}
           </span>
         );
       },
