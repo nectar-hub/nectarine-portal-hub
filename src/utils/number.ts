@@ -4,3 +4,12 @@ export function toNumber(value: unknown, fallback = 0): number {
   const n = parseFloat(String(value).replace(/,/g, ''));
   return Number.isFinite(n) ? n : fallback;
 }
+
+export function toFixedSafe(value: unknown, digits = 2): string {
+  const n = toNumber(value, 0);
+  try {
+    return n.toFixed(digits);
+  } catch {
+    return (0).toFixed(digits);
+  }
+}

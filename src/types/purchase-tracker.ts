@@ -47,18 +47,18 @@ export interface PurchaseFilters {
 
 export const PURCHASE_STATUS_COLORS: Record<PurchaseStatus, string> = {
   PENDING: 'bg-gray-500',
-  ORDERED: 'bg-blue-500',
-  RECEIVED: 'bg-teal-500',
-  'IN TRANSIT': 'bg-purple-500',
+  ORDERED: 'bg-blue-600',
+  RECEIVED: 'bg-emerald-600',
+  'IN TRANSIT': 'bg-purple-600',
   READY: 'bg-orange-500',
-  DELIVERED: 'bg-green-500',
-  CANCELLED: 'bg-red-500',
+  DELIVERED: 'bg-green-600',
+  CANCELLED: 'bg-red-600',
 };
 
 export const REGION_CURRENCIES: Record<PurchaseRegion, { symbol: string; code: string }> = {
   UK: { symbol: '£', code: 'GBP' },
   US: { symbol: '$', code: 'USD' },
-  UAE: { symbol: 'د.إ', code: 'AED' },
+  UAE: { symbol: 'AED ', code: 'AED' },
   CN: { symbol: '¥', code: 'CNY' },
   EU: { symbol: '€', code: 'EUR' },
   AU: { symbol: 'A$', code: 'AUD' },

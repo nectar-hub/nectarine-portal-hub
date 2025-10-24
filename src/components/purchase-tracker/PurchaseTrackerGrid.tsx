@@ -56,9 +56,21 @@ const PurchaseTrackerGrid = ({
   const handleDuplicate = async (purchase: PurchaseTracker) => {
     try {
       const { id, created_at, updated_at, created_by, updated_by, client_name, ...data } = purchase;
+      const dup = {
+        ...data,
+        invoice_no: data.invoice_no ?? null,
+        store_name: data.store_name ?? null,
+        amount: data.amount ?? null,
+        dop: data.dop ?? null,
+        store_order_no: data.store_order_no ?? null,
+        purchased_by: data.purchased_by ?? null,
+        dod: data.dod ?? null,
+        remarks: data.remarks ?? null,
+        source_link: data.source_link ?? null,
+      };
       const { error } = await supabase
         .from('purchase_tracker')
-        .insert([data]);
+        .insert([dup]);
 
       if (error) throw error;
 
@@ -151,12 +163,13 @@ const PurchaseTrackerGrid = ({
       width: 120,
       resizable: true,
       renderCell: ({ row }) => {
-        const currency = REGION_CURRENCIES[row.from_region as keyof typeof REGION_CURRENCIES];
-        const symbol = currency?.symbol ?? '';
+        const regionKey = String(row?.from_region ?? '').toUpperCase() as keyof typeof REGION_CURRENCIES;
+        const currency = REGION_CURRENCIES[regionKey] ?? { symbol: '', code: 'USD' };
+        const amount = toNumber(row?.amount);
         return (
           <span>
-            {symbol}
-            {Number(row.amount ?? 0).toFixed(2)}
+            {currency.symbol}
+            {amount.toFixed(2)}
           </span>
         );
       },
@@ -190,11 +203,15 @@ const PurchaseTrackerGrid = ({
       name: 'STATUS',
       width: 130,
       resizable: true,
-      renderCell: ({ row }) => (
-        <Badge className={`${PURCHASE_STATUS_COLORS[row.status as keyof typeof PURCHASE_STATUS_COLORS] ?? ''} text-white`}>
-          {row.status}
-        </Badge>
-      ),
+      renderCell: ({ row }) => {
+        const rawStatus = row?.status ?? 'PENDING';
+        const colorClass = PURCHASE_STATUS_COLORS[rawStatus as keyof typeof PURCHASE_STATUS_COLORS] ?? 'bg-gray-500';
+        return (
+          <Badge className={`${colorClass} text-white`}>
+            {String(rawStatus)}
+          </Badge>
+        );
+      },
     },
     {
       key: 'remarks',
@@ -275,7 +292,7 @@ const PurchaseTrackerGrid = ({
       <div style={{ height: '600px' }}>
         <DataGrid
           columns={columns}
-          rows={purchases}
+          rows={Array.isArray(purchases) ? purchases : []}
           rowKeyGetter={(row) => row.id}
           className="rdg-light"
           style={{ height: '100%' }}

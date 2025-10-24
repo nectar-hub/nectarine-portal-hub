@@ -19,6 +19,7 @@ import {
 import { PurchaseFilters, PurchaseTracker } from '@/types/purchase-tracker';
 import { toast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
+import { toFixedSafe } from '@/utils/number';
 
 interface PurchaseTrackerToolbarProps {
   filters: PurchaseFilters;
@@ -179,17 +180,17 @@ const PurchaseTrackerToolbar = ({
         <div className="flex gap-8 pt-4 border-t">
           <div>
             <p className="text-sm text-muted-foreground">Total QTY</p>
-            <p className="text-2xl font-bold">{totals.totalQty}</p>
+            <p className="text-2xl font-bold">{totals?.totalQty ?? 0}</p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Total Amount</p>
             <p className="text-2xl font-bold">
-              {totals.totalAmount.toFixed(2)}
+              {toFixedSafe(totals?.totalAmount, 2)}
             </p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Records</p>
-            <p className="text-2xl font-bold">{purchases.length}</p>
+            <p className="text-2xl font-bold">{purchases?.length ?? 0}</p>
           </div>
         </div>
       </CardContent>
