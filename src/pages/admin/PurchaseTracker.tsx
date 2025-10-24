@@ -10,7 +10,7 @@ import { PurchaseTrackerToolbar } from '@/components/purchase-tracker/PurchaseTr
 import { PurchaseTracker as PurchaseTrackerType } from '@/types/purchase-tracker';
 import { Loader2 } from 'lucide-react';
 import ErrorState from '@/components/admin/ErrorState';
-
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 const PurchaseTracker = () => {
   const { isAdmin } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
@@ -161,14 +161,27 @@ const PurchaseTracker = () => {
           />
 
           <div className="flex-1 min-h-0">
-            <PurchaseTrackerGrid
-              purchases={filteredPurchases}
-              clients={clients}
-              onRefresh={() => {
-                refetch();
-                refetchClients();
-              }}
-            />
+            <ErrorBoundary
+              fallback={
+                <ErrorState
+                  title="Failed to render purchases"
+                  message="There was a problem displaying the purchase grid."
+                  onRetry={() => {
+                    refetch();
+                    refetchClients();
+                  }}
+                />
+              }
+           >
+              <PurchaseTrackerGrid
+                purchases={filteredPurchases}
+                clients={clients}
+                onRefresh={() => {
+                  refetch();
+                  refetchClients();
+                }}
+              />
+            </ErrorBoundary>
           </div>
 
           {/* Footer with totals */}

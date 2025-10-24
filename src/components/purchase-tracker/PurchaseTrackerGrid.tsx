@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DataGrid, Column } from 'react-data-grid';
+import { DataGrid, type Column } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { PurchaseTracker, REGION_CURRENCIES, PURCHASE_STATUS_COLORS } from '@/types/purchase-tracker';
 import { Badge } from '@/components/ui/badge';
