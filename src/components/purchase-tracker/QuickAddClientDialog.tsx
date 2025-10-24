@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface QuickAddClientDialogProps {
   open: boolean;
@@ -14,6 +15,7 @@ interface QuickAddClientDialogProps {
 }
 
 export function QuickAddClientDialog({ open, onOpenChange, onClientAdded }: QuickAddClientDialogProps) {
+  const queryClient = useQueryClient();
   const [clientName, setClientName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [notes, setNotes] = useState('');
@@ -46,7 +48,10 @@ export function QuickAddClientDialog({ open, onOpenChange, onClientAdded }: Quic
       console.error(error);
     } else {
       toast.success('Client added successfully');
+      // Invalidate and refetch clients list globally
+      queryClient.invalidateQueries({ queryKey: ['air-cargo-clients'] });
       onClientAdded(data.id);
+      onOpenChange(false);
       setClientName('');
       setPhoneNumber('');
       setNotes('');

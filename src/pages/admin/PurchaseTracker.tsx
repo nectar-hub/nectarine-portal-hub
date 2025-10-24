@@ -44,7 +44,7 @@ const PurchaseTracker = () => {
   });
 
   // Fetch clients for filter dropdown
-  const { data: clients = [] } = useQuery({
+  const { data: clients = [], refetch: refetchClients } = useQuery({
     queryKey: ['air-cargo-clients'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -145,7 +145,10 @@ const PurchaseTracker = () => {
             <PurchaseTrackerGrid
               purchases={filteredPurchases}
               clients={clients}
-              onRefresh={refetch}
+              onRefresh={() => {
+                refetch();
+                refetchClients();
+              }}
             />
           </div>
 

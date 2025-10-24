@@ -76,7 +76,14 @@ export function PurchaseTrackerGrid({ purchases, clients, onRefresh }: PurchaseT
       name: 'INVOICE DATE',
       width: 130,
       resizable: true,
-      renderCell: ({ row }) => row.invoice_date ? format(new Date(row.invoice_date), 'dd-MMM-yyyy') : '',
+      renderCell: ({ row }) => {
+        if (!row.invoice_date) return '';
+        try {
+          return format(new Date(row.invoice_date), 'dd-MMM-yyyy');
+        } catch {
+          return row.invoice_date;
+        }
+      },
     },
     {
       key: 'invoice_no',
@@ -117,8 +124,9 @@ export function PurchaseTrackerGrid({ purchases, clients, onRefresh }: PurchaseT
       width: 120,
       resizable: true,
       renderCell: ({ row }) => {
-        const currency = REGION_CURRENCIES[row.from_region];
-        return row.amount ? `${currency.symbol}${row.amount.toFixed(2)}` : '';
+        if (!row.amount) return '';
+        const currency = REGION_CURRENCIES[row.from_region] || { symbol: '$', code: 'USD' };
+        return `${currency.symbol}${row.amount.toFixed(2)}`;
       },
     },
     {
@@ -126,7 +134,14 @@ export function PurchaseTrackerGrid({ purchases, clients, onRefresh }: PurchaseT
       name: 'DOP',
       width: 120,
       resizable: true,
-      renderCell: ({ row }) => row.dop ? format(new Date(row.dop), 'dd-MMM-yyyy') : '',
+      renderCell: ({ row }) => {
+        if (!row.dop) return '';
+        try {
+          return format(new Date(row.dop), 'dd-MMM-yyyy');
+        } catch {
+          return row.dop;
+        }
+      },
     },
     {
       key: 'store_order_no',
@@ -145,7 +160,14 @@ export function PurchaseTrackerGrid({ purchases, clients, onRefresh }: PurchaseT
       name: 'DOD',
       width: 120,
       resizable: true,
-      renderCell: ({ row }) => row.dod ? format(new Date(row.dod), 'dd-MMM-yyyy') : '',
+      renderCell: ({ row }) => {
+        if (!row.dod) return '';
+        try {
+          return format(new Date(row.dod), 'dd-MMM-yyyy');
+        } catch {
+          return row.dod;
+        }
+      },
     },
     {
       key: 'status',
@@ -154,7 +176,7 @@ export function PurchaseTrackerGrid({ purchases, clients, onRefresh }: PurchaseT
       resizable: true,
       renderCell: ({ row }) => (
         <Badge className={`${PURCHASE_STATUS_COLORS[row.status]} text-white`}>
-          {row.status.replace('_', ' ')}
+          {row.status.replace(/_/g, ' ')}
         </Badge>
       ),
     },

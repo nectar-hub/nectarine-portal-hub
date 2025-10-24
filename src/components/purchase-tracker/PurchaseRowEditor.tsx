@@ -16,7 +16,7 @@ import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QuickAddClientDialog } from './QuickAddClientDialog';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const formSchema = z.object({
   invoice_date: z.date(),
@@ -46,7 +46,13 @@ interface PurchaseRowEditorProps {
 
 export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, onSave }: PurchaseRowEditorProps) {
   const [showAddClient, setShowAddClient] = useState(false);
+  const [localClients, setLocalClients] = useState(clients);
   const isEditing = !!purchase;
+
+  // Update local clients when props change
+  useEffect(() => {
+    setLocalClients(clients);
+  }, [clients]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -175,7 +181,7 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, onSav
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {clients.map((client) => (
+                            {localClients.map((client) => (
                               <SelectItem key={client.id} value={client.id}>
                                 {client.client_name}
                               </SelectItem>
@@ -344,20 +350,9 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, onSav
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Purchased By</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select purchaser" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {PURCHASED_BY_OPTIONS.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} placeholder="Enter purchaser name" />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -486,7 +481,7 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, onSav
           onOpenChange={setShowAddClient}
           onClientAdded={(clientId) => {
             form.setValue('client_id', clientId);
-            setShowAddClient(false);
+            // The parent will refetch clients, which will update localClients via useEffect
           }}
         />
       )}
