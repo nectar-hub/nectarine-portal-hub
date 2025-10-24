@@ -9,6 +9,7 @@ import { PurchaseTrackerGrid } from '@/components/purchase-tracker/PurchaseTrack
 import { PurchaseTrackerToolbar } from '@/components/purchase-tracker/PurchaseTrackerToolbar';
 import { PurchaseTracker as PurchaseTrackerType } from '@/types/purchase-tracker';
 import { Loader2 } from 'lucide-react';
+import ErrorState from '@/components/admin/ErrorState';
 
 const PurchaseTracker = () => {
   const { isAdmin } = useAuth();
@@ -21,24 +22,17 @@ const PurchaseTracker = () => {
     to: undefined,
   });
 
-  // Fetch purchases with client names
-  const { data: purchases = [], isLoading, refetch } = useQuery({
+  // Fetch purchases (no join; we'll map client_name separately)
+  const { data: purchases = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['purchase-tracker'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('purchase_tracker')
-        .select(`
-          *,
-          air_cargo_clients!purchase_tracker_client_id_fkey(client_name)
-        `)
+        .select('*')
         .order('invoice_date', { ascending: false });
 
       if (error) throw error;
-
-      return (data || []).map((item: any) => ({
-        ...item,
-        client_name: item.air_cargo_clients?.client_name || 'Unknown',
-      })) as PurchaseTrackerType[];
+      return (data || []) as PurchaseTrackerType[];
     },
     enabled: isAdmin,
   });
@@ -57,9 +51,22 @@ const PurchaseTracker = () => {
     enabled: isAdmin,
   });
 
+  // Map clients for fast lookup and enrich purchases with client_name
+  const clientMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const c of clients) map[c.id] = c.client_name;
+    return map;
+  }, [clients]);
+
+  const purchasesWithClients = useMemo(() => {
+    return purchases.map((p) => ({ ...p, client_name: clientMap[p.client_id] || 'Unknown' }));
+  }, [purchases, clientMap]);
+
+  // Filter purchases
+
   // Filter purchases
   const filteredPurchases = useMemo(() => {
-    return purchases.filter((purchase) => {
+    return purchasesWithClients.filter((purchase) => {
       // Search filter
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch = !searchQuery || 
@@ -86,7 +93,7 @@ const PurchaseTracker = () => {
 
       return matchesSearch && matchesStatus && matchesRegion && matchesClient && matchesDateRange;
     });
-  }, [purchases, searchQuery, statusFilter, regionFilter, clientFilter, dateRange]);
+  }, [purchasesWithClients, searchQuery, statusFilter, regionFilter, clientFilter, dateRange]);
 
   // Calculate totals
   const totals = useMemo(() => {
@@ -101,6 +108,18 @@ const PurchaseTracker = () => {
         <div className="flex items-center justify-center h-full">
           <p className="text-destructive">Access denied. Admin privileges required.</p>
         </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (isError) {
+    return (
+      <DashboardLayout>
+        <ErrorState
+          title="Failed to load purchases"
+          message={(error as any)?.message || 'An unexpected error occurred.'}
+          onRetry={() => refetch()}
+        />
       </DashboardLayout>
     );
   }
