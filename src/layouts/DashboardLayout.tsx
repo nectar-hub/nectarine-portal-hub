@@ -18,7 +18,8 @@ import {
   Users,
   ShoppingBag,
   BarChart3,
-  Plane
+  Plane,
+  ShoppingBasket
 } from 'lucide-react';
 
 type DashboardLayoutProps = {
@@ -57,6 +58,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
     { name: 'Shipping Addresses', href: '/admin/shipping-addresses', icon: MapPin },
     { name: 'Air Cargo', href: '/admin/air-cargo', icon: Plane },
+    { name: 'Purchase Tracker', href: '/admin/purchase-tracker', icon: ShoppingBasket },
     { name: 'Settings', href: '/admin/settings', icon: Settings },
   ];
 

@@ -365,6 +365,121 @@ export type Database = {
         }
         Relationships: []
       }
+      purchase_tracker: {
+        Row: {
+          amount: number | null
+          client_id: string
+          created_at: string
+          created_by: string | null
+          dod: string | null
+          dop: string | null
+          from_region: Database["public"]["Enums"]["purchase_region"]
+          id: string
+          invoice_date: string
+          invoice_no: string | null
+          item_description: string
+          purchased_by: string | null
+          qty: number
+          remarks: string | null
+          source_link: string | null
+          status: Database["public"]["Enums"]["purchase_status"]
+          store_name: string | null
+          store_order_no: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          amount?: number | null
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          dod?: string | null
+          dop?: string | null
+          from_region: Database["public"]["Enums"]["purchase_region"]
+          id?: string
+          invoice_date: string
+          invoice_no?: string | null
+          item_description: string
+          purchased_by?: string | null
+          qty: number
+          remarks?: string | null
+          source_link?: string | null
+          status?: Database["public"]["Enums"]["purchase_status"]
+          store_name?: string | null
+          store_order_no?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          amount?: number | null
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          dod?: string | null
+          dop?: string | null
+          from_region?: Database["public"]["Enums"]["purchase_region"]
+          id?: string
+          invoice_date?: string
+          invoice_no?: string | null
+          item_description?: string
+          purchased_by?: string | null
+          qty?: number
+          remarks?: string | null
+          source_link?: string | null
+          status?: Database["public"]["Enums"]["purchase_status"]
+          store_name?: string | null
+          store_order_no?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_tracker_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "air_cargo_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_tracker_audit: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          purchase_id: string
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          purchase_id: string
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          purchase_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_tracker_audit_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_tracker"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       self_purchases: {
         Row: {
           admin_notes: string | null
@@ -533,13 +648,19 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
+      purchase_region: "UK" | "US" | "UAE" | "CN" | "EU" | "AU"
+      purchase_status:
+        | "PENDING"
+        | "ORDERED"
+        | "RECEIVED"
+        | "IN TRANSIT"
+        | "READY"
+        | "DELIVERED"
+        | "CANCELLED"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -668,6 +789,16 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      purchase_region: ["UK", "US", "UAE", "CN", "EU", "AU"],
+      purchase_status: [
+        "PENDING",
+        "ORDERED",
+        "RECEIVED",
+        "IN TRANSIT",
+        "READY",
+        "DELIVERED",
+        "CANCELLED",
+      ],
     },
   },
 } as const
