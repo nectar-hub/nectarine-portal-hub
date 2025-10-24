@@ -11,7 +11,9 @@ import { PurchaseTracker as PurchaseTrackerType } from '@/types/purchase-tracker
 import { Loader2 } from 'lucide-react';
 
 const PurchaseTracker = () => {
+  console.log('[PurchaseTracker] Component mounted');
   const { isAdmin } = useAuth();
+  console.log('[PurchaseTracker] isAdmin:', isAdmin);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [regionFilter, setRegionFilter] = useState<string>('all');
@@ -25,6 +27,7 @@ const PurchaseTracker = () => {
   const { data: purchases = [], isLoading, refetch } = useQuery({
     queryKey: ['purchase-tracker'],
     queryFn: async () => {
+      console.log('[PurchaseTracker] Fetching purchases...');
       const { data, error } = await supabase
         .from('purchase_tracker')
         .select(`
@@ -33,8 +36,12 @@ const PurchaseTracker = () => {
         `)
         .order('invoice_date', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[PurchaseTracker] Error fetching purchases:', error);
+        throw error;
+      }
 
+      console.log('[PurchaseTracker] Purchases fetched:', data?.length || 0);
       return (data || []).map((item: any) => ({
         ...item,
         client_name: item.air_cargo_clients?.client_name || 'Unknown',
@@ -95,7 +102,10 @@ const PurchaseTracker = () => {
     return { totalQty, totalAmount };
   }, [filteredPurchases]);
 
+  console.log('[PurchaseTracker] Render state - isAdmin:', isAdmin, 'isLoading:', isLoading);
+
   if (!isAdmin) {
+    console.log('[PurchaseTracker] Rendering access denied');
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full">
@@ -106,6 +116,7 @@ const PurchaseTracker = () => {
   }
 
   if (isLoading) {
+    console.log('[PurchaseTracker] Rendering loading state');
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full">
@@ -114,6 +125,8 @@ const PurchaseTracker = () => {
       </DashboardLayout>
     );
   }
+
+  console.log('[PurchaseTracker] Rendering main content with', purchases.length, 'purchases');
 
   return (
     <DashboardLayout>
