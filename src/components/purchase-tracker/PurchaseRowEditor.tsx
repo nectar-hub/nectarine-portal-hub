@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -56,11 +56,7 @@ const purchaseSchema = z.object({
     'CANCELLED',
   ]),
   remarks: z.string().nullable(),
-  source_link: z
-    .string()
-    .url({ message: 'Must be a valid URL' })
-    .nullable()
-    .or(z.literal('')),
+  source_link: z.string().url().nullable().or(z.literal('')),
 });
 
 type PurchaseFormData = z.infer<typeof purchaseSchema>;
@@ -85,7 +81,7 @@ const PurchaseRowEditor = ({ purchase, onClose, onSave }: PurchaseRowEditorProps
         .order('client_name');
 
       if (error) throw error;
-      return data ?? [];
+      return data;
     },
   });
 
@@ -95,19 +91,19 @@ const PurchaseRowEditor = ({ purchase, onClose, onSave }: PurchaseRowEditorProps
       ? {
           invoice_date: purchase.invoice_date,
           client_id: purchase.client_id,
-          invoice_no: purchase.invoice_no ?? '',
-          item_description: purchase.item_description ?? '',
-          qty: purchase.qty ?? 1,
-          from_region: purchase.from_region ?? 'UK',
-          store_name: purchase.store_name ?? '',
-          amount: purchase.amount ?? null,
-          dop: purchase.dop ?? null,
-          store_order_no: purchase.store_order_no ?? '',
-          purchased_by: purchase.purchased_by ?? '',
-          dod: purchase.dod ?? null,
-          status: purchase.status ?? 'PENDING',
-          remarks: purchase.remarks ?? '',
-          source_link: purchase.source_link ?? '',
+          invoice_no: purchase.invoice_no,
+          item_description: purchase.item_description,
+          qty: purchase.qty,
+          from_region: purchase.from_region,
+          store_name: purchase.store_name,
+          amount: purchase.amount,
+          dop: purchase.dop,
+          store_order_no: purchase.store_order_no,
+          purchased_by: purchase.purchased_by,
+          dod: purchase.dod,
+          status: purchase.status,
+          remarks: purchase.remarks,
+          source_link: purchase.source_link,
         }
       : {
           invoice_date: new Date().toISOString().split('T')[0],
@@ -135,7 +131,7 @@ const PurchaseRowEditor = ({ purchase, onClose, onSave }: PurchaseRowEditorProps
         ...data,
         invoice_no: data.invoice_no || null,
         store_name: data.store_name || null,
-        amount: data.amount ?? null,
+        amount: data.amount || null,
         dop: data.dop || null,
         store_order_no: data.store_order_no || null,
         purchased_by: data.purchased_by || null,
@@ -168,7 +164,7 @@ const PurchaseRowEditor = ({ purchase, onClose, onSave }: PurchaseRowEditorProps
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message ?? 'Something went wrong',
+        description: error.message,
         variant: 'destructive',
       });
     } finally {
@@ -210,7 +206,10 @@ const PurchaseRowEditor = ({ purchase, onClose, onSave }: PurchaseRowEditorProps
                     <FormItem>
                       <FormLabel>Client *</FormLabel>
                       <div className="flex gap-2">
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select client" />
@@ -228,8 +227,6 @@ const PurchaseRowEditor = ({ purchase, onClose, onSave }: PurchaseRowEditorProps
                           type="button"
                           variant="outline"
                           onClick={() => setShowQuickAdd(true)}
-                          aria-label="Quick add client"
-                          title="Quick add client"
                         >
                           +
                         </Button>
@@ -273,7 +270,10 @@ const PurchaseRowEditor = ({ purchase, onClose, onSave }: PurchaseRowEditorProps
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Region *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
@@ -318,7 +318,7 @@ const PurchaseRowEditor = ({ purchase, onClose, onSave }: PurchaseRowEditorProps
                           type="number"
                           step="0.01"
                           {...field}
-                          value={field.value ?? ''}
+                          value={field.value || ''}
                         />
                       </FormControl>
                       <FormMessage />
@@ -333,7 +333,11 @@ const PurchaseRowEditor = ({ purchase, onClose, onSave }: PurchaseRowEditorProps
                     <FormItem>
                       <FormLabel>Date of Purchase (DOP)</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} value={field.value || ''} />
+                        <Input
+                          type="date"
+                          {...field}
+                          value={field.value || ''}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -361,9 +365,7 @@ const PurchaseRowEditor = ({ purchase, onClose, onSave }: PurchaseRowEditorProps
                     <FormItem>
                       <FormLabel>Purchased By</FormLabel>
                       <Select
-                        onValueChange={(value) =>
-                          field.onChange(value === 'none' ? null : value)
-                        }
+                        onValueChange={(value) => field.onChange(value === 'none' ? null : value)}
                         value={field.value || 'none'}
                       >
                         <FormControl>
@@ -392,7 +394,11 @@ const PurchaseRowEditor = ({ purchase, onClose, onSave }: PurchaseRowEditorProps
                     <FormItem>
                       <FormLabel>Date of Dispatch (DOD)</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} value={field.value || ''} />
+                        <Input
+                          type="date"
+                          {...field}
+                          value={field.value || ''}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -405,7 +411,10 @@ const PurchaseRowEditor = ({ purchase, onClose, onSave }: PurchaseRowEditorProps
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
