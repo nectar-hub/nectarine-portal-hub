@@ -125,15 +125,28 @@ const ShipmentFormDialog = ({ open, onOpenChange, clients, shipment, consignment
         account_code: shipment.account_code || '',
         remarks: shipment.remarks || '',
       });
-    } else {
+    } else if (open) {
+      // Clear all fields when opening for new shipment
       form.reset({
         date_received: format(new Date(), 'yyyy-MM-dd'),
         client_id: '',
-        status: 'RECEIVED',
+        invoice_no: '',
+        pieces: undefined,
+        length_cm: undefined,
+        width_cm: undefined,
+        height_cm: undefined,
+        dead_weight_kg: undefined,
+        volumetric_weight_kg: undefined,
         volumetric_weight_locked: false,
+        destination: '',
+        packed_in: '',
+        status: 'RECEIVED',
+        dims_notes: '',
+        account_code: '',
+        remarks: '',
       });
     }
-  }, [shipment, form]);
+  }, [shipment, open, form]);
 
   const mutation = useMutation({
     mutationFn: async (data: ShipmentFormData) => {
