@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { PurchaseTracker, PurchaseFilters } from '@/types/purchase-tracker';
 import { toast } from '@/hooks/use-toast';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toNumber } from '@/utils/number';
 
 const PurchaseTrackerPage = () => {
   const { isAdmin } = useAuth();
@@ -109,15 +110,14 @@ const PurchaseTrackerPage = () => {
     return result;
   }, [purchases, filters]);
 
-  // Calculate totals
+  // Calculate totals (null-safe)
+  const safeFilteredPurchases = Array.isArray(filteredPurchases) ? filteredPurchases : [];
+
   const totals = useMemo(() => {
-    const totalQty = filteredPurchases.reduce((sum, p) => sum + Number(p.qty ?? 0), 0);
-    const totalAmount = filteredPurchases.reduce(
-      (sum, p) => sum + Number(p.amount ?? 0),
-      0
-    );
+    const totalQty = safeFilteredPurchases.reduce((sum, p) => sum + toNumber(p?.qty), 0);
+    const totalAmount = safeFilteredPurchases.reduce((sum, p) => sum + toNumber(p?.amount), 0);
     return { totalQty, totalAmount };
-  }, [filteredPurchases]);
+  }, [safeFilteredPurchases]);
 
   if (!isAdmin) {
     return <AccessDenied />;

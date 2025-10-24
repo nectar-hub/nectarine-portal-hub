@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Copy, ExternalLink, Trash2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import PurchaseRowEditor from './PurchaseRowEditor';
+import { toNumber } from '@/utils/number';
 
 interface PurchaseTrackerGridProps {
   purchases: PurchaseTracker[];
