@@ -10,6 +10,8 @@ import { PurchaseTrackerToolbar } from '@/components/purchase-tracker/PurchaseTr
 import { PurchaseTracker as PurchaseTrackerType } from '@/types/purchase-tracker';
 import { Loader2 } from 'lucide-react';
 
+console.log('[PurchaseTracker MODULE] Loading PurchaseTracker module...');
+
 const PurchaseTracker = () => {
   console.log('[PurchaseTracker] Component mounted');
   const { isAdmin } = useAuth();
