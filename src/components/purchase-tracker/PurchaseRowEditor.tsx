@@ -1,0 +1,495 @@
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { PurchaseTracker, PURCHASED_BY_OPTIONS } from '@/types/purchase-tracker';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { QuickAddClientDialog } from './QuickAddClientDialog';
+import { useState } from 'react';
+
+const formSchema = z.object({
+  invoice_date: z.date(),
+  client_id: z.string().min(1, 'Client is required'),
+  invoice_no: z.string().optional(),
+  item_description: z.string().min(1, 'Item description is required'),
+  qty: z.number().min(1, 'Quantity must be at least 1'),
+  from_region: z.enum(['UK', 'US', 'UAE', 'CN', 'EU', 'AU']),
+  store_name: z.string().optional(),
+  amount: z.number().optional(),
+  dop: z.date().optional(),
+  store_order_no: z.string().optional(),
+  purchased_by: z.string().optional(),
+  dod: z.date().optional(),
+  status: z.enum(['PENDING', 'ORDERED', 'RECEIVED', 'IN_TRANSIT', 'READY', 'DELIVERED', 'CANCELLED']),
+  remarks: z.string().optional(),
+  source_link: z.string().url().optional().or(z.literal('')),
+});
+
+interface PurchaseRowEditorProps {
+  purchase: PurchaseTracker | null;
+  clients: Array<{ id: string; client_name: string }>;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: () => void;
+}
+
+export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, onSave }: PurchaseRowEditorProps) {
+  const [showAddClient, setShowAddClient] = useState(false);
+  const isEditing = !!purchase;
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      invoice_date: purchase?.invoice_date ? new Date(purchase.invoice_date) : new Date(),
+      client_id: purchase?.client_id || '',
+      invoice_no: purchase?.invoice_no || '',
+      item_description: purchase?.item_description || '',
+      qty: purchase?.qty || 1,
+      from_region: purchase?.from_region || 'UK',
+      store_name: purchase?.store_name || '',
+      amount: purchase?.amount || undefined,
+      dop: purchase?.dop ? new Date(purchase.dop) : undefined,
+      store_order_no: purchase?.store_order_no || '',
+      purchased_by: purchase?.purchased_by || '',
+      dod: purchase?.dod ? new Date(purchase.dod) : undefined,
+      status: purchase?.status || 'PENDING',
+      remarks: purchase?.remarks || '',
+      source_link: purchase?.source_link || '',
+    },
+  });
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const data = {
+      invoice_date: format(values.invoice_date, 'yyyy-MM-dd'),
+      client_id: values.client_id,
+      invoice_no: values.invoice_no || null,
+      item_description: values.item_description,
+      qty: values.qty,
+      from_region: values.from_region,
+      store_name: values.store_name || null,
+      amount: values.amount || null,
+      dop: values.dop ? format(values.dop, 'yyyy-MM-dd') : null,
+      store_order_no: values.store_order_no || null,
+      purchased_by: values.purchased_by || null,
+      dod: values.dod ? format(values.dod, 'yyyy-MM-dd') : null,
+      status: values.status,
+      remarks: values.remarks || null,
+      source_link: values.source_link || null,
+    };
+
+    if (isEditing) {
+      const { error } = await supabase
+        .from('purchase_tracker')
+        .update(data)
+        .eq('id', purchase.id);
+
+      if (error) {
+        toast.error('Failed to update purchase record');
+        console.error(error);
+      } else {
+        toast.success('Purchase record updated');
+        onSave();
+      }
+    } else {
+      const { error } = await supabase.from('purchase_tracker').insert([data]);
+
+      if (error) {
+        toast.error('Failed to create purchase record');
+        console.error(error);
+      } else {
+        toast.success('Purchase record created');
+        onSave();
+      }
+    }
+  };
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{isEditing ? 'Edit Purchase' : 'Add New Purchase'}</DialogTitle>
+          </DialogHeader>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="invoice_date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Invoice Date *</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                'pl-3 text-left font-normal',
+                                !field.value && 'text-muted-foreground'
+                              )}
+                            >
+                              {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="client_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client *</FormLabel>
+                      <div className="flex gap-2">
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select client" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {clients.map((client) => (
+                              <SelectItem key={client.id} value={client.id}>
+                                {client.client_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowAddClient(true)}
+                        >
+                          +
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="invoice_no"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Invoice No</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="qty"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Quantity *</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="from_region"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>From Region *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="UK">UK</SelectItem>
+                          <SelectItem value="US">US</SelectItem>
+                          <SelectItem value="UAE">UAE</SelectItem>
+                          <SelectItem value="CN">CN</SelectItem>
+                          <SelectItem value="EU">EU</SelectItem>
+                          <SelectItem value="AU">AU</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="store_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Store Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Amount</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          {...field}
+                          value={field.value || ''}
+                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="dop"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Date of Purchase</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                'pl-3 text-left font-normal',
+                                !field.value && 'text-muted-foreground'
+                              )}
+                            >
+                              {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="store_order_no"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Store Order No</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="purchased_by"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Purchased By</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select purchaser" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {PURCHASED_BY_OPTIONS.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="dod"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Date of Delivery</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                'pl-3 text-left font-normal',
+                                !field.value && 'text-muted-foreground'
+                              )}
+                            >
+                              {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="PENDING">Pending</SelectItem>
+                          <SelectItem value="ORDERED">Ordered</SelectItem>
+                          <SelectItem value="RECEIVED">Received</SelectItem>
+                          <SelectItem value="IN_TRANSIT">In Transit</SelectItem>
+                          <SelectItem value="READY">Ready</SelectItem>
+                          <SelectItem value="DELIVERED">Delivered</SelectItem>
+                          <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="item_description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Item Description *</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} rows={3} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="source_link"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Source Link</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value || ''} placeholder="https://..." />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="remarks"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Remarks</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} value={field.value || ''} rows={2} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">{isEditing ? 'Update' : 'Create'}</Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {showAddClient && (
+        <QuickAddClientDialog
+          open={showAddClient}
+          onOpenChange={setShowAddClient}
+          onClientAdded={(clientId) => {
+            form.setValue('client_id', clientId);
+            setShowAddClient(false);
+          }}
+        />
+      )}
+    </>
+  );
+}
