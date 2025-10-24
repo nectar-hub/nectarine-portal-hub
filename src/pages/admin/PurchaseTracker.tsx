@@ -111,9 +111,9 @@ const PurchaseTrackerPage = () => {
 
   // Calculate totals
   const totals = useMemo(() => {
-    const totalQty = filteredPurchases.reduce((sum, p) => sum + p.qty, 0);
+    const totalQty = filteredPurchases.reduce((sum, p) => sum + Number(p.qty ?? 0), 0);
     const totalAmount = filteredPurchases.reduce(
-      (sum, p) => sum + (p.amount || 0),
+      (sum, p) => sum + Number(p.amount ?? 0),
       0
     );
     return { totalQty, totalAmount };
