@@ -124,9 +124,11 @@ export function PurchaseTrackerGrid({ purchases, clients, onRefresh }: PurchaseT
       width: 120,
       resizable: true,
       renderCell: ({ row }) => {
-        if (!row.amount) return '';
         const currency = REGION_CURRENCIES[row.from_region] || { symbol: '$', code: 'USD' };
-        return `${currency.symbol}${row.amount.toFixed(2)}`;
+        if (row.amount == null) return '';
+        const amt = Number((row.amount as unknown) as number);
+        if (Number.isNaN(amt)) return String(row.amount as any);
+        return `${currency.symbol}${amt.toFixed(2)}`;
       },
     },
     {
@@ -175,8 +177,8 @@ export function PurchaseTrackerGrid({ purchases, clients, onRefresh }: PurchaseT
       width: 130,
       resizable: true,
       renderCell: ({ row }) => (
-        <Badge className={`${PURCHASE_STATUS_COLORS[row.status]} text-white`}>
-          {row.status.replace(/_/g, ' ')}
+        <Badge className={`${(PURCHASE_STATUS_COLORS as any)[String(row.status)] || 'bg-muted'} text-white`}>
+          {String(row.status || 'PENDING').replace(/_/g, ' ')}
         </Badge>
       ),
     },
