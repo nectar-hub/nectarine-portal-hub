@@ -365,8 +365,8 @@ const PurchaseRowEditor = ({ purchase, onClose, onSave }: PurchaseRowEditorProps
                     <FormItem>
                       <FormLabel>Purchased By</FormLabel>
                       <Select
-                        onValueChange={field.onChange}
-                        value={field.value || ''}
+                        onValueChange={(value) => field.onChange(value === 'none' ? null : value)}
+                        value={field.value || 'none'}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -374,6 +374,7 @@ const PurchaseRowEditor = ({ purchase, onClose, onSave }: PurchaseRowEditorProps
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                          <SelectItem value="none">-</SelectItem>
                           {PURCHASED_BY_OPTIONS.map((option) => (
                             <SelectItem key={option} value={option}>
                               {option}

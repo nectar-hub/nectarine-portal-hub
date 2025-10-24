@@ -68,5 +68,5 @@ export const PURCHASED_BY_OPTIONS = [
   'HEBRON',
   'COBBY',
   'SYSTEM',
-  'OTHER'
+  'OTHER',
 ];

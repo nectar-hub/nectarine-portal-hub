@@ -54,10 +54,10 @@ const PurchaseTrackerGrid = ({
 
   const handleDuplicate = async (purchase: PurchaseTracker) => {
     try {
-      const { id, created_at, updated_at, ...data } = purchase;
+      const { id, created_at, updated_at, created_by, updated_by, client_name, ...data } = purchase;
       const { error } = await supabase
         .from('purchase_tracker')
-        .insert(data);
+        .insert([data]);
 
       if (error) throw error;
 
