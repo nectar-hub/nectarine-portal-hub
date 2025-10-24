@@ -20,7 +20,6 @@ import Requests from "./pages/admin/Requests";
 import Analytics from "./pages/admin/Analytics";
 import Settings from "./pages/admin/Settings";
 import AirCargo from "./pages/admin/AirCargo";
-import PurchaseTracker from "./pages/admin/PurchaseTracker";
 import NotFound from "./pages/NotFound";
 import MainLayout from "./layouts/MainLayout";
 
@@ -152,14 +151,6 @@ const App = () => (
               element={
                 <MainLayout requireAuth adminOnly>
                   <AirCargo />
-                </MainLayout>
-              }
-            />
-            <Route
-              path="/admin/purchase-tracker"
-              element={
-                <MainLayout requireAuth adminOnly>
-                  <PurchaseTracker />
                 </MainLayout>
               }
             />
