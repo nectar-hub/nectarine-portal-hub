@@ -35,9 +35,13 @@ const PurchaseTrackerToolbar = ({
 }: PurchaseTrackerToolbarProps) => {
   const [searchTerm, setSearchTerm] = useState(filters.search || '');
 
+  const setFilters = (newFilters: PurchaseFilters) => {
+    onFiltersChange(newFilters);
+  };
+
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
-    onFiltersChange({ ...filters, search: value });
+    setFilters({ ...filters, search: value });
   };
 
   const handleExportCSV = () => {
@@ -81,7 +85,7 @@ const PurchaseTrackerToolbar = ({
 
   const handleClearFilters = () => {
     setSearchTerm('');
-    onFiltersChange({});
+    setFilters({});
   };
 
   return (
@@ -120,7 +124,7 @@ const PurchaseTrackerToolbar = ({
           <Select
             value={filters.region || 'all'}
             onValueChange={(value) =>
-              onFiltersChange({
+              setFilters({
                 ...filters,
                 region: value === 'all' ? undefined : (value as any),
               })
@@ -143,7 +147,7 @@ const PurchaseTrackerToolbar = ({
           <Select
             value={filters.status || 'all'}
             onValueChange={(value) =>
-              onFiltersChange({
+              setFilters({
                 ...filters,
                 status: value === 'all' ? undefined : (value as any),
               })
