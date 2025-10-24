@@ -6,6 +6,7 @@ import DashboardLayout from '@/layouts/DashboardLayout';
 import PageHeader from '@/components/admin/PageHeader';
 import { Card } from '@/components/ui/card';
 import { PurchaseTrackerGrid } from '@/components/purchase-tracker/PurchaseTrackerGrid';
+import { PurchaseTrackerTable } from '@/components/purchase-tracker/PurchaseTrackerTable';
 import { PurchaseTrackerToolbar } from '@/components/purchase-tracker/PurchaseTrackerToolbar';
 import { PurchaseTracker as PurchaseTrackerType } from '@/types/purchase-tracker';
 import { Loader2 } from 'lucide-react';
@@ -173,7 +174,7 @@ const PurchaseTracker = () => {
                 />
               }
            >
-              <PurchaseTrackerGrid
+              <PurchaseTrackerTable
                 purchases={filteredPurchases}
                 clients={clients}
                 onRefresh={() => {
