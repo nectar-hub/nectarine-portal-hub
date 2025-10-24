@@ -9,7 +9,6 @@ import { Search, Download, Upload, Plus, RefreshCw, CalendarIcon, FileDown } fro
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { PurchaseRowEditor } from './PurchaseRowEditor';
-import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 
 interface PurchaseTrackerToolbarProps {
@@ -47,7 +46,7 @@ export function PurchaseTrackerToolbar({
 }: PurchaseTrackerToolbarProps) {
   const [isAddingNew, setIsAddingNew] = useState(false);
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const exportData = purchases.map((p) => ({
       'Invoice Date': p.invoice_date,
       'Client Name': p.client_name,
@@ -66,6 +65,7 @@ export function PurchaseTrackerToolbar({
       'Link': p.source_link || '',
     }));
 
+    const XLSX = await import('xlsx');
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Purchase Tracker');
