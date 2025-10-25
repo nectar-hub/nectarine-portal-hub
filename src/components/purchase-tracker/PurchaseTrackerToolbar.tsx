@@ -9,6 +9,7 @@ import { Search, Download, Upload, Plus, RefreshCw, CalendarIcon, FileDown } fro
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { PurchaseRowEditor } from './PurchaseRowEditor';
+import { MonthPeriodSelector } from './MonthPeriodSelector';
 import { toast } from 'sonner';
 
 interface PurchaseTrackerToolbarProps {
@@ -22,6 +23,8 @@ interface PurchaseTrackerToolbarProps {
   onClientFilterChange: (value: string) => void;
   dateRange: { from: Date | undefined; to: Date | undefined };
   onDateRangeChange: (range: { from: Date | undefined; to: Date | undefined }) => void;
+  selectedPeriodId: string | null;
+  onPeriodChange: (periodId: string | null) => void;
   clients: Array<{ id: string; client_name: string }>;
   purchases: PurchaseTracker[];
   totals: { totalQty: number; totalAmount: number };
@@ -39,6 +42,8 @@ export function PurchaseTrackerToolbar({
   onClientFilterChange,
   dateRange,
   onDateRangeChange,
+  selectedPeriodId,
+  onPeriodChange,
   clients,
   purchases,
   totals,
@@ -83,7 +88,31 @@ export function PurchaseTrackerToolbar({
 
   return (
     <div className="p-4 border-b space-y-3">
-      {/* Top Row - Search and Action Buttons */}
+      {/* Top Row - Month Selector and Actions */}
+      <div className="flex gap-2 items-center justify-between">
+        <MonthPeriodSelector 
+          selectedPeriodId={selectedPeriodId}
+          onPeriodChange={onPeriodChange}
+        />
+
+        <div className="flex gap-2">
+          <Button onClick={() => setIsAddingNew(true)} size="sm">
+            <Plus className="h-4 w-4 mr-1" />
+            Add Purchase
+          </Button>
+
+          <Button onClick={handleExport} variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-1" />
+            Export
+          </Button>
+
+          <Button onClick={onRefresh} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Search Row */}
       <div className="flex gap-2 items-center">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -94,20 +123,6 @@ export function PurchaseTrackerToolbar({
             className="pl-10"
           />
         </div>
-
-        <Button onClick={() => setIsAddingNew(true)} size="sm">
-          <Plus className="h-4 w-4 mr-1" />
-          Add Purchase
-        </Button>
-
-        <Button onClick={handleExport} variant="outline" size="sm">
-          <Download className="h-4 w-4 mr-1" />
-          Export
-        </Button>
-
-        <Button onClick={onRefresh} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4" />
-        </Button>
       </div>
 
       {/* Filter Row */}
@@ -212,6 +227,7 @@ export function PurchaseTrackerToolbar({
           clients={clients}
           open={isAddingNew}
           onOpenChange={setIsAddingNew}
+          defaultMonthPeriodId={selectedPeriodId}
           onSave={() => {
             setIsAddingNew(false);
             onRefresh();

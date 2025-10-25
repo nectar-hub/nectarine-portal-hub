@@ -18,6 +18,7 @@ const PurchaseTracker = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [regionFilter, setRegionFilter] = useState<string>('all');
   const [clientFilter, setClientFilter] = useState<string>('all');
+  const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
     from: undefined,
     to: undefined,
@@ -69,6 +70,8 @@ const PurchaseTracker = () => {
   // Filter purchases
   const filteredPurchases = useMemo(() => {
     return purchasesWithClients.filter((purchase) => {
+      // Month period filter
+      const matchesPeriod = !selectedPeriodId || purchase.month_period_id === selectedPeriodId;
       // Search filter - search in items too
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch = !searchQuery || 
@@ -98,9 +101,9 @@ const PurchaseTracker = () => {
         (!dateRange.from || invoiceDate >= dateRange.from) &&
         (!dateRange.to || invoiceDate <= dateRange.to);
 
-      return matchesSearch && matchesStatus && matchesRegion && matchesClient && matchesDateRange;
+      return matchesPeriod && matchesSearch && matchesStatus && matchesRegion && matchesClient && matchesDateRange;
     });
-  }, [purchasesWithClients, searchQuery, statusFilter, regionFilter, clientFilter, dateRange]);
+  }, [purchasesWithClients, searchQuery, statusFilter, regionFilter, clientFilter, dateRange, selectedPeriodId]);
 
   // Calculate totals
   const totals = useMemo(() => {
@@ -171,6 +174,8 @@ const PurchaseTracker = () => {
             onClientFilterChange={setClientFilter}
             dateRange={dateRange}
             onDateRangeChange={setDateRange}
+            selectedPeriodId={selectedPeriodId}
+            onPeriodChange={setSelectedPeriodId}
             clients={clients}
             purchases={filteredPurchases}
             totals={totals}
@@ -193,6 +198,7 @@ const PurchaseTracker = () => {
               <PurchaseTrackerTable
                 purchases={filteredPurchases}
                 clients={clients}
+                selectedPeriodId={selectedPeriodId}
                 onRefresh={() => {
                   refetch();
                   refetchClients();

@@ -33,6 +33,7 @@ export interface PurchaseTracker {
   remarks: string | null;
   source_link?: string | null; // Deprecated, kept for backward compatibility
   items?: PurchaseTrackerItem[]; // New: array of items
+  month_period_id: string | null; // New: link to month period
   created_at: string;
   updated_at: string;
   created_by: string | null;

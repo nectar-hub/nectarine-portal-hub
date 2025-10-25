@@ -297,6 +297,39 @@ export type Database = {
           },
         ]
       }
+      month_periods: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          month: number
+          status: string
+          updated_at: string
+          updated_by: string | null
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month: number
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          year: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month?: number
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           created_at: string
@@ -378,6 +411,7 @@ export type Database = {
           invoice_date: string
           invoice_no: string | null
           item_description: string | null
+          month_period_id: string | null
           purchased_by: string | null
           qty: number | null
           remarks: string | null
@@ -400,6 +434,7 @@ export type Database = {
           invoice_date: string
           invoice_no?: string | null
           item_description?: string | null
+          month_period_id?: string | null
           purchased_by?: string | null
           qty?: number | null
           remarks?: string | null
@@ -422,6 +457,7 @@ export type Database = {
           invoice_date?: string
           invoice_no?: string | null
           item_description?: string | null
+          month_period_id?: string | null
           purchased_by?: string | null
           qty?: number | null
           remarks?: string | null
@@ -438,6 +474,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "air_cargo_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_tracker_month_period_id_fkey"
+            columns: ["month_period_id"]
+            isOneToOne: false
+            referencedRelation: "month_periods"
             referencedColumns: ["id"]
           },
         ]

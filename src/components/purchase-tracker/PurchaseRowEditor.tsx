@@ -29,6 +29,7 @@ const formSchema = z.object({
   dod: z.date().optional(),
   status: z.enum(['PENDING', 'ORDERED', 'RECEIVED', 'IN_TRANSIT', 'READY', 'DELIVERED', 'CANCELLED']),
   remarks: z.string().optional(),
+  month_period_id: z.string().optional(),
 });
 
 interface PurchaseRowEditorProps {
@@ -36,10 +37,11 @@ interface PurchaseRowEditorProps {
   clients: Array<{ id: string; client_name: string }>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  defaultMonthPeriodId?: string | null;
   onSave: () => void;
 }
 
-export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, onSave }: PurchaseRowEditorProps) {
+export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defaultMonthPeriodId, onSave }: PurchaseRowEditorProps) {
   const [showAddClient, setShowAddClient] = useState(false);
   const [localClients, setLocalClients] = useState(clients);
   const [items, setItems] = useState<Partial<PurchaseTrackerItem>[]>([]);
@@ -71,6 +73,7 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, onSav
       dod: purchase?.dod ? new Date(purchase.dod) : undefined,
       status: purchase?.status || 'PENDING',
       remarks: purchase?.remarks || '',
+      month_period_id: purchase?.month_period_id || defaultMonthPeriodId || '',
     },
   });
 
@@ -119,6 +122,7 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, onSav
       dod: values.dod ? format(values.dod, 'yyyy-MM-dd') : null,
       status: values.status,
       remarks: values.remarks || null,
+      month_period_id: values.month_period_id || null,
       // Clear deprecated fields
       item_description: null,
       qty: null,

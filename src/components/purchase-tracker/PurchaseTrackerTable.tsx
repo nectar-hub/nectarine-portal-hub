@@ -12,10 +12,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 interface PurchaseTrackerTableProps {
   purchases: PurchaseTracker[];
   clients: Array<{ id: string; client_name: string }>;
+  selectedPeriodId: string | null;
   onRefresh: () => void;
 }
 
-export function PurchaseTrackerTable({ purchases, clients, onRefresh }: PurchaseTrackerTableProps) {
+export function PurchaseTrackerTable({ purchases, clients, selectedPeriodId, onRefresh }: PurchaseTrackerTableProps) {
   const [editingPurchase, setEditingPurchase] = useState<PurchaseTracker | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
@@ -262,6 +263,7 @@ export function PurchaseTrackerTable({ purchases, clients, onRefresh }: Purchase
           clients={clients}
           open={!!editingPurchase}
           onOpenChange={(open) => !open && setEditingPurchase(null)}
+          defaultMonthPeriodId={selectedPeriodId}
           onSave={() => {
             setEditingPurchase(null);
             onRefresh();
