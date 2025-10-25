@@ -513,15 +513,7 @@ export type Database = {
           old_data?: Json | null
           purchase_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "purchase_tracker_audit_purchase_id_fkey"
-            columns: ["purchase_id"]
-            isOneToOne: false
-            referencedRelation: "purchase_tracker"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       purchase_tracker_items: {
         Row: {
