@@ -1,24 +1,38 @@
 export type PurchaseRegion = 'UK' | 'US' | 'UAE' | 'CN' | 'EU' | 'AU';
 export type PurchaseStatus = 'PENDING' | 'ORDERED' | 'RECEIVED' | 'IN_TRANSIT' | 'READY' | 'DELIVERED' | 'CANCELLED';
 
+export interface PurchaseTrackerItem {
+  id: string;
+  purchase_id: string;
+  item_description: string;
+  qty: number;
+  amount?: number | null;
+  store_name?: string | null;
+  store_order_no?: string | null;
+  source_link?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface PurchaseTracker {
   id: string;
   invoice_date: string;
   client_id: string;
   client_name?: string;
   invoice_no: string | null;
-  item_description: string;
-  qty: number;
+  item_description?: string | null; // Deprecated, kept for backward compatibility
+  qty?: number | null; // Deprecated, kept for backward compatibility
   from_region: PurchaseRegion;
-  store_name: string | null;
-  amount: number | null;
+  store_name?: string | null; // Deprecated, kept for backward compatibility
+  amount?: number | null; // Deprecated, kept for backward compatibility
   dop: string | null;
-  store_order_no: string | null;
+  store_order_no?: string | null; // Deprecated, kept for backward compatibility
   purchased_by: string | null;
   dod: string | null;
   status: PurchaseStatus;
   remarks: string | null;
-  source_link: string | null;
+  source_link?: string | null; // Deprecated, kept for backward compatibility
+  items?: PurchaseTrackerItem[]; // New: array of items
   created_at: string;
   updated_at: string;
   created_by: string | null;

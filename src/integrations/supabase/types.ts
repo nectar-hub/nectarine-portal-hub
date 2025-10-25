@@ -377,9 +377,9 @@ export type Database = {
           id: string
           invoice_date: string
           invoice_no: string | null
-          item_description: string
+          item_description: string | null
           purchased_by: string | null
-          qty: number
+          qty: number | null
           remarks: string | null
           source_link: string | null
           status: Database["public"]["Enums"]["purchase_status"]
@@ -399,9 +399,9 @@ export type Database = {
           id?: string
           invoice_date: string
           invoice_no?: string | null
-          item_description: string
+          item_description?: string | null
           purchased_by?: string | null
-          qty?: number
+          qty?: number | null
           remarks?: string | null
           source_link?: string | null
           status?: Database["public"]["Enums"]["purchase_status"]
@@ -421,9 +421,9 @@ export type Database = {
           id?: string
           invoice_date?: string
           invoice_no?: string | null
-          item_description?: string
+          item_description?: string | null
           purchased_by?: string | null
-          qty?: number
+          qty?: number | null
           remarks?: string | null
           source_link?: string | null
           status?: Database["public"]["Enums"]["purchase_status"]
@@ -473,6 +473,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "purchase_tracker_audit_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_tracker"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_tracker_items: {
+        Row: {
+          amount: number | null
+          created_at: string
+          id: string
+          item_description: string
+          purchase_id: string
+          qty: number
+          source_link: string | null
+          store_name: string | null
+          store_order_no: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          id?: string
+          item_description: string
+          purchase_id: string
+          qty?: number
+          source_link?: string | null
+          store_name?: string | null
+          store_order_no?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          id?: string
+          item_description?: string
+          purchase_id?: string
+          qty?: number
+          source_link?: string | null
+          store_name?: string | null
+          store_order_no?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_tracker_items_purchase_id_fkey"
             columns: ["purchase_id"]
             isOneToOne: false
             referencedRelation: "purchase_tracker"

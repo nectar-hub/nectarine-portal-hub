@@ -23,13 +23,16 @@ const PurchaseTracker = () => {
     to: undefined,
   });
 
-  // Fetch purchases (no join; we'll map client_name separately)
+  // Fetch purchases with items
   const { data: purchases = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['purchase-tracker'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('purchase_tracker')
-        .select('*')
+        .select(`
+          *,
+          items:purchase_tracker_items(*)
+        `)
         .order('invoice_date', { ascending: false });
 
       if (error) throw error;
@@ -64,18 +67,21 @@ const PurchaseTracker = () => {
   }, [purchases, clientMap]);
 
   // Filter purchases
-
-  // Filter purchases
   const filteredPurchases = useMemo(() => {
     return purchasesWithClients.filter((purchase) => {
-      // Search filter
+      // Search filter - search in items too
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch = !searchQuery || 
         purchase.item_description?.toLowerCase().includes(searchLower) ||
         purchase.invoice_no?.toLowerCase().includes(searchLower) ||
         purchase.store_name?.toLowerCase().includes(searchLower) ||
         purchase.remarks?.toLowerCase().includes(searchLower) ||
-        purchase.client_name?.toLowerCase().includes(searchLower);
+        purchase.client_name?.toLowerCase().includes(searchLower) ||
+        purchase.items?.some(item => 
+          item.item_description?.toLowerCase().includes(searchLower) ||
+          item.store_name?.toLowerCase().includes(searchLower) ||
+          item.store_order_no?.toLowerCase().includes(searchLower)
+        );
 
       // Status filter
       const matchesStatus = statusFilter === 'all' || purchase.status === statusFilter;
@@ -98,8 +104,18 @@ const PurchaseTracker = () => {
 
   // Calculate totals
   const totals = useMemo(() => {
-    const totalQty = filteredPurchases.reduce((sum, p) => sum + (p.qty || 0), 0);
-    const totalAmount = filteredPurchases.reduce((sum, p) => sum + (p.amount || 0), 0);
+    let totalQty = 0;
+    let totalAmount = 0;
+    
+    filteredPurchases.forEach(p => {
+      if (p.items && p.items.length > 0) {
+        p.items.forEach(item => {
+          totalQty += item.qty || 0;
+          totalAmount += Number(item.amount) || 0;
+        });
+      }
+    });
+    
     return { totalQty, totalAmount };
   }, [filteredPurchases]);
 
