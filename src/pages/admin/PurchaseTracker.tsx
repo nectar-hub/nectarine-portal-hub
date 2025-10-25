@@ -5,9 +5,11 @@ import { useAuth } from '@/context/AuthContext';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import PageHeader from '@/components/admin/PageHeader';
 import { Card } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PurchaseTrackerGrid } from '@/components/purchase-tracker/PurchaseTrackerGrid';
 import { PurchaseTrackerTable } from '@/components/purchase-tracker/PurchaseTrackerTable';
 import { PurchaseTrackerToolbar } from '@/components/purchase-tracker/PurchaseTrackerToolbar';
+import PurchaseReportsView from '@/components/purchase-tracker/PurchaseReportsView';
 import { PurchaseTracker as PurchaseTrackerType } from '@/types/purchase-tracker';
 import { Loader2 } from 'lucide-react';
 import ErrorState from '@/components/admin/ErrorState';
@@ -162,69 +164,84 @@ const PurchaseTracker = () => {
           description="Excel-style purchase tracking with client management"
         />
 
-        <Card className="flex-1 flex flex-col overflow-hidden">
-          <PurchaseTrackerToolbar
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
-            regionFilter={regionFilter}
-            onRegionFilterChange={setRegionFilter}
-            clientFilter={clientFilter}
-            onClientFilterChange={setClientFilter}
-            dateRange={dateRange}
-            onDateRangeChange={setDateRange}
-            selectedPeriodId={selectedPeriodId}
-            onPeriodChange={setSelectedPeriodId}
-            clients={clients}
-            purchases={filteredPurchases}
-            totals={totals}
-            onRefresh={refetch}
-          />
+        <Tabs defaultValue="tracker" className="flex-1 flex flex-col">
+          <TabsList>
+            <TabsTrigger value="tracker">Purchase Tracker</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+          </TabsList>
 
-          <div className="flex-1 min-h-0">
-            <ErrorBoundary
-              fallback={
-                <ErrorState
-                  title="Failed to render purchases"
-                  message="There was a problem displaying the purchase grid."
-                  onRetry={() => {
-                    refetch();
-                    refetchClients();
-                  }}
-                />
-              }
-           >
-              <PurchaseTrackerTable
-                purchases={filteredPurchases}
-                clients={clients}
+          <TabsContent value="tracker" className="flex-1 flex flex-col mt-4">
+            <Card className="flex-1 flex flex-col overflow-hidden">
+              <PurchaseTrackerToolbar
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                statusFilter={statusFilter}
+                onStatusFilterChange={setStatusFilter}
+                regionFilter={regionFilter}
+                onRegionFilterChange={setRegionFilter}
+                clientFilter={clientFilter}
+                onClientFilterChange={setClientFilter}
+                dateRange={dateRange}
+                onDateRangeChange={setDateRange}
                 selectedPeriodId={selectedPeriodId}
-                onRefresh={() => {
-                  refetch();
-                  refetchClients();
-                }}
+                onPeriodChange={setSelectedPeriodId}
+                clients={clients}
+                purchases={filteredPurchases}
+                totals={totals}
+                onRefresh={refetch}
               />
-            </ErrorBoundary>
-          </div>
 
-          {/* Footer with totals */}
-          <div className="border-t px-4 py-3 bg-muted/30">
-            <div className="flex gap-8 text-sm">
-              <div>
-                <span className="font-medium">Total Records:</span>{' '}
-                <span className="text-primary font-bold">{filteredPurchases.length}</span>
+              <div className="flex-1 min-h-0">
+                <ErrorBoundary
+                  fallback={
+                    <ErrorState
+                      title="Failed to render purchases"
+                      message="There was a problem displaying the purchase grid."
+                      onRetry={() => {
+                        refetch();
+                        refetchClients();
+                      }}
+                    />
+                  }
+                >
+                  <PurchaseTrackerTable
+                    purchases={filteredPurchases}
+                    clients={clients}
+                    selectedPeriodId={selectedPeriodId}
+                    onRefresh={() => {
+                      refetch();
+                      refetchClients();
+                    }}
+                  />
+                </ErrorBoundary>
               </div>
-              <div>
-                <span className="font-medium">Total Qty:</span>{' '}
-                <span className="text-primary font-bold">{totals.totalQty}</span>
+
+              {/* Footer with totals */}
+              <div className="border-t px-4 py-3 bg-muted/30">
+                <div className="flex gap-8 text-sm">
+                  <div>
+                    <span className="font-medium">Total Records:</span>{' '}
+                    <span className="text-primary font-bold">{filteredPurchases.length}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium">Total Qty:</span>{' '}
+                    <span className="text-primary font-bold">{totals.totalQty}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium">Total Amount:</span>{' '}
+                    <span className="text-primary font-bold">{totals.totalAmount.toFixed(2)}</span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <span className="font-medium">Total Amount:</span>{' '}
-                <span className="text-primary font-bold">{totals.totalAmount.toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
-        </Card>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reports" className="flex-1 mt-4">
+            <Card className="h-full overflow-auto">
+              <PurchaseReportsView />
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
