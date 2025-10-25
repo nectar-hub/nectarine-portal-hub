@@ -71,17 +71,16 @@ const AirCargoSheet = ({ consignmentId }: AirCargoSheetProps) => {
   const { data: shipments = [], isLoading, refetch } = useQuery({
     queryKey: ['air-cargo-shipments', consignmentId],
     queryFn: async () => {
-      let query = supabase
-        .from('air_cargo_shipments')
-        .select('*')
-        .order('date_received', { ascending: false })
-        .order('created_at', { ascending: false });
-
-      if (consignmentId) {
-        query = query.eq('consignment_id', consignmentId);
+      if (!consignmentId) {
+        return [];
       }
 
-      const { data, error } = await query;
+      const { data, error } = await supabase
+        .from('air_cargo_shipments')
+        .select('*')
+        .eq('consignment_id', consignmentId)
+        .order('date_received', { ascending: false })
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
       return data as Shipment[];
@@ -241,7 +240,12 @@ const AirCargoSheet = ({ consignmentId }: AirCargoSheetProps) => {
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {!consignmentId ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <p className="text-lg font-medium mb-2">No consignment selected</p>
+            <p className="text-sm">Please select a consignment from the Consignments tab to view shipments</p>
+          </div>
+        ) : isLoading ? (
           <div className="text-center py-8 text-muted-foreground">Loading shipments...</div>
         ) : (
           <>
