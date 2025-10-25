@@ -456,6 +456,15 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
                 />
               </div>
 
+              {/* hidden month period id to include in submission */}
+              <FormField
+                control={form.control}
+                name="month_period_id"
+                render={({ field }) => (
+                  <input type="hidden" {...field} value={field.value || ''} />
+                )}
+              />
+
               {/* Items list */}
               <PurchaseItemsList
                 items={items}
