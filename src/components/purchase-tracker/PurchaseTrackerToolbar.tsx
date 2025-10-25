@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { PurchaseTracker, PurchaseStatus, PurchaseRegion } from '@/types/purchase-tracker';
 import { Search, Download, Upload, Plus, RefreshCw, CalendarIcon, FileDown } from 'lucide-react';
 import { format } from 'date-fns';
@@ -155,19 +156,38 @@ export function PurchaseTrackerToolbar({
           </PopoverContent>
         </Popover>
 
-        <Select value={clientFilter} onValueChange={onClientFilterChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="All Clients" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Clients</SelectItem>
-            {clients.map((client) => (
-              <SelectItem key={client.id} value={client.id}>
-                {client.client_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-[180px] justify-between">
+              {clientFilter === 'all' 
+                ? 'All Clients' 
+                : clients.find(c => c.id === clientFilter)?.client_name || 'All Clients'}
+              <CalendarIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[250px] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Search clients..." />
+              <CommandList>
+                <CommandEmpty>No client found.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem value="all" onSelect={() => onClientFilterChange('all')}>
+                    All Clients
+                  </CommandItem>
+                  {clients.map((client) => (
+                    <CommandItem
+                      key={client.id}
+                      value={client.client_name}
+                      onSelect={() => onClientFilterChange(client.id)}
+                    >
+                      {client.client_name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
 
         <Select value={regionFilter} onValueChange={onRegionFilterChange}>
           <SelectTrigger className="w-[130px]">

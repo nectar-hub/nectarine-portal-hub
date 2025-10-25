@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { PurchaseTracker, PurchaseTrackerItem } from '@/types/purchase-tracker';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -273,21 +274,47 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Client *</FormLabel>
-                      <div className="flex gap-2">
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select client" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {localClients.map((client) => (
-                              <SelectItem key={client.id} value={client.id}>
-                                {client.client_name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      <div className="flex gap-2 flex-1">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                  'flex-1 justify-between',
+                                  !field.value && 'text-muted-foreground'
+                                )}
+                              >
+                                {field.value
+                                  ? localClients.find((c) => c.id === field.value)?.client_name
+                                  : 'Select client'}
+                                <CalendarIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[300px] p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Search clients..." />
+                              <CommandList>
+                                <CommandEmpty>No client found.</CommandEmpty>
+                                <CommandGroup>
+                                  {localClients.map((client) => (
+                                    <CommandItem
+                                      key={client.id}
+                                      value={client.client_name}
+                                      onSelect={() => {
+                                        field.onChange(client.id);
+                                      }}
+                                    >
+                                      {client.client_name}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                         <Button
                           type="button"
                           variant="outline"
