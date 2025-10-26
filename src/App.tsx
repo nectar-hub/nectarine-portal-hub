@@ -15,6 +15,7 @@ import BuyForMe from "./pages/dashboard/BuyForMe";
 import ShippingAddress from "./pages/dashboard/ShippingAddress";
 import Orders from "./pages/dashboard/Orders";
 import SelfPurchases from "./pages/dashboard/SelfPurchases";
+import Account from "./pages/dashboard/Account";
 import Users from "./pages/admin/Users";
 import Requests from "./pages/admin/Requests";
 import Analytics from "./pages/admin/Analytics";
@@ -86,6 +87,14 @@ const App = () => (
               element={
                 <MainLayout requireAuth>
                   <SelfPurchases />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/dashboard/account"
+              element={
+                <MainLayout requireAuth>
+                  <Account />
                 </MainLayout>
               }
             />
