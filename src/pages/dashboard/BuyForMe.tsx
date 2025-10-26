@@ -89,6 +89,7 @@ const BuyForMe = () => {
           created_at,
           updated_at,
           status_updated_at,
+          admin_notes,
           items:buy_request_items(*)
         `)
         .eq('user_id', user.id)

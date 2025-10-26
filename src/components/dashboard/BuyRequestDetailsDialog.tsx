@@ -226,6 +226,20 @@ export const BuyRequestDetailsDialog = ({
             </Card>
           )}
 
+          {/* Admin Notes - Communication from Admin */}
+          {request.admin_notes && (
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="p-4">
+                <h4 className="font-medium mb-3 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary" />
+                  Message from Admin
+                </h4>
+                <div className="bg-background p-3 rounded-md">
+                  <p className="text-sm whitespace-pre-wrap">{request.admin_notes}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Timeline */}
           <Card>
