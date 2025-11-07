@@ -46,12 +46,32 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
   const [showAddClient, setShowAddClient] = useState(false);
   const [localClients, setLocalClients] = useState(clients);
   const [items, setItems] = useState<Partial<PurchaseTrackerItem>[]>([]);
+  const [monthPeriods, setMonthPeriods] = useState<Array<{ id: string; month: number; year: number; status: string }>>([]);
   const isEditing = !!purchase;
 
   // Update local clients when props change
   useEffect(() => {
     setLocalClients(clients);
   }, [clients]);
+
+  // Fetch month periods
+  useEffect(() => {
+    const fetchMonthPeriods = async () => {
+      const { data, error } = await supabase
+        .from('month_periods')
+        .select('id, month, year, status')
+        .order('year', { ascending: false })
+        .order('month', { ascending: false });
+      
+      if (!error && data) {
+        setMonthPeriods(data);
+      }
+    };
+    
+    if (open) {
+      fetchMonthPeriods();
+    }
+  }, [open]);
 
   // Initialize items
   useEffect(() => {
@@ -481,16 +501,36 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
                     </FormItem>
                   )}
                 />
-              </div>
 
-              {/* hidden month period id to include in submission */}
-              <FormField
-                control={form.control}
-                name="month_period_id"
-                render={({ field }) => (
-                  <input type="hidden" {...field} value={field.value || ''} />
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="month_period_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Month Period</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select period (optional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">No Period</SelectItem>
+                          {monthPeriods.map((period) => (
+                            <SelectItem key={period.id} value={period.id}>
+                              {new Date(period.year, period.month - 1).toLocaleDateString('en-US', { 
+                                month: 'long', 
+                                year: 'numeric' 
+                              })} ({period.status})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               {/* Items list */}
               <PurchaseItemsList
