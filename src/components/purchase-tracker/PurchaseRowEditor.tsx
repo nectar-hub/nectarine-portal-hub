@@ -73,6 +73,40 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
     }
   }, [open]);
 
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      invoice_date: new Date(),
+      client_id: '',
+      invoice_no: '',
+      from_region: 'UK',
+      dop: undefined,
+      purchased_by: '',
+      dod: undefined,
+      status: 'PENDING',
+      remarks: '',
+      month_period_id: '',
+    },
+  });
+
+  // Reset form when purchase changes
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        invoice_date: purchase?.invoice_date ? new Date(purchase.invoice_date) : new Date(),
+        client_id: purchase?.client_id || '',
+        invoice_no: purchase?.invoice_no || '',
+        from_region: purchase?.from_region || 'UK',
+        dop: purchase?.dop ? new Date(purchase.dop) : undefined,
+        purchased_by: purchase?.purchased_by || '',
+        dod: purchase?.dod ? new Date(purchase.dod) : undefined,
+        status: purchase?.status || 'PENDING',
+        remarks: purchase?.remarks || '',
+        month_period_id: purchase?.month_period_id || defaultMonthPeriodId || '',
+      });
+    }
+  }, [purchase, open, defaultMonthPeriodId, form]);
+
   // Initialize items
   useEffect(() => {
     if (purchase?.items && purchase.items.length > 0) {
@@ -81,22 +115,6 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
       setItems([{ item_description: '', qty: 1 }]);
     }
   }, [purchase]);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      invoice_date: purchase?.invoice_date ? new Date(purchase.invoice_date) : new Date(),
-      client_id: purchase?.client_id || '',
-      invoice_no: purchase?.invoice_no || '',
-      from_region: purchase?.from_region || 'UK',
-      dop: purchase?.dop ? new Date(purchase.dop) : undefined,
-      purchased_by: purchase?.purchased_by || '',
-      dod: purchase?.dod ? new Date(purchase.dod) : undefined,
-      status: purchase?.status || 'PENDING',
-      remarks: purchase?.remarks || '',
-      month_period_id: purchase?.month_period_id || defaultMonthPeriodId || '',
-    },
-  });
 
   const handleItemChange = (index: number, field: keyof PurchaseTrackerItem, value: string | number) => {
     setItems(prev => {
