@@ -105,7 +105,7 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
         month_period_id: purchase?.month_period_id || defaultMonthPeriodId || '',
       });
     }
-  }, [purchase, open, defaultMonthPeriodId, form]);
+  }, [purchase, open, defaultMonthPeriodId]);
 
   // Initialize items
   useEffect(() => {
