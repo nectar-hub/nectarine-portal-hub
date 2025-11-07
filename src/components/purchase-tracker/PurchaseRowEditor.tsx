@@ -46,66 +46,12 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
   const [showAddClient, setShowAddClient] = useState(false);
   const [localClients, setLocalClients] = useState(clients);
   const [items, setItems] = useState<Partial<PurchaseTrackerItem>[]>([]);
-  const [monthPeriods, setMonthPeriods] = useState<Array<{ id: string; month: number; year: number; status: string }>>([]);
   const isEditing = !!purchase;
 
   // Update local clients when props change
   useEffect(() => {
     setLocalClients(clients);
   }, [clients]);
-
-  // Fetch month periods
-  useEffect(() => {
-    const fetchMonthPeriods = async () => {
-      const { data, error } = await supabase
-        .from('month_periods')
-        .select('id, month, year, status')
-        .order('year', { ascending: false })
-        .order('month', { ascending: false });
-      
-      if (!error && data) {
-        setMonthPeriods(data);
-      }
-    };
-    
-    if (open) {
-      fetchMonthPeriods();
-    }
-  }, [open]);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      invoice_date: new Date(),
-      client_id: '',
-      invoice_no: '',
-      from_region: 'UK',
-      dop: undefined,
-      purchased_by: '',
-      dod: undefined,
-      status: 'PENDING',
-      remarks: '',
-      month_period_id: '',
-    },
-  });
-
-  // Reset form when purchase changes
-  useEffect(() => {
-    if (open) {
-      form.reset({
-        invoice_date: purchase?.invoice_date ? new Date(purchase.invoice_date) : new Date(),
-        client_id: purchase?.client_id || '',
-        invoice_no: purchase?.invoice_no || '',
-        from_region: purchase?.from_region || 'UK',
-        dop: purchase?.dop ? new Date(purchase.dop) : undefined,
-        purchased_by: purchase?.purchased_by || '',
-        dod: purchase?.dod ? new Date(purchase.dod) : undefined,
-        status: purchase?.status || 'PENDING',
-        remarks: purchase?.remarks || '',
-        month_period_id: purchase?.month_period_id || defaultMonthPeriodId || '',
-      });
-    }
-  }, [purchase, open, defaultMonthPeriodId]);
 
   // Initialize items
   useEffect(() => {
@@ -115,6 +61,22 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
       setItems([{ item_description: '', qty: 1 }]);
     }
   }, [purchase]);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      invoice_date: purchase?.invoice_date ? new Date(purchase.invoice_date) : new Date(),
+      client_id: purchase?.client_id || '',
+      invoice_no: purchase?.invoice_no || '',
+      from_region: purchase?.from_region || 'UK',
+      dop: purchase?.dop ? new Date(purchase.dop) : undefined,
+      purchased_by: purchase?.purchased_by || '',
+      dod: purchase?.dod ? new Date(purchase.dod) : undefined,
+      status: purchase?.status || 'PENDING',
+      remarks: purchase?.remarks || '',
+      month_period_id: purchase?.month_period_id || defaultMonthPeriodId || '',
+    },
+  });
 
   const handleItemChange = (index: number, field: keyof PurchaseTrackerItem, value: string | number) => {
     setItems(prev => {
@@ -519,36 +481,16 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="month_period_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Month Period</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select period (optional)" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="">No Period</SelectItem>
-                          {monthPeriods.map((period) => (
-                            <SelectItem key={period.id} value={period.id}>
-                              {new Date(period.year, period.month - 1).toLocaleDateString('en-US', { 
-                                month: 'long', 
-                                year: 'numeric' 
-                              })} ({period.status})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
+
+              {/* hidden month period id to include in submission */}
+              <FormField
+                control={form.control}
+                name="month_period_id"
+                render={({ field }) => (
+                  <input type="hidden" {...field} value={field.value || ''} />
+                )}
+              />
 
               {/* Items list */}
               <PurchaseItemsList
