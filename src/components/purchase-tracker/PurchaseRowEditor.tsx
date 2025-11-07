@@ -11,6 +11,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { PurchaseTracker, PurchaseTrackerItem } from '@/types/purchase-tracker';
+import { MonthPeriod, getMonthLabel } from '@/types/month-period';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { QuickAddClientDialog } from './QuickAddClientDialog';
 import { PurchaseItemsList } from './PurchaseItemsList';
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 const formSchema = z.object({
   invoice_date: z.date(),
@@ -30,7 +32,7 @@ const formSchema = z.object({
   dod: z.date().optional(),
   status: z.enum(['PENDING', 'ORDERED', 'RECEIVED', 'IN_TRANSIT', 'READY', 'DELIVERED', 'CANCELLED']),
   remarks: z.string().optional(),
-  month_period_id: z.string().optional(),
+  month_period_id: z.string().min(1, 'Month period is required'),
 });
 
 interface PurchaseRowEditorProps {
@@ -47,6 +49,20 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
   const [localClients, setLocalClients] = useState(clients);
   const [items, setItems] = useState<Partial<PurchaseTrackerItem>[]>([]);
   const isEditing = !!purchase;
+
+  // Fetch month periods
+  const { data: periods = [] } = useQuery({
+    queryKey: ['month-periods'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('month_periods')
+        .select('*')
+        .order('year', { ascending: false })
+        .order('month', { ascending: false });
+      if (error) throw error;
+      return data as MonthPeriod[];
+    },
+  });
 
   // Update local clients when props change
   useEffect(() => {
@@ -481,16 +497,32 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
                     </FormItem>
                   )}
                 />
-              </div>
 
-              {/* hidden month period id to include in submission */}
-              <FormField
-                control={form.control}
-                name="month_period_id"
-                render={({ field }) => (
-                  <input type="hidden" {...field} value={field.value || ''} />
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="month_period_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Month Period *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select month period" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {periods.map((period) => (
+                            <SelectItem key={period.id} value={period.id}>
+                              {getMonthLabel(period)} {period.status === 'CLOSED' && '🔒'}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               {/* Items list */}
               <PurchaseItemsList
