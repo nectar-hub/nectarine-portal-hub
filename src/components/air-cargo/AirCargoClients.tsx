@@ -14,6 +14,16 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import ClientFormDialog from './ClientFormDialog';
 
 type Client = {
@@ -28,6 +38,11 @@ const AirCargoClients = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [deleteAlert, setDeleteAlert] = useState<{ open: boolean; clientId: string | null; shipmentCount: number }>({
+    open: false,
+    clientId: null,
+    shipmentCount: 0,
+  });
   const queryClient = useQueryClient();
 
   const { data: clients = [], isLoading, refetch } = useQuery({
@@ -96,10 +111,28 @@ const AirCargoClients = () => {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this client?')) {
+  const handleDelete = async (id: string) => {
+    // Check for associated shipments first
+    const { count, error } = await supabase
+      .from('air_cargo_shipments')
+      .select('*', { count: 'exact', head: true })
+      .eq('client_id', id);
+
+    if (error) {
+      toast.error('Failed to check for associated shipments');
+      return;
+    }
+
+    if (count && count > 0) {
+      setDeleteAlert({ open: true, clientId: id, shipmentCount: count });
+    } else {
+      // No shipments, proceed with deletion
       deleteMutation.mutate(id);
     }
+  };
+
+  const handleConfirmDelete = () => {
+    setDeleteAlert({ open: false, clientId: null, shipmentCount: 0 });
   };
 
   const handleCloseDialog = () => {
@@ -187,6 +220,21 @@ const AirCargoClients = () => {
           onOpenChange={handleCloseDialog}
           client={editingClient}
         />
+
+        <AlertDialog open={deleteAlert.open} onOpenChange={(open) => !open && handleConfirmDelete()}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Cannot Delete Client</AlertDialogTitle>
+              <AlertDialogDescription>
+                This client has {deleteAlert.shipmentCount} associated shipment{deleteAlert.shipmentCount !== 1 ? 's' : ''}. 
+                You must reassign or delete these shipments before you can delete this client.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction onClick={handleConfirmDelete}>Understood</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );
