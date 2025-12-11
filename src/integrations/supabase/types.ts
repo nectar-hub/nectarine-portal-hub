@@ -23,6 +23,7 @@ export type Database = {
           notes: string | null
           phone_number: string | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           client_name: string
@@ -32,6 +33,7 @@ export type Database = {
           notes?: string | null
           phone_number?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           client_name?: string
@@ -41,6 +43,7 @@ export type Database = {
           notes?: string | null
           phone_number?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
