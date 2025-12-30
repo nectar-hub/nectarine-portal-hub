@@ -7,7 +7,7 @@ export const useProductionCosts = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch all production costs with consignment details
+  // Fetch all production costs with consignment details and weights from the DB view
   const { data: productionCosts, isLoading, error, refetch } = useQuery({
     queryKey: ['production-costs'],
     queryFn: async () => {
@@ -22,25 +22,21 @@ export const useProductionCosts = () => {
 
       if (costsError) throw costsError;
 
-      // Fetch all shipments to calculate weights per consignment
-      const { data: shipments, error: shipmentsError } = await supabase
-        .from('air_cargo_shipments')
-        .select('consignment_id, dead_weight_kg, volumetric_weight_kg, chargeable_weight_kg')
-        .range(0, 9999);
+      // Fetch aggregated weights from the database view (no pagination issues)
+      const { data: weights, error: weightsError } = await supabase
+        .from('air_cargo_consignment_weights')
+        .select('consignment_id, total_dead_weight, total_volumetric_weight, total_chargeable_weight');
 
-      if (shipmentsError) throw shipmentsError;
+      if (weightsError) throw weightsError;
 
-      // Calculate total weights per consignment
+      // Build lookup map
       const weightsByConsignment: Record<string, { dead: number; volumetric: number; chargeable: number }> = {};
-      shipments?.forEach((shipment) => {
-        if (shipment.consignment_id) {
-          if (!weightsByConsignment[shipment.consignment_id]) {
-            weightsByConsignment[shipment.consignment_id] = { dead: 0, volumetric: 0, chargeable: 0 };
-          }
-          weightsByConsignment[shipment.consignment_id].dead += Number(shipment.dead_weight_kg) || 0;
-          weightsByConsignment[shipment.consignment_id].volumetric += Number(shipment.volumetric_weight_kg) || 0;
-          weightsByConsignment[shipment.consignment_id].chargeable += Number(shipment.chargeable_weight_kg) || 0;
-        }
+      weights?.forEach((w) => {
+        weightsByConsignment[w.consignment_id] = {
+          dead: Number(w.total_dead_weight) || 0,
+          volumetric: Number(w.total_volumetric_weight) || 0,
+          chargeable: Number(w.total_chargeable_weight) || 0,
+        };
       });
 
       // Combine data
@@ -58,7 +54,7 @@ export const useProductionCosts = () => {
     },
   });
 
-  // Fetch consignments for dropdown (with weights)
+  // Fetch consignments for dropdown (with weights from the DB view)
   const { data: consignments } = useQuery({
     queryKey: ['consignments-for-costs'],
     queryFn: async () => {
@@ -69,25 +65,21 @@ export const useProductionCosts = () => {
 
       if (consError) throw consError;
 
-      // Fetch shipments to calculate weights
-      const { data: shipments, error: shipmentsError } = await supabase
-        .from('air_cargo_shipments')
-        .select('consignment_id, dead_weight_kg, volumetric_weight_kg, chargeable_weight_kg')
-        .range(0, 9999);
+      // Fetch aggregated weights from the database view
+      const { data: weights, error: weightsError } = await supabase
+        .from('air_cargo_consignment_weights')
+        .select('consignment_id, total_dead_weight, total_volumetric_weight, total_chargeable_weight');
 
-      if (shipmentsError) throw shipmentsError;
+      if (weightsError) throw weightsError;
 
-      // Calculate weights
+      // Build lookup map
       const weightsByConsignment: Record<string, { dead: number; volumetric: number; chargeable: number }> = {};
-      shipments?.forEach((shipment) => {
-        if (shipment.consignment_id) {
-          if (!weightsByConsignment[shipment.consignment_id]) {
-            weightsByConsignment[shipment.consignment_id] = { dead: 0, volumetric: 0, chargeable: 0 };
-          }
-          weightsByConsignment[shipment.consignment_id].dead += Number(shipment.dead_weight_kg) || 0;
-          weightsByConsignment[shipment.consignment_id].volumetric += Number(shipment.volumetric_weight_kg) || 0;
-          weightsByConsignment[shipment.consignment_id].chargeable += Number(shipment.chargeable_weight_kg) || 0;
-        }
+      weights?.forEach((w) => {
+        weightsByConsignment[w.consignment_id] = {
+          dead: Number(w.total_dead_weight) || 0,
+          volumetric: Number(w.total_volumetric_weight) || 0,
+          chargeable: Number(w.total_chargeable_weight) || 0,
+        };
       });
 
       const result: ConsignmentWithWeights[] = (cons || []).map((c) => ({
