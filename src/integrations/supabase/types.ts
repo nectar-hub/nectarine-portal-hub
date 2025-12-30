@@ -793,7 +793,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      air_cargo_consignment_weights: {
+        Row: {
+          consignment_id: string | null
+          shipment_count: number | null
+          total_chargeable_weight: number | null
+          total_dead_weight: number | null
+          total_volumetric_weight: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "air_cargo_shipments_consignment_id_fkey"
+            columns: ["consignment_id"]
+            isOneToOne: false
+            referencedRelation: "air_cargo_consignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       create_order: {
