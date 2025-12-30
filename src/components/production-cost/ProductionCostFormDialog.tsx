@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, Check, ChevronsUpDown, Loader2 } from 'lucide-react';
+import { CalendarIcon, Check, ChevronsUpDown, Loader2, TrendingUp, TrendingDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,9 +17,11 @@ import {
   ConsignmentWithWeights,
   FOREIGN_CURRENCY_OPTIONS,
   ForeignCurrencyType,
+  ROUTE_OPTIONS,
   calculateForeignCosts,
   calculateLocalCosts,
-  calculateCostPerKg,
+  calculateProfit,
+  calculateProfitMargin,
   formatForeignCurrency,
   formatTZS,
 } from '@/types/production-cost';
@@ -60,6 +62,8 @@ export const ProductionCostFormDialog = ({
     currency: 'USD' as ForeignCurrencyType,
     notes: '',
     cost_date: new Date(),
+    revenue_total: 0,
+    route: 'ZNZ Airport → Ferry → Dar → Office',
   });
 
   useEffect(() => {
@@ -78,6 +82,8 @@ export const ProductionCostFormDialog = ({
         currency: (editingCost.currency as ForeignCurrencyType) || 'USD',
         notes: editingCost.notes || '',
         cost_date: new Date(editingCost.cost_date),
+        revenue_total: Number(editingCost.revenue_total) || 0,
+        route: editingCost.route || 'ZNZ Airport → Ferry → Dar → Office',
       });
       setDuplicateError(false);
     } else {
@@ -94,6 +100,8 @@ export const ProductionCostFormDialog = ({
         currency: 'USD',
         notes: '',
         cost_date: new Date(),
+        revenue_total: 0,
+        route: 'ZNZ Airport → Ferry → Dar → Office',
       });
       setDuplicateError(false);
     }
@@ -109,12 +117,14 @@ export const ProductionCostFormDialog = ({
     }
   };
 
-  const handleCostChange = (field: keyof typeof formData, value: number) => {
+  const handleCostChange = (field: keyof typeof formData, value: number | string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const foreignTotal = calculateForeignCosts(formData);
   const localTotal = calculateLocalCosts(formData);
+  const profit = calculateProfit(formData.revenue_total, foreignTotal);
+  const profitMargin = calculateProfitMargin(formData.revenue_total, profit);
 
   const handleSubmit = () => {
     if (!selectedConsignment || duplicateError) return;
@@ -132,6 +142,8 @@ export const ProductionCostFormDialog = ({
       currency: formData.currency,
       notes: formData.notes || null,
       cost_date: format(formData.cost_date, 'yyyy-MM-dd'),
+      revenue_total: formData.revenue_total,
+      route: formData.route,
     });
   };
 
@@ -145,7 +157,7 @@ export const ProductionCostFormDialog = ({
         <DialogHeader>
           <DialogTitle>{editingCost ? 'Edit Production Cost' : 'Add Production Cost'}</DialogTitle>
           <DialogDescription>
-            {editingCost ? 'Update the production cost details for this consignment.' : 'Select a consignment and enter the production costs.'}
+            {editingCost ? 'Update the production cost and revenue details.' : 'Select a consignment and enter costs and revenue.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -218,6 +230,46 @@ export const ProductionCostFormDialog = ({
               </CardContent>
             </Card>
           )}
+
+          {/* Revenue Input - Prominent placement */}
+          <Card className="border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                Revenue
+                <span className="text-xs font-normal text-muted-foreground px-2 py-0.5 bg-purple-100 dark:bg-purple-900 rounded">
+                  {formData.currency}
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs">Revenue Total ({formData.currency})</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={formData.revenue_total}
+                  onChange={(e) => handleCostChange('revenue_total', Number(e.target.value) || 0)}
+                  className="text-lg font-semibold"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Route</Label>
+                <Select value={formData.route} onValueChange={(value) => handleCostChange('route', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROUTE_OPTIONS.map((r) => (
+                      <SelectItem key={r} value={r}>
+                        {r}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Cost Inputs - Grouped */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -358,7 +410,7 @@ export const ProductionCostFormDialog = ({
             </Card>
           </div>
 
-          {/* Currency (for foreign costs), Date, Notes */}
+          {/* Currency, Date, Notes */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Foreign Currency (Freight & Handling)</Label>
@@ -407,25 +459,48 @@ export const ProductionCostFormDialog = ({
             </div>
           </div>
 
-          {/* Live Totals - Separated by currency */}
+          {/* Live Totals & Profit */}
           <Card className="bg-primary/5 border-primary/20">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Calculated Totals</CardTitle>
+              <CardTitle className="text-sm">Calculated Totals & Profit</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4 text-sm">
+            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <p className="text-muted-foreground">Foreign Costs (Freight + Handling)</p>
-                <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{formatForeignCurrency(foreignTotal, formData.currency)}</p>
+                <p className="text-muted-foreground">Foreign Costs Total</p>
+                <p className="font-semibold text-blue-600 dark:text-blue-400">
+                  {formatForeignCurrency(foreignTotal, formData.currency)}
+                </p>
               </div>
               <div>
-                <p className="text-muted-foreground">Local Costs (Clearance + Transport + Labour)</p>
-                <p className="text-xl font-bold text-green-600 dark:text-green-400">{formatTZS(localTotal)}</p>
+                <p className="text-muted-foreground">Local Costs Total</p>
+                <p className="font-semibold text-green-600 dark:text-green-400">
+                  {formatTZS(localTotal)}
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Revenue</p>
+                <p className="font-semibold text-purple-600 dark:text-purple-400">
+                  {formatForeignCurrency(formData.revenue_total, formData.currency)}
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground flex items-center gap-1">
+                  Profit (vs Foreign Costs)
+                  {profit >= 0 ? (
+                    <TrendingUp className="h-3 w-3 text-green-500" />
+                  ) : (
+                    <TrendingDown className="h-3 w-3 text-red-500" />
+                  )}
+                </p>
+                <p className={cn('font-semibold', profit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400')}>
+                  {formatForeignCurrency(profit, formData.currency)} ({profitMargin})
+                </p>
               </div>
             </CardContent>
           </Card>
 
           {/* Actions */}
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>

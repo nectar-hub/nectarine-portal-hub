@@ -386,6 +386,8 @@ export type Database = {
           labour_helpers_cost: number
           notes: string | null
           office_handling_cost: number
+          revenue_total: number | null
+          route: string | null
           updated_at: string
           updated_by: string | null
           znz_airport_to_ferry_transport_cost: number
@@ -405,6 +407,8 @@ export type Database = {
           labour_helpers_cost?: number
           notes?: string | null
           office_handling_cost?: number
+          revenue_total?: number | null
+          route?: string | null
           updated_at?: string
           updated_by?: string | null
           znz_airport_to_ferry_transport_cost?: number
@@ -424,6 +428,8 @@ export type Database = {
           labour_helpers_cost?: number
           notes?: string | null
           office_handling_cost?: number
+          revenue_total?: number | null
+          route?: string | null
           updated_at?: string
           updated_by?: string | null
           znz_airport_to_ferry_transport_cost?: number
