@@ -17,7 +17,7 @@ import {
   ConsignmentWithWeights,
   FOREIGN_CURRENCY_OPTIONS,
   ForeignCurrencyType,
-  ROUTE_OPTIONS,
+  
   calculateForeignCosts,
   calculateLocalCosts,
   formatForeignCurrency,
@@ -61,7 +61,6 @@ export const ProductionCostFormDialog = ({
     notes: '',
     cost_date: new Date(),
     revenue_total: 0,
-    route: 'ZNZ Airport → Ferry → Dar → Office',
   });
 
   useEffect(() => {
@@ -81,7 +80,7 @@ export const ProductionCostFormDialog = ({
         notes: editingCost.notes || '',
         cost_date: new Date(editingCost.cost_date),
         revenue_total: Number(editingCost.revenue_total) || 0,
-        route: editingCost.route || 'ZNZ Airport → Ferry → Dar → Office',
+        
       });
       setDuplicateError(false);
     } else {
@@ -99,7 +98,7 @@ export const ProductionCostFormDialog = ({
         notes: '',
         cost_date: new Date(),
         revenue_total: 0,
-        route: 'ZNZ Airport → Ferry → Dar → Office',
+        
       });
       setDuplicateError(false);
     }
@@ -139,7 +138,7 @@ export const ProductionCostFormDialog = ({
       notes: formData.notes || null,
       cost_date: format(formData.cost_date, 'yyyy-MM-dd'),
       revenue_total: formData.revenue_total,
-      route: formData.route,
+      
     });
   };
 
@@ -227,22 +226,6 @@ export const ProductionCostFormDialog = ({
             </Card>
           )}
 
-          {/* Route Selection */}
-          <div className="space-y-2">
-            <Label>Route</Label>
-            <Select value={formData.route} onValueChange={(value) => handleCostChange('route', value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ROUTE_OPTIONS.map((r) => (
-                  <SelectItem key={r} value={r}>
-                    {r}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
 
           {/* Cost Inputs - Grouped */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
