@@ -1,0 +1,194 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { ProductionCostWithConsignment, ConsignmentWithWeights, CurrencyType } from '@/types/production-cost';
+
+export const useProductionCosts = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch all production costs with consignment details
+  const { data: productionCosts, isLoading, error, refetch } = useQuery({
+    queryKey: ['production-costs'],
+    queryFn: async () => {
+      // Fetch production costs with consignment info
+      const { data: costs, error: costsError } = await supabase
+        .from('production_costs')
+        .select(`
+          *,
+          consignment:air_cargo_consignments(id, consignment_name)
+        `)
+        .order('cost_date', { ascending: false });
+
+      if (costsError) throw costsError;
+
+      // Fetch all shipments to calculate weights per consignment
+      const { data: shipments, error: shipmentsError } = await supabase
+        .from('air_cargo_shipments')
+        .select('consignment_id, dead_weight_kg, chargeable_weight_kg');
+
+      if (shipmentsError) throw shipmentsError;
+
+      // Calculate total weights per consignment
+      const weightsByConsignment: Record<string, { dead: number; chargeable: number }> = {};
+      shipments?.forEach((shipment) => {
+        if (shipment.consignment_id) {
+          if (!weightsByConsignment[shipment.consignment_id]) {
+            weightsByConsignment[shipment.consignment_id] = { dead: 0, chargeable: 0 };
+          }
+          weightsByConsignment[shipment.consignment_id].dead += Number(shipment.dead_weight_kg) || 0;
+          weightsByConsignment[shipment.consignment_id].chargeable += Number(shipment.chargeable_weight_kg) || 0;
+        }
+      });
+
+      // Combine data
+      const enrichedCosts: ProductionCostWithConsignment[] = (costs || []).map((cost) => ({
+        ...cost,
+        currency: cost.currency as CurrencyType,
+        total_dead_weight: weightsByConsignment[cost.consignment_id]?.dead || 0,
+        total_chargeable_weight: weightsByConsignment[cost.consignment_id]?.chargeable || 0,
+      }));
+
+      return enrichedCosts;
+    },
+  });
+
+  // Fetch consignments for dropdown (with weights)
+  const { data: consignments } = useQuery({
+    queryKey: ['consignments-for-costs'],
+    queryFn: async () => {
+      const { data: cons, error: consError } = await supabase
+        .from('air_cargo_consignments')
+        .select('id, consignment_name')
+        .order('created_at', { ascending: false });
+
+      if (consError) throw consError;
+
+      // Fetch shipments to calculate weights
+      const { data: shipments, error: shipmentsError } = await supabase
+        .from('air_cargo_shipments')
+        .select('consignment_id, dead_weight_kg, chargeable_weight_kg');
+
+      if (shipmentsError) throw shipmentsError;
+
+      // Calculate weights
+      const weightsByConsignment: Record<string, { dead: number; chargeable: number }> = {};
+      shipments?.forEach((shipment) => {
+        if (shipment.consignment_id) {
+          if (!weightsByConsignment[shipment.consignment_id]) {
+            weightsByConsignment[shipment.consignment_id] = { dead: 0, chargeable: 0 };
+          }
+          weightsByConsignment[shipment.consignment_id].dead += Number(shipment.dead_weight_kg) || 0;
+          weightsByConsignment[shipment.consignment_id].chargeable += Number(shipment.chargeable_weight_kg) || 0;
+        }
+      });
+
+      const result: ConsignmentWithWeights[] = (cons || []).map((c) => ({
+        id: c.id,
+        consignment_name: c.consignment_name,
+        total_dead_weight: weightsByConsignment[c.id]?.dead || 0,
+        total_chargeable_weight: weightsByConsignment[c.id]?.chargeable || 0,
+      }));
+
+      return result;
+    },
+  });
+
+  // Check if consignment already has a production cost
+  const checkDuplicate = async (consignmentId: string): Promise<boolean> => {
+    const { data } = await supabase
+      .from('production_costs')
+      .select('id')
+      .eq('consignment_id', consignmentId)
+      .single();
+    return !!data;
+  };
+
+  // Create production cost
+  const createMutation = useMutation({
+    mutationFn: async (data: Omit<ProductionCostWithConsignment, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by' | 'consignment' | 'total_dead_weight' | 'total_chargeable_weight'>) => {
+      const { error } = await supabase.from('production_costs').insert({
+        consignment_id: data.consignment_id,
+        airline_freight_cost: data.airline_freight_cost,
+        office_handling_cost: data.office_handling_cost,
+        arrival_clearance_cost: data.arrival_clearance_cost,
+        znz_airport_to_ferry_transport_cost: data.znz_airport_to_ferry_transport_cost,
+        znz_to_dar_shipping_cost: data.znz_to_dar_shipping_cost,
+        dar_clearance_cost: data.dar_clearance_cost,
+        dar_ferry_to_office_transport_cost: data.dar_ferry_to_office_transport_cost,
+        labour_helpers_cost: data.labour_helpers_cost,
+        currency: data.currency,
+        notes: data.notes,
+        cost_date: data.cost_date,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['production-costs'] });
+      toast({ title: 'Success', description: 'Production cost created successfully' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  // Update production cost
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, ...data }: Partial<ProductionCostWithConsignment> & { id: string }) => {
+      const { error } = await supabase
+        .from('production_costs')
+        .update({
+          airline_freight_cost: data.airline_freight_cost,
+          office_handling_cost: data.office_handling_cost,
+          arrival_clearance_cost: data.arrival_clearance_cost,
+          znz_airport_to_ferry_transport_cost: data.znz_airport_to_ferry_transport_cost,
+          znz_to_dar_shipping_cost: data.znz_to_dar_shipping_cost,
+          dar_clearance_cost: data.dar_clearance_cost,
+          dar_ferry_to_office_transport_cost: data.dar_ferry_to_office_transport_cost,
+          labour_helpers_cost: data.labour_helpers_cost,
+          currency: data.currency,
+          notes: data.notes,
+          cost_date: data.cost_date,
+        })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['production-costs'] });
+      toast({ title: 'Success', description: 'Production cost updated successfully' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  // Delete production cost
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('production_costs').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['production-costs'] });
+      toast({ title: 'Success', description: 'Production cost deleted successfully' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  return {
+    productionCosts,
+    consignments,
+    isLoading,
+    error,
+    refetch,
+    checkDuplicate,
+    createCost: createMutation.mutate,
+    updateCost: updateMutation.mutate,
+    deleteCost: deleteMutation.mutate,
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+  };
+};
