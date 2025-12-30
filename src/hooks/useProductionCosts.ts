@@ -25,7 +25,8 @@ export const useProductionCosts = () => {
       // Fetch all shipments to calculate weights per consignment
       const { data: shipments, error: shipmentsError } = await supabase
         .from('air_cargo_shipments')
-        .select('consignment_id, dead_weight_kg, volumetric_weight_kg, chargeable_weight_kg');
+        .select('consignment_id, dead_weight_kg, volumetric_weight_kg, chargeable_weight_kg')
+        .range(0, 9999);
 
       if (shipmentsError) throw shipmentsError;
 
@@ -69,7 +70,8 @@ export const useProductionCosts = () => {
       // Fetch shipments to calculate weights
       const { data: shipments, error: shipmentsError } = await supabase
         .from('air_cargo_shipments')
-        .select('consignment_id, dead_weight_kg, volumetric_weight_kg, chargeable_weight_kg');
+        .select('consignment_id, dead_weight_kg, volumetric_weight_kg, chargeable_weight_kg')
+        .range(0, 9999);
 
       if (shipmentsError) throw shipmentsError;
 
