@@ -25,18 +25,19 @@ export const useProductionCosts = () => {
       // Fetch all shipments to calculate weights per consignment
       const { data: shipments, error: shipmentsError } = await supabase
         .from('air_cargo_shipments')
-        .select('consignment_id, dead_weight_kg, chargeable_weight_kg');
+        .select('consignment_id, dead_weight_kg, volumetric_weight_kg, chargeable_weight_kg');
 
       if (shipmentsError) throw shipmentsError;
 
       // Calculate total weights per consignment
-      const weightsByConsignment: Record<string, { dead: number; chargeable: number }> = {};
+      const weightsByConsignment: Record<string, { dead: number; volumetric: number; chargeable: number }> = {};
       shipments?.forEach((shipment) => {
         if (shipment.consignment_id) {
           if (!weightsByConsignment[shipment.consignment_id]) {
-            weightsByConsignment[shipment.consignment_id] = { dead: 0, chargeable: 0 };
+            weightsByConsignment[shipment.consignment_id] = { dead: 0, volumetric: 0, chargeable: 0 };
           }
           weightsByConsignment[shipment.consignment_id].dead += Number(shipment.dead_weight_kg) || 0;
+          weightsByConsignment[shipment.consignment_id].volumetric += Number(shipment.volumetric_weight_kg) || 0;
           weightsByConsignment[shipment.consignment_id].chargeable += Number(shipment.chargeable_weight_kg) || 0;
         }
       });
@@ -46,6 +47,7 @@ export const useProductionCosts = () => {
         ...cost,
         currency: cost.currency as ForeignCurrencyType,
         total_dead_weight: weightsByConsignment[cost.consignment_id]?.dead || 0,
+        total_volumetric_weight: weightsByConsignment[cost.consignment_id]?.volumetric || 0,
         total_chargeable_weight: weightsByConsignment[cost.consignment_id]?.chargeable || 0,
       }));
 
@@ -67,18 +69,19 @@ export const useProductionCosts = () => {
       // Fetch shipments to calculate weights
       const { data: shipments, error: shipmentsError } = await supabase
         .from('air_cargo_shipments')
-        .select('consignment_id, dead_weight_kg, chargeable_weight_kg');
+        .select('consignment_id, dead_weight_kg, volumetric_weight_kg, chargeable_weight_kg');
 
       if (shipmentsError) throw shipmentsError;
 
       // Calculate weights
-      const weightsByConsignment: Record<string, { dead: number; chargeable: number }> = {};
+      const weightsByConsignment: Record<string, { dead: number; volumetric: number; chargeable: number }> = {};
       shipments?.forEach((shipment) => {
         if (shipment.consignment_id) {
           if (!weightsByConsignment[shipment.consignment_id]) {
-            weightsByConsignment[shipment.consignment_id] = { dead: 0, chargeable: 0 };
+            weightsByConsignment[shipment.consignment_id] = { dead: 0, volumetric: 0, chargeable: 0 };
           }
           weightsByConsignment[shipment.consignment_id].dead += Number(shipment.dead_weight_kg) || 0;
+          weightsByConsignment[shipment.consignment_id].volumetric += Number(shipment.volumetric_weight_kg) || 0;
           weightsByConsignment[shipment.consignment_id].chargeable += Number(shipment.chargeable_weight_kg) || 0;
         }
       });
@@ -87,6 +90,7 @@ export const useProductionCosts = () => {
         id: c.id,
         consignment_name: c.consignment_name,
         total_dead_weight: weightsByConsignment[c.id]?.dead || 0,
+        total_volumetric_weight: weightsByConsignment[c.id]?.volumetric || 0,
         total_chargeable_weight: weightsByConsignment[c.id]?.chargeable || 0,
       }));
 
@@ -106,7 +110,7 @@ export const useProductionCosts = () => {
 
   // Create production cost
   const createMutation = useMutation({
-    mutationFn: async (data: Omit<ProductionCostWithConsignment, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by' | 'consignment' | 'total_dead_weight' | 'total_chargeable_weight'>) => {
+    mutationFn: async (data: Omit<ProductionCostWithConsignment, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by' | 'consignment' | 'total_dead_weight' | 'total_volumetric_weight' | 'total_chargeable_weight'>) => {
       const { error } = await supabase.from('production_costs').insert({
         consignment_id: data.consignment_id,
         airline_freight_cost: data.airline_freight_cost,

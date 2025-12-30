@@ -89,6 +89,7 @@ export const ProductionCostGrid = ({ data, onEdit, onDelete, onInlineUpdate }: P
             <TableRow className="bg-muted/50">
               <TableHead className="sticky left-0 bg-muted/50 z-10 min-w-[180px]">Consignment</TableHead>
               <TableHead className="text-right min-w-[90px]">Dead Wt</TableHead>
+              <TableHead className="text-right min-w-[90px]">Vol Wt</TableHead>
               <TableHead className="text-right min-w-[90px]">Chrg Wt</TableHead>
               {/* Foreign currency columns */}
               {foreignCostFields.map((field) => (
@@ -113,7 +114,7 @@ export const ProductionCostGrid = ({ data, onEdit, onDelete, onInlineUpdate }: P
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={17} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={18} className="h-24 text-center text-muted-foreground">
                   No production costs found. Click "Add Production Cost" to get started.
                 </TableCell>
               </TableRow>
@@ -129,6 +130,9 @@ export const ProductionCostGrid = ({ data, onEdit, onDelete, onInlineUpdate }: P
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground text-sm">
                       {row.total_dead_weight.toFixed(1)}
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground text-sm">
+                      {row.total_volumetric_weight.toFixed(1)}
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground text-sm">
                       {row.total_chargeable_weight.toFixed(1)}

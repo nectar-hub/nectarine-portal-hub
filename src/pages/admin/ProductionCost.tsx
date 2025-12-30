@@ -64,7 +64,7 @@ const ProductionCost = () => {
     updateCost({ id, [field]: value });
   };
 
-  const handleFormSubmit = (data: Omit<ProductionCostWithConsignment, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by' | 'consignment' | 'total_dead_weight' | 'total_chargeable_weight'>) => {
+  const handleFormSubmit = (data: Omit<ProductionCostWithConsignment, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by' | 'consignment' | 'total_dead_weight' | 'total_volumetric_weight' | 'total_chargeable_weight'>) => {
     if (editingCost) {
       updateCost({ id: editingCost.id, ...data });
     } else {

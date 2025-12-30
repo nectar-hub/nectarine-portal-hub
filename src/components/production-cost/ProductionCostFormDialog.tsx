@@ -30,7 +30,7 @@ interface ProductionCostFormDialogProps {
   consignments: ConsignmentWithWeights[];
   existingCostIds: string[];
   editingCost?: ProductionCostWithConsignment;
-  onSubmit: (data: Omit<ProductionCostWithConsignment, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by' | 'consignment' | 'total_dead_weight' | 'total_chargeable_weight'>) => void;
+  onSubmit: (data: Omit<ProductionCostWithConsignment, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by' | 'consignment' | 'total_dead_weight' | 'total_volumetric_weight' | 'total_chargeable_weight'>) => void;
   isSubmitting: boolean;
 }
 
@@ -198,7 +198,7 @@ export const ProductionCostFormDialog = ({
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium">Consignment Details (Read-Only)</CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-3 gap-4 text-sm">
+              <CardContent className="grid grid-cols-4 gap-4 text-sm">
                 <div>
                   <p className="text-muted-foreground">Consignment Name</p>
                   <p className="font-medium">{selectedConsignment.consignment_name}</p>
@@ -206,6 +206,10 @@ export const ProductionCostFormDialog = ({
                 <div>
                   <p className="text-muted-foreground">Total Dead Weight</p>
                   <p className="font-medium">{selectedConsignment.total_dead_weight.toFixed(2)} kg</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Total Volumetric Weight</p>
+                  <p className="font-medium">{selectedConsignment.total_volumetric_weight.toFixed(2)} kg</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Total Chargeable Weight</p>
