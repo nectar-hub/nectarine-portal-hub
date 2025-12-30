@@ -2,15 +2,6 @@ export type ForeignCurrencyType = 'USD' | 'EUR' | 'GBP';
 
 export const FOREIGN_CURRENCY_OPTIONS: ForeignCurrencyType[] = ['USD', 'EUR', 'GBP'];
 
-// Route options for consignment logistics
-export const ROUTE_OPTIONS = [
-  'ZNZ Airport → Ferry → Dar → Office',
-  'Dar Airport → Office',
-  'ZNZ Direct',
-  'Other',
-] as const;
-
-export type RouteType = typeof ROUTE_OPTIONS[number];
 
 // Foreign costs (in selected currency): airline_freight_cost, office_handling_cost
 // Local costs (always TZS): all others
@@ -30,7 +21,6 @@ export interface ProductionCost {
   notes: string | null;
   cost_date: string;
   revenue_total: number;
-  route: string;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -69,7 +59,7 @@ export interface ProductionCostFormData {
   notes: string;
   cost_date: Date;
   revenue_total: number;
-  route: string;
+  
 }
 
 // Fields that use foreign currency

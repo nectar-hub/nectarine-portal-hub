@@ -89,7 +89,7 @@ export const ProductionCostGrid = ({ data, onEdit, onDelete, onInlineUpdate }: P
           <TableHeader>
             <TableRow className="bg-muted/50">
               <TableHead className="sticky left-0 bg-muted/50 z-10 min-w-[180px]">Consignment</TableHead>
-              <TableHead className="min-w-[100px]">Route</TableHead>
+              
               <TableHead className="text-right min-w-[80px]">Dead Wt</TableHead>
               <TableHead className="text-right min-w-[80px]">Vol Wt</TableHead>
               <TableHead className="text-right min-w-[80px]">Chrg Wt</TableHead>
@@ -118,7 +118,7 @@ export const ProductionCostGrid = ({ data, onEdit, onDelete, onInlineUpdate }: P
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={22} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={21} className="h-24 text-center text-muted-foreground">
                   No production costs found. Click "Add Production Cost" to get started.
                 </TableCell>
               </TableRow>
@@ -134,9 +134,6 @@ export const ProductionCostGrid = ({ data, onEdit, onDelete, onInlineUpdate }: P
                   <TableRow key={row.id} className="group">
                     <TableCell className="sticky left-0 bg-background z-10 font-medium">
                       {row.consignment?.consignment_name || 'Unknown'}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {row.route || '-'}
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground text-sm">
                       {(Number(row.total_dead_weight) || 0).toFixed(1)}

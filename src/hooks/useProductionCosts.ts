@@ -44,7 +44,7 @@ export const useProductionCosts = () => {
         ...cost,
         currency: cost.currency as ForeignCurrencyType,
         revenue_total: Number(cost.revenue_total) || 0,
-        route: cost.route || 'ZNZ Airport → Ferry → Dar → Office',
+        
         total_dead_weight: weightsByConsignment[cost.consignment_id]?.dead || 0,
         total_volumetric_weight: weightsByConsignment[cost.consignment_id]?.volumetric || 0,
         total_chargeable_weight: weightsByConsignment[cost.consignment_id]?.chargeable || 0,
@@ -121,7 +121,6 @@ export const useProductionCosts = () => {
         notes: data.notes,
         cost_date: data.cost_date,
         revenue_total: data.revenue_total,
-        route: data.route,
       });
       if (error) throw error;
     },
@@ -152,7 +151,7 @@ export const useProductionCosts = () => {
           notes: data.notes,
           cost_date: data.cost_date,
           revenue_total: data.revenue_total,
-          route: data.route,
+          
         })
         .eq('id', id);
       if (error) throw error;
