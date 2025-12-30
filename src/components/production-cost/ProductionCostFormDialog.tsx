@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, Check, ChevronsUpDown, Loader2, TrendingUp, TrendingDown } from 'lucide-react';
+import { CalendarIcon, Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,8 +20,6 @@ import {
   ROUTE_OPTIONS,
   calculateForeignCosts,
   calculateLocalCosts,
-  calculateProfit,
-  calculateProfitMargin,
   formatForeignCurrency,
   formatTZS,
 } from '@/types/production-cost';
@@ -123,8 +121,6 @@ export const ProductionCostFormDialog = ({
 
   const foreignTotal = calculateForeignCosts(formData);
   const localTotal = calculateLocalCosts(formData);
-  const profit = calculateProfit(formData.revenue_total, foreignTotal);
-  const profitMargin = calculateProfitMargin(formData.revenue_total, profit);
 
   const handleSubmit = () => {
     if (!selectedConsignment || duplicateError) return;
@@ -231,45 +227,22 @@ export const ProductionCostFormDialog = ({
             </Card>
           )}
 
-          {/* Revenue Input - Prominent placement */}
-          <Card className="border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                Revenue
-                <span className="text-xs font-normal text-muted-foreground px-2 py-0.5 bg-purple-100 dark:bg-purple-900 rounded">
-                  {formData.currency}
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-xs">Revenue Total ({formData.currency})</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={formData.revenue_total}
-                  onChange={(e) => handleCostChange('revenue_total', Number(e.target.value) || 0)}
-                  className="text-lg font-semibold"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Route</Label>
-                <Select value={formData.route} onValueChange={(value) => handleCostChange('route', value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ROUTE_OPTIONS.map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {r}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Route Selection */}
+          <div className="space-y-2">
+            <Label>Route</Label>
+            <Select value={formData.route} onValueChange={(value) => handleCostChange('route', value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROUTE_OPTIONS.map((r) => (
+                  <SelectItem key={r} value={r}>
+                    {r}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Cost Inputs - Grouped */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -459,12 +432,12 @@ export const ProductionCostFormDialog = ({
             </div>
           </div>
 
-          {/* Live Totals & Profit */}
+          {/* Live Totals */}
           <Card className="bg-primary/5 border-primary/20">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Calculated Totals & Profit</CardTitle>
+              <CardTitle className="text-sm">Calculated Totals</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <CardContent className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-muted-foreground">Foreign Costs Total</p>
                 <p className="font-semibold text-blue-600 dark:text-blue-400">
@@ -475,25 +448,6 @@ export const ProductionCostFormDialog = ({
                 <p className="text-muted-foreground">Local Costs Total</p>
                 <p className="font-semibold text-green-600 dark:text-green-400">
                   {formatTZS(localTotal)}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Revenue</p>
-                <p className="font-semibold text-purple-600 dark:text-purple-400">
-                  {formatForeignCurrency(formData.revenue_total, formData.currency)}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground flex items-center gap-1">
-                  Profit (vs Foreign Costs)
-                  {profit >= 0 ? (
-                    <TrendingUp className="h-3 w-3 text-green-500" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3 text-red-500" />
-                  )}
-                </p>
-                <p className={cn('font-semibold', profit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400')}>
-                  {formatForeignCurrency(profit, formData.currency)} ({profitMargin})
                 </p>
               </div>
             </CardContent>
