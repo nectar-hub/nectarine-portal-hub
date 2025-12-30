@@ -31,6 +31,7 @@ export interface ProductionCostWithConsignment extends ProductionCost {
     consignment_name: string;
   };
   total_dead_weight: number;
+  total_volumetric_weight: number;
   total_chargeable_weight: number;
 }
 
@@ -38,6 +39,7 @@ export interface ConsignmentWithWeights {
   id: string;
   consignment_name: string;
   total_dead_weight: number;
+  total_volumetric_weight: number;
   total_chargeable_weight: number;
 }
 
