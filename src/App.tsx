@@ -22,6 +22,7 @@ import Analytics from "./pages/admin/Analytics";
 import Settings from "./pages/admin/Settings";
 import AirCargo from "./pages/admin/AirCargo";
 import PurchaseTracker from "./pages/admin/PurchaseTracker";
+import ProductionCost from "./pages/admin/ProductionCost";
 import NotFound from "./pages/NotFound";
 import MainLayout from "./layouts/MainLayout";
 
@@ -169,6 +170,14 @@ const App = () => (
               element={
                 <MainLayout requireAuth adminOnly>
                   <PurchaseTracker />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/admin/production-cost"
+              element={
+                <MainLayout requireAuth adminOnly>
+                  <ProductionCost />
                 </MainLayout>
               }
             />

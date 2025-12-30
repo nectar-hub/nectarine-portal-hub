@@ -371,6 +371,74 @@ export type Database = {
           },
         ]
       }
+      production_costs: {
+        Row: {
+          airline_freight_cost: number
+          arrival_clearance_cost: number
+          consignment_id: string
+          cost_date: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          dar_clearance_cost: number
+          dar_ferry_to_office_transport_cost: number
+          id: string
+          labour_helpers_cost: number
+          notes: string | null
+          office_handling_cost: number
+          updated_at: string
+          updated_by: string | null
+          znz_airport_to_ferry_transport_cost: number
+          znz_to_dar_shipping_cost: number
+        }
+        Insert: {
+          airline_freight_cost?: number
+          arrival_clearance_cost?: number
+          consignment_id: string
+          cost_date?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          dar_clearance_cost?: number
+          dar_ferry_to_office_transport_cost?: number
+          id?: string
+          labour_helpers_cost?: number
+          notes?: string | null
+          office_handling_cost?: number
+          updated_at?: string
+          updated_by?: string | null
+          znz_airport_to_ferry_transport_cost?: number
+          znz_to_dar_shipping_cost?: number
+        }
+        Update: {
+          airline_freight_cost?: number
+          arrival_clearance_cost?: number
+          consignment_id?: string
+          cost_date?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          dar_clearance_cost?: number
+          dar_ferry_to_office_transport_cost?: number
+          id?: string
+          labour_helpers_cost?: number
+          notes?: string | null
+          office_handling_cost?: number
+          updated_at?: string
+          updated_by?: string | null
+          znz_airport_to_ferry_transport_cost?: number
+          znz_to_dar_shipping_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_costs_consignment_id_fkey"
+            columns: ["consignment_id"]
+            isOneToOne: true
+            referencedRelation: "air_cargo_consignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
