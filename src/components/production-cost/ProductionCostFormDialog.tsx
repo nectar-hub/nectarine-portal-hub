@@ -15,11 +15,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ProductionCostWithConsignment,
   ConsignmentWithWeights,
-  CURRENCY_OPTIONS,
-  CurrencyType,
-  calculateTotalCost,
+  FOREIGN_CURRENCY_OPTIONS,
+  ForeignCurrencyType,
+  calculateForeignCosts,
+  calculateLocalCosts,
   calculateCostPerKg,
-  formatCurrency,
+  formatForeignCurrency,
+  formatTZS,
 } from '@/types/production-cost';
 
 interface ProductionCostFormDialogProps {
@@ -55,7 +57,7 @@ export const ProductionCostFormDialog = ({
     dar_clearance_cost: 0,
     dar_ferry_to_office_transport_cost: 0,
     labour_helpers_cost: 0,
-    currency: 'USD' as CurrencyType,
+    currency: 'USD' as ForeignCurrencyType,
     notes: '',
     cost_date: new Date(),
   });
@@ -73,7 +75,7 @@ export const ProductionCostFormDialog = ({
         dar_clearance_cost: editingCost.dar_clearance_cost,
         dar_ferry_to_office_transport_cost: editingCost.dar_ferry_to_office_transport_cost,
         labour_helpers_cost: editingCost.labour_helpers_cost,
-        currency: editingCost.currency as CurrencyType,
+        currency: (editingCost.currency as ForeignCurrencyType) || 'USD',
         notes: editingCost.notes || '',
         cost_date: new Date(editingCost.cost_date),
       });
@@ -100,7 +102,6 @@ export const ProductionCostFormDialog = ({
   const handleConsignmentSelect = (consignment: ConsignmentWithWeights) => {
     setSelectedConsignment(consignment);
     setConsignmentOpen(false);
-    // Check for duplicate
     if (!editingCost && existingCostIds.includes(consignment.id)) {
       setDuplicateError(true);
     } else {
@@ -112,9 +113,8 @@ export const ProductionCostFormDialog = ({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const totalCost = calculateTotalCost(formData as any);
-  const costPerDeadKg = calculateCostPerKg(totalCost, selectedConsignment?.total_dead_weight || 0);
-  const costPerChargeableKg = calculateCostPerKg(totalCost, selectedConsignment?.total_chargeable_weight || 0);
+  const foreignTotal = calculateForeignCosts(formData);
+  const localTotal = calculateLocalCosts(formData);
 
   const handleSubmit = () => {
     if (!selectedConsignment || duplicateError) return;
@@ -217,14 +217,19 @@ export const ProductionCostFormDialog = ({
 
           {/* Cost Inputs - Grouped */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Freight & Handling */}
-            <Card>
+            {/* Freight & Handling (Foreign Currency) */}
+            <Card className="border-blue-200 dark:border-blue-800">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Freight & Handling</CardTitle>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  Freight & Handling
+                  <span className="text-xs font-normal text-muted-foreground px-2 py-0.5 bg-blue-100 dark:bg-blue-900 rounded">
+                    {formData.currency}
+                  </span>
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <Label className="text-xs">Airline Freight Cost</Label>
+                  <Label className="text-xs">Airline Freight Cost ({formData.currency})</Label>
                   <Input
                     type="number"
                     min={0}
@@ -234,7 +239,7 @@ export const ProductionCostFormDialog = ({
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Office Handling Cost</Label>
+                  <Label className="text-xs">Office Handling Cost ({formData.currency})</Label>
                   <Input
                     type="number"
                     min={0}
@@ -246,28 +251,33 @@ export const ProductionCostFormDialog = ({
               </CardContent>
             </Card>
 
-            {/* Clearance */}
-            <Card>
+            {/* Clearance (TZS) */}
+            <Card className="border-green-200 dark:border-green-800">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Clearance Costs</CardTitle>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  Clearance Costs
+                  <span className="text-xs font-normal text-muted-foreground px-2 py-0.5 bg-green-100 dark:bg-green-900 rounded">
+                    TZS
+                  </span>
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <Label className="text-xs">Arrival Clearance Cost</Label>
+                  <Label className="text-xs">Arrival Clearance Cost (TZS)</Label>
                   <Input
                     type="number"
                     min={0}
-                    step="0.01"
+                    step="1"
                     value={formData.arrival_clearance_cost}
                     onChange={(e) => handleCostChange('arrival_clearance_cost', Number(e.target.value) || 0)}
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Dar Clearance Cost</Label>
+                  <Label className="text-xs">Dar Clearance Cost (TZS)</Label>
                   <Input
                     type="number"
                     min={0}
-                    step="0.01"
+                    step="1"
                     value={formData.dar_clearance_cost}
                     onChange={(e) => handleCostChange('dar_clearance_cost', Number(e.target.value) || 0)}
                   />
@@ -275,28 +285,33 @@ export const ProductionCostFormDialog = ({
               </CardContent>
             </Card>
 
-            {/* Zanzibar Transport & Shipping */}
-            <Card>
+            {/* Zanzibar Transport & Shipping (TZS) */}
+            <Card className="border-green-200 dark:border-green-800">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Zanzibar Transport & Shipping</CardTitle>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  Zanzibar Transport & Shipping
+                  <span className="text-xs font-normal text-muted-foreground px-2 py-0.5 bg-green-100 dark:bg-green-900 rounded">
+                    TZS
+                  </span>
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <Label className="text-xs">ZNZ Airport → Ferry</Label>
+                  <Label className="text-xs">ZNZ Airport → Ferry (TZS)</Label>
                   <Input
                     type="number"
                     min={0}
-                    step="0.01"
+                    step="1"
                     value={formData.znz_airport_to_ferry_transport_cost}
                     onChange={(e) => handleCostChange('znz_airport_to_ferry_transport_cost', Number(e.target.value) || 0)}
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">ZNZ → Dar Shipping</Label>
+                  <Label className="text-xs">ZNZ → Dar Shipping (TZS)</Label>
                   <Input
                     type="number"
                     min={0}
-                    step="0.01"
+                    step="1"
                     value={formData.znz_to_dar_shipping_cost}
                     onChange={(e) => handleCostChange('znz_to_dar_shipping_cost', Number(e.target.value) || 0)}
                   />
@@ -304,28 +319,33 @@ export const ProductionCostFormDialog = ({
               </CardContent>
             </Card>
 
-            {/* Dar Transport & Labour */}
-            <Card>
+            {/* Dar Transport & Labour (TZS) */}
+            <Card className="border-green-200 dark:border-green-800">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Dar Transport & Labour</CardTitle>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  Dar Transport & Labour
+                  <span className="text-xs font-normal text-muted-foreground px-2 py-0.5 bg-green-100 dark:bg-green-900 rounded">
+                    TZS
+                  </span>
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <Label className="text-xs">Dar Ferry → Office</Label>
+                  <Label className="text-xs">Dar Ferry → Office (TZS)</Label>
                   <Input
                     type="number"
                     min={0}
-                    step="0.01"
+                    step="1"
                     value={formData.dar_ferry_to_office_transport_cost}
                     onChange={(e) => handleCostChange('dar_ferry_to_office_transport_cost', Number(e.target.value) || 0)}
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Labour/Helpers Cost</Label>
+                  <Label className="text-xs">Labour/Helpers Cost (TZS)</Label>
                   <Input
                     type="number"
                     min={0}
-                    step="0.01"
+                    step="1"
                     value={formData.labour_helpers_cost}
                     onChange={(e) => handleCostChange('labour_helpers_cost', Number(e.target.value) || 0)}
                   />
@@ -334,16 +354,16 @@ export const ProductionCostFormDialog = ({
             </Card>
           </div>
 
-          {/* Currency, Date, Notes */}
+          {/* Currency (for foreign costs), Date, Notes */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label>Currency</Label>
-              <Select value={formData.currency} onValueChange={(value: CurrencyType) => setFormData((prev) => ({ ...prev, currency: value }))}>
+              <Label>Foreign Currency (Freight & Handling)</Label>
+              <Select value={formData.currency} onValueChange={(value: ForeignCurrencyType) => setFormData((prev) => ({ ...prev, currency: value }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {CURRENCY_OPTIONS.map((c) => (
+                  {FOREIGN_CURRENCY_OPTIONS.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
                     </SelectItem>
@@ -383,23 +403,19 @@ export const ProductionCostFormDialog = ({
             </div>
           </div>
 
-          {/* Live Totals */}
+          {/* Live Totals - Separated by currency */}
           <Card className="bg-primary/5 border-primary/20">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Calculated Totals</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-3 gap-4 text-sm">
+            <CardContent className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-muted-foreground">Total Cost</p>
-                <p className="text-xl font-bold text-primary">{formatCurrency(totalCost, formData.currency)}</p>
+                <p className="text-muted-foreground">Foreign Costs (Freight + Handling)</p>
+                <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{formatForeignCurrency(foreignTotal, formData.currency)}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Cost / Dead Kg</p>
-                <p className="font-medium">{costPerDeadKg === 'N/A' ? 'N/A' : formatCurrency(Number(costPerDeadKg), formData.currency)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Cost / Chargeable Kg</p>
-                <p className="font-medium">{costPerChargeableKg === 'N/A' ? 'N/A' : formatCurrency(Number(costPerChargeableKg), formData.currency)}</p>
+                <p className="text-muted-foreground">Local Costs (Clearance + Transport + Labour)</p>
+                <p className="text-xl font-bold text-green-600 dark:text-green-400">{formatTZS(localTotal)}</p>
               </div>
             </CardContent>
           </Card>

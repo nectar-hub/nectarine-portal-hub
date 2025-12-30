@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ProductionCostWithConsignment, ConsignmentWithWeights, CurrencyType } from '@/types/production-cost';
+import { ProductionCostWithConsignment, ConsignmentWithWeights, ForeignCurrencyType } from '@/types/production-cost';
 
 export const useProductionCosts = () => {
   const { toast } = useToast();
@@ -44,7 +44,7 @@ export const useProductionCosts = () => {
       // Combine data
       const enrichedCosts: ProductionCostWithConsignment[] = (costs || []).map((cost) => ({
         ...cost,
-        currency: cost.currency as CurrencyType,
+        currency: cost.currency as ForeignCurrencyType,
         total_dead_weight: weightsByConsignment[cost.consignment_id]?.dead || 0,
         total_chargeable_weight: weightsByConsignment[cost.consignment_id]?.chargeable || 0,
       }));

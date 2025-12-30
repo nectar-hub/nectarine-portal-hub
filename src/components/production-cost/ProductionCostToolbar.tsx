@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, Download, Plus, Search, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { ProductionCostWithConsignment, formatCurrency, calculateTotalCost } from '@/types/production-cost';
+import { ProductionCostWithConsignment, calculateForeignCosts, calculateLocalCosts } from '@/types/production-cost';
 import * as XLSX from 'xlsx';
 
 interface ProductionCostToolbarProps {
@@ -33,26 +33,24 @@ export const ProductionCostToolbar = ({
       'Consignment Name',
       'Dead Weight (kg)',
       'Chargeable Weight (kg)',
-      'Airline Freight',
-      'Office Handling',
-      'Arrival Clearance',
-      'ZNZ Airport→Ferry',
-      'ZNZ→Dar Shipping',
-      'Dar Clearance',
-      'Dar Ferry→Office',
-      'Labour Cost',
-      'Total Cost',
-      'Cost/Dead Kg',
-      'Cost/Chargeable Kg',
+      'Airline Freight (Foreign)',
+      'Office Handling (Foreign)',
+      'Foreign Total',
       'Currency',
+      'Arrival Clearance (TZS)',
+      'ZNZ Airport→Ferry (TZS)',
+      'ZNZ→Dar Shipping (TZS)',
+      'Dar Clearance (TZS)',
+      'Dar Ferry→Office (TZS)',
+      'Labour Cost (TZS)',
+      'Local Total (TZS)',
       'Cost Date',
       'Notes',
     ];
 
     const rows = data.map((row) => {
-      const total = calculateTotalCost(row);
-      const costPerDead = row.total_dead_weight ? (total / row.total_dead_weight).toFixed(2) : 'N/A';
-      const costPerChargeable = row.total_chargeable_weight ? (total / row.total_chargeable_weight).toFixed(2) : 'N/A';
+      const foreignTotal = calculateForeignCosts(row);
+      const localTotal = calculateLocalCosts(row);
 
       return [
         row.consignment?.consignment_name || '',
@@ -60,16 +58,15 @@ export const ProductionCostToolbar = ({
         row.total_chargeable_weight.toFixed(2),
         row.airline_freight_cost,
         row.office_handling_cost,
+        foreignTotal.toFixed(2),
+        row.currency,
         row.arrival_clearance_cost,
         row.znz_airport_to_ferry_transport_cost,
         row.znz_to_dar_shipping_cost,
         row.dar_clearance_cost,
         row.dar_ferry_to_office_transport_cost,
         row.labour_helpers_cost,
-        total.toFixed(2),
-        costPerDead,
-        costPerChargeable,
-        row.currency,
+        localTotal,
         row.cost_date,
         row.notes || '',
       ];
@@ -85,23 +82,23 @@ export const ProductionCostToolbar = ({
 
   const exportToXLSX = () => {
     const wsData = data.map((row) => {
-      const total = calculateTotalCost(row);
+      const foreignTotal = calculateForeignCosts(row);
+      const localTotal = calculateLocalCosts(row);
       return {
         'Consignment Name': row.consignment?.consignment_name || '',
         'Dead Weight (kg)': row.total_dead_weight,
         'Chargeable Weight (kg)': row.total_chargeable_weight,
         'Airline Freight': row.airline_freight_cost,
         'Office Handling': row.office_handling_cost,
-        'Arrival Clearance': row.arrival_clearance_cost,
-        'ZNZ Airport→Ferry': row.znz_airport_to_ferry_transport_cost,
-        'ZNZ→Dar Shipping': row.znz_to_dar_shipping_cost,
-        'Dar Clearance': row.dar_clearance_cost,
-        'Dar Ferry→Office': row.dar_ferry_to_office_transport_cost,
-        'Labour Cost': row.labour_helpers_cost,
-        'Total Cost': total,
-        'Cost/Dead Kg': row.total_dead_weight ? total / row.total_dead_weight : 0,
-        'Cost/Chargeable Kg': row.total_chargeable_weight ? total / row.total_chargeable_weight : 0,
-        Currency: row.currency,
+        'Foreign Total': foreignTotal,
+        'Currency': row.currency,
+        'Arrival Clearance (TZS)': row.arrival_clearance_cost,
+        'ZNZ Airport→Ferry (TZS)': row.znz_airport_to_ferry_transport_cost,
+        'ZNZ→Dar Shipping (TZS)': row.znz_to_dar_shipping_cost,
+        'Dar Clearance (TZS)': row.dar_clearance_cost,
+        'Dar Ferry→Office (TZS)': row.dar_ferry_to_office_transport_cost,
+        'Labour Cost (TZS)': row.labour_helpers_cost,
+        'Local Total (TZS)': localTotal,
         'Cost Date': row.cost_date,
         Notes: row.notes || '',
       };

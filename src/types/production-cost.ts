@@ -1,6 +1,9 @@
-export type CurrencyType = 'USD' | 'TZS' | 'EUR' | 'GBP';
+export type ForeignCurrencyType = 'USD' | 'EUR' | 'GBP';
 
-export const CURRENCY_OPTIONS: CurrencyType[] = ['USD', 'TZS', 'EUR', 'GBP'];
+export const FOREIGN_CURRENCY_OPTIONS: ForeignCurrencyType[] = ['USD', 'EUR', 'GBP'];
+
+// Foreign costs (in selected currency): airline_freight_cost, office_handling_cost
+// Local costs (always TZS): all others
 
 export interface ProductionCost {
   id: string;
@@ -13,7 +16,7 @@ export interface ProductionCost {
   dar_clearance_cost: number;
   dar_ferry_to_office_transport_cost: number;
   labour_helpers_cost: number;
-  currency: CurrencyType;
+  currency: string; // Foreign currency for airline/office costs
   notes: string | null;
   cost_date: string;
   created_at: string;
@@ -48,16 +51,31 @@ export interface ProductionCostFormData {
   dar_clearance_cost: number;
   dar_ferry_to_office_transport_cost: number;
   labour_helpers_cost: number;
-  currency: CurrencyType;
+  currency: ForeignCurrencyType;
   notes: string;
   cost_date: Date;
 }
 
-// Calculation helpers
-export const calculateTotalCost = (cost: Partial<ProductionCost> | ProductionCostFormData): number => {
+// Fields that use foreign currency
+export const FOREIGN_CURRENCY_FIELDS = ['airline_freight_cost', 'office_handling_cost'];
+
+// Fields that use TZS (local currency)
+export const LOCAL_CURRENCY_FIELDS = [
+  'arrival_clearance_cost',
+  'znz_airport_to_ferry_transport_cost',
+  'znz_to_dar_shipping_cost',
+  'dar_clearance_cost',
+  'dar_ferry_to_office_transport_cost',
+  'labour_helpers_cost',
+];
+
+// Calculate totals separately for foreign and local costs
+export const calculateForeignCosts = (cost: Partial<ProductionCost> | ProductionCostFormData): number => {
+  return (cost.airline_freight_cost || 0) + (cost.office_handling_cost || 0);
+};
+
+export const calculateLocalCosts = (cost: Partial<ProductionCost> | ProductionCostFormData): number => {
   return (
-    (cost.airline_freight_cost || 0) +
-    (cost.office_handling_cost || 0) +
     (cost.arrival_clearance_cost || 0) +
     (cost.znz_airport_to_ferry_transport_cost || 0) +
     (cost.znz_to_dar_shipping_cost || 0) +
@@ -72,12 +90,15 @@ export const calculateCostPerKg = (totalCost: number, weight: number | null): st
   return (totalCost / weight).toFixed(2);
 };
 
-export const formatCurrency = (value: number, currency: CurrencyType): string => {
-  const symbols: Record<CurrencyType, string> = {
+export const formatForeignCurrency = (value: number, currency: ForeignCurrencyType | string): string => {
+  const symbols: Record<string, string> = {
     USD: '$',
-    TZS: 'TSh',
     EUR: '€',
     GBP: '£',
   };
-  return `${symbols[currency]}${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `${symbols[currency] || '$'}${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+export const formatTZS = (value: number): string => {
+  return `TSh ${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 };
