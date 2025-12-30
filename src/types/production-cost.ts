@@ -2,6 +2,16 @@ export type ForeignCurrencyType = 'USD' | 'EUR' | 'GBP';
 
 export const FOREIGN_CURRENCY_OPTIONS: ForeignCurrencyType[] = ['USD', 'EUR', 'GBP'];
 
+// Route options for consignment logistics
+export const ROUTE_OPTIONS = [
+  'ZNZ Airport → Ferry → Dar → Office',
+  'Dar Airport → Office',
+  'ZNZ Direct',
+  'Other',
+] as const;
+
+export type RouteType = typeof ROUTE_OPTIONS[number];
+
 // Foreign costs (in selected currency): airline_freight_cost, office_handling_cost
 // Local costs (always TZS): all others
 
@@ -16,9 +26,11 @@ export interface ProductionCost {
   dar_clearance_cost: number;
   dar_ferry_to_office_transport_cost: number;
   labour_helpers_cost: number;
-  currency: string; // Foreign currency for airline/office costs
+  currency: string;
   notes: string | null;
   cost_date: string;
+  revenue_total: number;
+  route: string;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -56,6 +68,8 @@ export interface ProductionCostFormData {
   currency: ForeignCurrencyType;
   notes: string;
   cost_date: Date;
+  revenue_total: number;
+  route: string;
 }
 
 // Fields that use foreign currency
@@ -73,18 +87,31 @@ export const LOCAL_CURRENCY_FIELDS = [
 
 // Calculate totals separately for foreign and local costs
 export const calculateForeignCosts = (cost: Partial<ProductionCost> | ProductionCostFormData): number => {
-  return (cost.airline_freight_cost || 0) + (cost.office_handling_cost || 0);
+  return (Number(cost.airline_freight_cost) || 0) + (Number(cost.office_handling_cost) || 0);
 };
 
 export const calculateLocalCosts = (cost: Partial<ProductionCost> | ProductionCostFormData): number => {
   return (
-    (cost.arrival_clearance_cost || 0) +
-    (cost.znz_airport_to_ferry_transport_cost || 0) +
-    (cost.znz_to_dar_shipping_cost || 0) +
-    (cost.dar_clearance_cost || 0) +
-    (cost.dar_ferry_to_office_transport_cost || 0) +
-    (cost.labour_helpers_cost || 0)
+    (Number(cost.arrival_clearance_cost) || 0) +
+    (Number(cost.znz_airport_to_ferry_transport_cost) || 0) +
+    (Number(cost.znz_to_dar_shipping_cost) || 0) +
+    (Number(cost.dar_clearance_cost) || 0) +
+    (Number(cost.dar_ferry_to_office_transport_cost) || 0) +
+    (Number(cost.labour_helpers_cost) || 0)
   );
+};
+
+// Calculate profit (revenue - foreign costs for now, since currencies differ)
+export const calculateProfit = (revenue: number, foreignCost: number): number => {
+  return (Number(revenue) || 0) - (Number(foreignCost) || 0);
+};
+
+// Calculate profit margin percentage (null-safe)
+export const calculateProfitMargin = (revenue: number, profit: number): string => {
+  const revenueNum = Number(revenue) || 0;
+  if (revenueNum <= 0) return 'N/A';
+  const margin = (profit / revenueNum) * 100;
+  return margin.toFixed(1) + '%';
 };
 
 export const calculateCostPerKg = (totalCost: number, weight: number | null): string => {
@@ -93,14 +120,22 @@ export const calculateCostPerKg = (totalCost: number, weight: number | null): st
 };
 
 export const formatForeignCurrency = (value: number, currency: ForeignCurrencyType | string): string => {
+  const numValue = Number(value) || 0;
   const symbols: Record<string, string> = {
     USD: '$',
     EUR: '€',
     GBP: '£',
   };
-  return `${symbols[currency] || '$'}${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `${symbols[currency] || '$'}${numValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 export const formatTZS = (value: number): string => {
-  return `TSh ${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  const numValue = Number(value) || 0;
+  return `TSh ${numValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+};
+
+// Safe number formatting helper
+export const safeToFixed = (value: number | null | undefined, decimals: number = 2): string => {
+  const numValue = Number(value) || 0;
+  return numValue.toFixed(decimals);
 };

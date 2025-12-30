@@ -23,6 +23,7 @@ import Settings from "./pages/admin/Settings";
 import AirCargo from "./pages/admin/AirCargo";
 import PurchaseTracker from "./pages/admin/PurchaseTracker";
 import ProductionCost from "./pages/admin/ProductionCost";
+import CostReports from "./pages/admin/CostReports";
 import NotFound from "./pages/NotFound";
 import MainLayout from "./layouts/MainLayout";
 
@@ -178,6 +179,14 @@ const App = () => (
               element={
                 <MainLayout requireAuth adminOnly>
                   <ProductionCost />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/admin/cost-reports"
+              element={
+                <MainLayout requireAuth adminOnly>
+                  <CostReports />
                 </MainLayout>
               }
             />
