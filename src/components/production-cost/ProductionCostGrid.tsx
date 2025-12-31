@@ -286,7 +286,16 @@ export const ProductionCostGrid = ({ data, onEdit, onDelete, onInlineUpdate }: P
                           className="w-full h-full px-2 py-2 text-right hover:bg-purple-100 dark:hover:bg-purple-900/30 cursor-text text-sm font-medium"
                           onClick={() => handleCellClick(row.id, 'revenue_total', revenue)}
                         >
-                          {formatForeignCurrency(revenue, row.currency)}
+                          <div className="flex flex-col items-end">
+                            <span>{formatForeignCurrency(revenue, row.currency)}</span>
+                            {tzsToForeignRate !== null ? (
+                              <span className="text-xs text-muted-foreground font-normal">
+                                ≈ {formatTZS(revenue / tzsToForeignRate)}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-orange-500 font-normal">No rate</span>
+                            )}
+                          </div>
                         </button>
                       )}
                     </TableCell>
