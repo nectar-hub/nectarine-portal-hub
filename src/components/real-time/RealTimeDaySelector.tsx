@@ -33,22 +33,28 @@ export const RealTimeDaySelector = ({
   isCopyingDay,
 }: RealTimeDaySelectorProps) => {
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-card rounded-lg border">
-      <div className="flex items-center gap-2">
+    <div className="p-4 bg-card rounded-lg border space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <CalendarIcon className="h-5 w-5 text-primary" />
+          <div>
+            <h3 className="font-semibold text-lg">
+              {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {hasDay ? 'Viewing daily entries' : 'No record for this date'}
+            </p>
+          </div>
+        </div>
+        
         <Popover>
           <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                'w-[240px] justify-start text-left font-normal',
-                !selectedDate && 'text-muted-foreground'
-              )}
-            >
+            <Button variant="outline" size="sm">
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {selectedDate ? format(selectedDate, 'EEEE, MMMM d, yyyy') : <span>Pick a date</span>}
+              Change Date
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
+          <PopoverContent className="w-auto p-0" align="end">
             <Calendar
               mode="single"
               selected={selectedDate}
@@ -60,7 +66,7 @@ export const RealTimeDaySelector = ({
         </Popover>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
         {!hasDay && (
           <Button onClick={onCreateDay} disabled={isCreatingDay} size="sm">
             <Plus className="mr-2 h-4 w-4" />
