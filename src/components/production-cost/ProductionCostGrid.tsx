@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Table,
   TableBody,
@@ -26,9 +26,8 @@ import {
   calculateLocalCosts,
   formatForeignCurrency,
   formatTZS,
-  FOREIGN_CURRENCY_FIELDS,
 } from '@/types/production-cost';
-import { format } from 'date-fns';
+import { format, parseISO, isWithinInterval, isBefore, isAfter, isEqual } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
 
@@ -39,16 +38,44 @@ interface ProductionCostGridProps {
   onInlineUpdate: (id: string, field: string, value: number) => void;
 }
 
-// Cache for exchange rates to avoid repeated lookups
-type RateCache = Record<string, number | null>;
-
 export const ProductionCostGrid = ({ data, onEdit, onDelete, onInlineUpdate }: ProductionCostGridProps) => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
   const [cellValue, setCellValue] = useState<string>('');
-  const [rateCache, setRateCache] = useState<RateCache>({});
   
-  const { getRate } = useExchangeRates();
+  const { exchangeRates } = useExchangeRates();
+
+  // Build a rate lookup function from cached exchange rates
+  const getRateFromCache = useCallback((baseCurrency: string, quoteCurrency: string, costDate: string): number | null => {
+    if (!exchangeRates || exchangeRates.length === 0) return null;
+    if (baseCurrency === quoteCurrency) return 1;
+    
+    const date = parseISO(costDate);
+    
+    // Try direct rate
+    const directRate = exchangeRates.find(r => 
+      r.base_currency === baseCurrency && 
+      r.quote_currency === quoteCurrency &&
+      r.is_active &&
+      !isAfter(parseISO(r.effective_from), date) &&
+      (!r.effective_to || !isBefore(parseISO(r.effective_to), date))
+    );
+    
+    if (directRate) return directRate.rate;
+    
+    // Try inverse rate
+    const inverseRate = exchangeRates.find(r => 
+      r.base_currency === quoteCurrency && 
+      r.quote_currency === baseCurrency &&
+      r.is_active &&
+      !isAfter(parseISO(r.effective_from), date) &&
+      (!r.effective_to || !isBefore(parseISO(r.effective_to), date))
+    );
+    
+    if (inverseRate) return 1 / inverseRate.rate;
+    
+    return null;
+  }, [exchangeRates]);
 
   // Foreign currency fields
   const foreignCostFields = [
@@ -65,34 +92,6 @@ export const ProductionCostGrid = ({ data, onEdit, onDelete, onInlineUpdate }: P
     { key: 'dar_ferry_to_office_transport_cost', label: 'Dar→Office' },
     { key: 'labour_helpers_cost', label: 'Labour' },
   ];
-
-  // Fetch exchange rates for all rows
-  useEffect(() => {
-    const fetchRates = async () => {
-      const newCache: RateCache = {};
-      
-      for (const row of data) {
-        const cacheKey = `TZS_${row.currency}_${row.cost_date}`;
-        if (rateCache[cacheKey] !== undefined) {
-          newCache[cacheKey] = rateCache[cacheKey];
-          continue;
-        }
-        
-        try {
-          const rate = await getRate('TZS', row.currency, new Date(row.cost_date));
-          newCache[cacheKey] = rate;
-        } catch {
-          newCache[cacheKey] = null;
-        }
-      }
-      
-      setRateCache((prev) => ({ ...prev, ...newCache }));
-    };
-
-    if (data.length > 0) {
-      fetchRates();
-    }
-  }, [data, getRate]);
 
   const handleCellClick = (id: string, field: string, currentValue: number) => {
     setEditingCell({ id, field });
@@ -161,9 +160,8 @@ export const ProductionCostGrid = ({ data, onEdit, onDelete, onInlineUpdate }: P
                 const localTotal = calculateLocalCosts(row);
                 const revenue = Number(row.revenue_total) || 0;
                 
-                // Get TZS to foreign currency rate
-                const cacheKey = `TZS_${row.currency}_${row.cost_date}`;
-                const tzsToForeignRate = rateCache[cacheKey];
+                // Get TZS to foreign currency rate from cached exchange rates
+                const tzsToForeignRate = getRateFromCache('TZS', row.currency, row.cost_date);
                 
                 // Convert local costs to foreign currency
                 const localTotalConverted = tzsToForeignRate ? localTotal * tzsToForeignRate : null;
