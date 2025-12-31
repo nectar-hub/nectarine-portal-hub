@@ -12,6 +12,8 @@ type Profile = {
   is_admin: boolean;
 };
 
+type UserRole = 'admin' | 'superadmin' | 'moderator' | 'user';
+
 type AuthContextType = {
   session: Session | null;
   user: User | null;
@@ -23,6 +25,8 @@ type AuthContextType = {
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, newPassword: string) => Promise<void>;
   isAdmin: boolean;
+  isSuperadmin: boolean;
+  userRoles: UserRole[];
 };
 
 type RegisterData = {
@@ -51,6 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
 
   // Load user profile from Supabase
   const loadUserProfile = async (userId: string) => {
@@ -69,6 +74,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       console.log('[AUTH] Profile loaded successfully:', data);
       setProfile(data);
+      
+      // Load user roles
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      if (rolesError) {
+        console.error('[AUTH] Error loading user roles:', rolesError);
+        return;
+      }
+      
+      const roles = rolesData?.map(r => r.role as UserRole) || [];
+      console.log('[AUTH] User roles loaded:', roles);
+      setUserRoles(roles);
     } catch (error) {
       console.error('[AUTH] Error in loadUserProfile:', error);
     }
@@ -89,6 +109,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }, 0);
         } else {
           setProfile(null);
+          setUserRoles([]);
         }
       }
     );
@@ -273,12 +294,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const isAdmin = !!profile?.is_admin;
+  const isAdmin = !!profile?.is_admin || userRoles.includes('admin') || userRoles.includes('superadmin');
+  const isSuperadmin = userRoles.includes('superadmin');
   
   console.log('[AUTH] Current auth state:', {
     user: user?.id,
     profile: profile?.id,
     isAdmin,
+    isSuperadmin,
+    userRoles,
     profileIsAdmin: profile?.is_admin
   });
 
@@ -296,7 +320,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout,
         forgotPassword,
         resetPassword,
-        isAdmin
+        isAdmin,
+        isSuperadmin,
+        userRoles
       }}
     >
       {children}

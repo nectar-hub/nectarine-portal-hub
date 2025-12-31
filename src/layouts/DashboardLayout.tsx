@@ -29,7 +29,7 @@ type DashboardLayoutProps = {
 };
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const { user, profile, logout, isAdmin } = useAuth();
+  const { user, profile, logout, isAdmin, isSuperadmin } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -51,22 +51,28 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { name: 'My Account', href: '/dashboard/account', icon: Settings },
   ];
 
+  // Define admin nav items with superadmin-only restrictions
   const adminNavItems = [
-    { name: 'Dashboard', href: '/admin', icon: Home },
-    { name: 'All Requests', href: '/admin/requests', icon: ClipboardList },
-    { name: 'Buy For Me Requests', href: '/admin/buy-requests', icon: ShoppingBag },
-    { name: 'Self Purchases', href: '/admin/self-purchases', icon: Package },
-    { name: 'Users', href: '/admin/users', icon: Users },
-    { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-    { name: 'Shipping Addresses', href: '/admin/shipping-addresses', icon: MapPin },
-    { name: 'Air Cargo', href: '/admin/air-cargo', icon: Plane },
-    { name: 'Purchase Tracker', href: '/admin/purchase-tracker', icon: ShoppingBasket },
-    { name: 'Production Cost', href: '/admin/production-cost', icon: DollarSign },
-    { name: 'Multi-Currency', href: '/admin/multi-currency', icon: Coins },
-    { name: 'Settings', href: '/admin/settings', icon: Settings },
+    { name: 'Dashboard', href: '/admin', icon: Home, superadminOnly: false },
+    { name: 'All Requests', href: '/admin/requests', icon: ClipboardList, superadminOnly: false },
+    { name: 'Buy For Me Requests', href: '/admin/buy-requests', icon: ShoppingBag, superadminOnly: false },
+    { name: 'Self Purchases', href: '/admin/self-purchases', icon: Package, superadminOnly: false },
+    { name: 'Users', href: '/admin/users', icon: Users, superadminOnly: false },
+    { name: 'Analytics', href: '/admin/analytics', icon: BarChart3, superadminOnly: false },
+    { name: 'Shipping Addresses', href: '/admin/shipping-addresses', icon: MapPin, superadminOnly: false },
+    { name: 'Air Cargo', href: '/admin/air-cargo', icon: Plane, superadminOnly: false },
+    { name: 'Purchase Tracker', href: '/admin/purchase-tracker', icon: ShoppingBasket, superadminOnly: false },
+    { name: 'Production Cost', href: '/admin/production-cost', icon: DollarSign, superadminOnly: true },
+    { name: 'Multi-Currency', href: '/admin/multi-currency', icon: Coins, superadminOnly: false },
+    { name: 'Settings', href: '/admin/settings', icon: Settings, superadminOnly: false },
   ];
 
-  const navItems = isAdmin ? adminNavItems : userNavItems;
+  // Filter admin items based on superadmin status
+  const filteredAdminNavItems = adminNavItems.filter(item => 
+    !item.superadminOnly || isSuperadmin
+  );
+
+  const navItems = isAdmin ? filteredAdminNavItems : userNavItems;
   
   const handleLogout = async () => {
     await logout();

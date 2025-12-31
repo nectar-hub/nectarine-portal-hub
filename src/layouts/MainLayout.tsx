@@ -7,10 +7,11 @@ type MainLayoutProps = {
   children: ReactNode;
   requireAuth?: boolean;
   adminOnly?: boolean;
+  superadminOnly?: boolean;
 };
 
-const MainLayout = ({ children, requireAuth = false, adminOnly = false }: MainLayoutProps) => {
-  const { user, loading, isAdmin } = useAuth();
+const MainLayout = ({ children, requireAuth = false, adminOnly = false, superadminOnly = false }: MainLayoutProps) => {
+  const { user, loading, isAdmin, isSuperadmin } = useAuth();
 
   if (loading) {
     return (
@@ -26,6 +27,10 @@ const MainLayout = ({ children, requireAuth = false, adminOnly = false }: MainLa
 
   if (adminOnly && !isAdmin) {
     return <Navigate to="/dashboard" />;
+  }
+
+  if (superadminOnly && !isSuperadmin) {
+    return <Navigate to="/admin" />;
   }
 
   return (
