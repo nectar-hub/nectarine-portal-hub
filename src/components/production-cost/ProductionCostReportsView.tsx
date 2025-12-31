@@ -123,8 +123,8 @@ export function ProductionCostReportsView() {
 
     const byMonth: Record<string, {
       count: number;
-      totalRevenue: number;
-      totalProfit: number;
+      totalRevenueTZS: number;
+      totalProfitTZS: number;
       margins: number[];
     }> = {};
 
@@ -166,19 +166,22 @@ export function ProductionCostReportsView() {
       byCurrency[currency].totalProfit += profit;
       byCurrency[currency].margins.push(margin);
 
-      // Aggregate by month
+      // Aggregate by month - convert to TZS for unified totals
       const monthKey = format(new Date(cost.cost_date), 'yyyy-MM');
       if (!byMonth[monthKey]) {
         byMonth[monthKey] = {
           count: 0,
-          totalRevenue: 0,
-          totalProfit: 0,
+          totalRevenueTZS: 0,
+          totalProfitTZS: 0,
           margins: [],
         };
       }
       byMonth[monthKey].count++;
-      byMonth[monthKey].totalRevenue += revenue;
-      byMonth[monthKey].totalProfit += profit;
+      // Convert revenue and profit to TZS using the exchange rate
+      const revenueTZS = rate ? revenue * rate : 0;
+      const profitTZS = rate ? profit * rate : 0;
+      byMonth[monthKey].totalRevenueTZS += revenueTZS;
+      byMonth[monthKey].totalProfitTZS += profitTZS;
       byMonth[monthKey].margins.push(margin);
 
       // Overall totals
@@ -365,8 +368,8 @@ export function ProductionCostReportsView() {
                       .sort(([a], [b]) => a.localeCompare(b))
                       .map(([monthKey, data]) => ({
                         month: format(new Date(monthKey + '-01'), 'MMM yyyy'),
-                        profit: data.totalProfit,
-                        fill: data.totalProfit >= 0 ? PROFIT_COLORS.positive : PROFIT_COLORS.negative,
+                        profit: data.totalProfitTZS,
+                        fill: data.totalProfitTZS >= 0 ? PROFIT_COLORS.positive : PROFIT_COLORS.negative,
                       }))}
                     margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                   >
@@ -379,10 +382,10 @@ export function ProductionCostReportsView() {
                     <YAxis
                       tick={{ fontSize: 12 }}
                       className="text-muted-foreground"
-                      tickFormatter={(value) => value.toLocaleString()}
+                      tickFormatter={(value) => (value / 1000000).toFixed(1) + 'M'}
                     />
                     <Tooltip
-                      formatter={(value: number) => [value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 'Profit']}
+                      formatter={(value: number) => [formatTZS(value), 'Profit (TZS)']}
                       contentStyle={{
                         backgroundColor: 'hsl(var(--background))',
                         border: '1px solid hsl(var(--border))',
@@ -398,7 +401,7 @@ export function ProductionCostReportsView() {
                         .map(([monthKey, data], index) => (
                           <Cell
                             key={`cell-${index}`}
-                            fill={data.totalProfit >= 0 ? PROFIT_COLORS.positive : PROFIT_COLORS.negative}
+                            fill={data.totalProfitTZS >= 0 ? PROFIT_COLORS.positive : PROFIT_COLORS.negative}
                           />
                         ))}
                     </Bar>
@@ -502,11 +505,11 @@ export function ProductionCostReportsView() {
                         {format(new Date(monthKey + '-01'), 'MMMM yyyy')}
                       </TableCell>
                       <TableCell className="text-right">{data.count}</TableCell>
-                      <TableCell className="text-right text-muted-foreground">
-                        (Mixed currencies)
+                      <TableCell className="text-right">
+                        {formatTZS(data.totalRevenueTZS)}
                       </TableCell>
-                      <TableCell className={`text-right font-medium ${data.totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        (Mixed currencies)
+                      <TableCell className={`text-right font-medium ${data.totalProfitTZS >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatTZS(data.totalProfitTZS)}
                       </TableCell>
                       <TableCell className={`text-right ${avgMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {avgMargin.toFixed(1)}%
