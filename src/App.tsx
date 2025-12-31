@@ -184,6 +184,14 @@ const App = () => (
               }
             />
             <Route
+              path="/admin/multi-currency"
+              element={
+                <MainLayout requireAuth adminOnly>
+                  <MultiCurrency />
+                </MainLayout>
+              }
+            />
+            <Route
               path="/admin"
               element={
                 <MainLayout requireAuth adminOnly>
