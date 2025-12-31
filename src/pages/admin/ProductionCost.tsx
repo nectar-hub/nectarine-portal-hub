@@ -4,10 +4,12 @@ import PageHeader from '@/components/admin/PageHeader';
 import { ProductionCostToolbar } from '@/components/production-cost/ProductionCostToolbar';
 import { ProductionCostGrid } from '@/components/production-cost/ProductionCostGrid';
 import { ProductionCostFormDialog } from '@/components/production-cost/ProductionCostFormDialog';
+import { ProductionCostReportsView } from '@/components/production-cost/ProductionCostReportsView';
 import { useProductionCosts } from '@/hooks/useProductionCosts';
 import { ProductionCostWithConsignment } from '@/types/production-cost';
 import { Loader2 } from 'lucide-react';
-import { format, isSameDay } from 'date-fns';
+import { isSameDay } from 'date-fns';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const ProductionCost = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -82,37 +84,50 @@ const ProductionCost = () => {
           description="Manage production and operational costs per air cargo consignment"
         />
 
-        <ProductionCostToolbar
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          dateFilter={dateFilter}
-          onDateFilterChange={setDateFilter}
-          onAddClick={handleAddClick}
-          data={filteredData}
-        />
+        <Tabs defaultValue="costs" className="w-full">
+          <TabsList>
+            <TabsTrigger value="costs">Costs</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+          </TabsList>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
-          <ProductionCostGrid
-            data={filteredData}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onInlineUpdate={handleInlineUpdate}
-          />
-        )}
+          <TabsContent value="costs" className="space-y-6">
+            <ProductionCostToolbar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              dateFilter={dateFilter}
+              onDateFilterChange={setDateFilter}
+              onAddClick={handleAddClick}
+              data={filteredData}
+            />
 
-        <ProductionCostFormDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          consignments={consignments || []}
-          existingCostIds={existingCostIds}
-          editingCost={editingCost}
-          onSubmit={handleFormSubmit}
-          isSubmitting={isCreating || isUpdating}
-        />
+            {isLoading ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <ProductionCostGrid
+                data={filteredData}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onInlineUpdate={handleInlineUpdate}
+              />
+            )}
+
+            <ProductionCostFormDialog
+              open={dialogOpen}
+              onOpenChange={setDialogOpen}
+              consignments={consignments || []}
+              existingCostIds={existingCostIds}
+              editingCost={editingCost}
+              onSubmit={handleFormSubmit}
+              isSubmitting={isCreating || isUpdating}
+            />
+          </TabsContent>
+
+          <TabsContent value="reports">
+            <ProductionCostReportsView />
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
