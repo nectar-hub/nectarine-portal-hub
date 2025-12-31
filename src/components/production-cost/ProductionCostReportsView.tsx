@@ -12,6 +12,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from 'recharts';
 import { ProductionCostReportsFilters } from './ProductionCostReportsFilters';
 import {
   ProductionCostWithConsignment,
@@ -21,6 +34,12 @@ import {
   formatForeignCurrency,
   formatTZS,
 } from '@/types/production-cost';
+
+const CHART_COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))'];
+const PROFIT_COLORS = {
+  positive: 'hsl(142, 76%, 36%)',
+  negative: 'hsl(0, 84%, 60%)',
+};
 
 export function ProductionCostReportsView() {
   const [startDate, setStartDate] = useState<Date>(startOfMonth(new Date()));
@@ -271,6 +290,126 @@ export function ProductionCostReportsView() {
             <div className={`text-2xl font-bold ${(aggregatedData?.avgMargin || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {(aggregatedData?.avgMargin || 0).toFixed(1)}%
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Cost Breakdown Pie Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Cost Breakdown (Foreign vs Local)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {aggregatedData && Object.keys(aggregatedData.byCurrency).length > 0 ? (
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={Object.entries(aggregatedData.byCurrency).flatMap(([currency, data]) => [
+                        {
+                          name: `Foreign (${currency})`,
+                          value: data.totalForeignCosts,
+                          currency,
+                        },
+                        {
+                          name: `Local (${currency})`,
+                          value: data.totalLocalCosts,
+                          currency,
+                        },
+                      ]).filter(item => item.value > 0)}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      labelLine={false}
+                    >
+                      {Object.entries(aggregatedData.byCurrency).flatMap((_, index) => [
+                        <Cell key={`foreign-${index}`} fill={CHART_COLORS[0]} />,
+                        <Cell key={`local-${index}`} fill={CHART_COLORS[1]} />,
+                      ])}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number, name: string) => {
+                        const currency = name.includes('USD') ? 'USD' : name.includes('EUR') ? 'EUR' : 'GBP';
+                        return [formatForeignCurrency(value, currency as ForeignCurrencyType), name];
+                      }}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                No cost data for the selected period
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Monthly Profit Trend Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Monthly Profit Trend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {aggregatedData && Object.keys(aggregatedData.byMonth).length > 0 ? (
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={Object.entries(aggregatedData.byMonth)
+                      .sort(([a], [b]) => a.localeCompare(b))
+                      .map(([monthKey, data]) => ({
+                        month: format(new Date(monthKey + '-01'), 'MMM yyyy'),
+                        profit: data.totalProfit,
+                        fill: data.totalProfit >= 0 ? PROFIT_COLORS.positive : PROFIT_COLORS.negative,
+                      }))}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fontSize: 12 }}
+                      className="text-muted-foreground"
+                    />
+                    <YAxis
+                      tick={{ fontSize: 12 }}
+                      className="text-muted-foreground"
+                      tickFormatter={(value) => value.toLocaleString()}
+                    />
+                    <Tooltip
+                      formatter={(value: number) => [value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 'Profit']}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '6px',
+                      }}
+                    />
+                    <Bar
+                      dataKey="profit"
+                      radius={[4, 4, 0, 0]}
+                    >
+                      {Object.entries(aggregatedData.byMonth)
+                        .sort(([a], [b]) => a.localeCompare(b))
+                        .map(([monthKey, data], index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={data.totalProfit >= 0 ? PROFIT_COLORS.positive : PROFIT_COLORS.negative}
+                          />
+                        ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                No profit data for the selected period
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
