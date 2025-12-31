@@ -5,12 +5,14 @@ import { RealTimeDaySelector } from '@/components/real-time/RealTimeDaySelector'
 import { RealTimeOpeningBalances } from '@/components/real-time/RealTimeOpeningBalances';
 import { RealTimeGrid } from '@/components/real-time/RealTimeGrid';
 import { RealTimeSummary } from '@/components/real-time/RealTimeSummary';
+import { RealTimeMonthlyReports } from '@/components/real-time/RealTimeMonthlyReports';
 import { useRealTime } from '@/hooks/useRealTime';
 import { exportDayToXLSX, exportMonthToXLSX } from '@/lib/real-time-export';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { RealTimeDay, RealTimeEntry, RealTimeEntryRow, DaySummary } from '@/types/real-time';
-import { Loader2, Clock } from 'lucide-react';
+import { Loader2, Clock, CalendarDays, BarChart3 } from 'lucide-react';
 
 const safeNum = (val: number | null | undefined): number => {
   if (val === null || val === undefined || isNaN(Number(val))) return 0;
@@ -178,37 +180,56 @@ const RealTime = () => {
           </div>
         </div>
 
-        <RealTimeDaySelector
-          selectedDate={selectedDate}
-          onDateChange={setSelectedDate}
-          hasDay={!!currentDay}
-          onCreateDay={() => createDay()}
-          onCopyPreviousDay={() => copyPreviousDay()}
-          onExportDay={handleExportDay}
-          onExportMonth={handleExportMonth}
-          isCreatingDay={isCreatingDay}
-          isCopyingDay={isCopyingDay}
-        />
+        <Tabs defaultValue="daily" className="w-full">
+          <TabsList>
+            <TabsTrigger value="daily" className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4" />
+              Daily Entry
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Monthly Reports
+            </TabsTrigger>
+          </TabsList>
 
-        <RealTimeOpeningBalances
-          day={currentDay}
-          openingTotal={openingTotal}
-          onUpdateBalances={updateOpeningBalances}
-        />
+          <TabsContent value="daily" className="space-y-6 mt-6">
+            <RealTimeDaySelector
+              selectedDate={selectedDate}
+              onDateChange={setSelectedDate}
+              hasDay={!!currentDay}
+              onCreateDay={() => createDay()}
+              onCopyPreviousDay={() => copyPreviousDay()}
+              onExportDay={handleExportDay}
+              onExportMonth={handleExportMonth}
+              isCreatingDay={isCreatingDay}
+              isCopyingDay={isCopyingDay}
+            />
 
-        <RealTimeGrid
-          day={currentDay}
-          entries={entryRows}
-          openingTotal={openingTotal}
-          onAddEntry={addEntry}
-          onUpdateEntry={updateEntry}
-          onDeleteEntry={deleteEntry}
-        />
+            <RealTimeOpeningBalances
+              day={currentDay}
+              openingTotal={openingTotal}
+              onUpdateBalances={updateOpeningBalances}
+            />
 
-        <RealTimeSummary
-          summary={daySummary}
-          hasDay={!!currentDay}
-        />
+            <RealTimeGrid
+              day={currentDay}
+              entries={entryRows}
+              openingTotal={openingTotal}
+              onAddEntry={addEntry}
+              onUpdateEntry={updateEntry}
+              onDeleteEntry={deleteEntry}
+            />
+
+            <RealTimeSummary
+              summary={daySummary}
+              hasDay={!!currentDay}
+            />
+          </TabsContent>
+
+          <TabsContent value="reports" className="mt-6">
+            <RealTimeMonthlyReports />
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
