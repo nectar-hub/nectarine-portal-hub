@@ -295,10 +295,19 @@ export const ProductionCostGrid = ({ data, onEdit, onDelete, onInlineUpdate }: P
                       'text-right font-semibold bg-purple-100/70 dark:bg-purple-900/40 text-sm',
                       profit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                     )}>
-                      <span className="flex items-center justify-end gap-1">
-                        {profit >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                        {formatForeignCurrency(Math.abs(profit), row.currency)}
-                      </span>
+                      <div className="flex flex-col items-end">
+                        <span className="flex items-center justify-end gap-1">
+                          {profit >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                          {formatForeignCurrency(Math.abs(profit), row.currency)}
+                        </span>
+                        {tzsToForeignRate !== null ? (
+                          <span className="text-xs text-muted-foreground">
+                            ≈ {formatTZS(Math.abs(profit) / tzsToForeignRate)}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-orange-500">No rate</span>
+                        )}
+                      </div>
                     </TableCell>
                     {/* Margin */}
                     <TableCell className={cn(
