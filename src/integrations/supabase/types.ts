@@ -934,7 +934,7 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "superadmin"
       purchase_region: "UK" | "US" | "UAE" | "CN" | "EU" | "AU"
       purchase_status:
         | "PENDING"
@@ -1071,7 +1071,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "superadmin"],
       purchase_region: ["UK", "US", "UAE", "CN", "EU", "AU"],
       purchase_status: [
         "PENDING",
