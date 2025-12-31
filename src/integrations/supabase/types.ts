@@ -300,6 +300,108 @@ export type Database = {
           },
         ]
       }
+      currencies: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          decimal_places: number
+          is_active: boolean
+          is_base: boolean
+          name: string
+          symbol: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          decimal_places?: number
+          is_active?: boolean
+          is_base?: boolean
+          name: string
+          symbol: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          decimal_places?: number
+          is_active?: boolean
+          is_base?: boolean
+          name?: string
+          symbol?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      exchange_rates: {
+        Row: {
+          base_currency: string
+          created_at: string
+          created_by: string | null
+          effective_from: string
+          effective_to: string | null
+          id: string
+          is_active: boolean
+          notes: string | null
+          quote_currency: string
+          rate: number
+          source: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          base_currency: string
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          quote_currency: string
+          rate: number
+          source?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          base_currency?: string
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          quote_currency?: string
+          rate?: number
+          source?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exchange_rates_base_currency_fkey"
+            columns: ["base_currency"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "exchange_rates_quote_currency_fkey"
+            columns: ["quote_currency"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       month_periods: {
         Row: {
           created_at: string
@@ -813,6 +915,14 @@ export type Database = {
       create_order: {
         Args: { _reference_id: string; _user_id: string }
         Returns: string
+      }
+      get_exchange_rate: {
+        Args: {
+          p_base_currency: string
+          p_date?: string
+          p_quote_currency: string
+        }
+        Returns: number
       }
       has_role: {
         Args: {
