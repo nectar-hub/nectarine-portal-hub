@@ -23,6 +23,7 @@ import Settings from "./pages/admin/Settings";
 import AirCargo from "./pages/admin/AirCargo";
 import PurchaseTracker from "./pages/admin/PurchaseTracker";
 import ProductionCost from "./pages/admin/ProductionCost";
+import MultiCurrency from "./pages/admin/MultiCurrency";
 
 import NotFound from "./pages/NotFound";
 import MainLayout from "./layouts/MainLayout";
