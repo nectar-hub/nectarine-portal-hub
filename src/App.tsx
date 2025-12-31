@@ -178,7 +178,7 @@ const App = () => (
             <Route
               path="/admin/production-cost"
               element={
-                <MainLayout requireAuth adminOnly>
+                <MainLayout requireAuth adminOnly superadminOnly>
                   <ProductionCost />
                 </MainLayout>
               }

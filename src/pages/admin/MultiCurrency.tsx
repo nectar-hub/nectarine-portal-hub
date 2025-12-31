@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import PageHeader from '@/components/admin/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,10 +12,21 @@ import { ConversionPreview } from '@/components/multi-currency/ConversionPreview
 import { useCurrencies } from '@/hooks/useCurrencies';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
 import { Currency, CurrencyFormData, ExchangeRate, ExchangeRateFormData } from '@/types/currency';
-import { Loader2, Plus } from 'lucide-react';
+import { Loader2, Plus, Lock } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const MultiCurrency = () => {
-  const [activeTab, setActiveTab] = useState('currencies');
+  const { isSuperadmin } = useAuth();
+  // Default to 'preview' tab for non-superadmins
+  const [activeTab, setActiveTab] = useState(isSuperadmin ? 'currencies' : 'preview');
+  
+  // Redirect to preview if non-superadmin tries to access restricted tabs
+  useEffect(() => {
+    if (!isSuperadmin && (activeTab === 'currencies' || activeTab === 'rates')) {
+      setActiveTab('preview');
+    }
+  }, [isSuperadmin, activeTab]);
   
   // Currency state
   const [currencyDialogOpen, setCurrencyDialogOpen] = useState(false);
@@ -128,10 +139,23 @@ const MultiCurrency = () => {
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
-              <TabsTrigger value="currencies">Currencies</TabsTrigger>
-              <TabsTrigger value="rates">Exchange Rates</TabsTrigger>
+              {isSuperadmin && (
+                <>
+                  <TabsTrigger value="currencies">Currencies</TabsTrigger>
+                  <TabsTrigger value="rates">Exchange Rates</TabsTrigger>
+                </>
+              )}
               <TabsTrigger value="preview">Conversion Preview</TabsTrigger>
             </TabsList>
+
+            {!isSuperadmin && (
+              <Alert className="mt-4 mb-2">
+                <Lock className="h-4 w-4" />
+                <AlertDescription>
+                  Currency and exchange rate management is restricted to superadmins. You can use the Conversion Preview to check rates.
+                </AlertDescription>
+              </Alert>
+            )}
 
             <TabsContent value="currencies" className="space-y-4">
               <div className="flex justify-end">
