@@ -24,6 +24,9 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  LineChart,
+  Line,
+  ComposedChart,
 } from 'recharts';
 import { ProductionCostReportsFilters } from './ProductionCostReportsFilters';
 import {
@@ -124,6 +127,7 @@ export function ProductionCostReportsView() {
     const byMonth: Record<string, {
       count: number;
       totalRevenueTZS: number;
+      totalCostsTZS: number;
       totalProfitTZS: number;
       margins: number[];
     }> = {};
@@ -172,15 +176,18 @@ export function ProductionCostReportsView() {
         byMonth[monthKey] = {
           count: 0,
           totalRevenueTZS: 0,
+          totalCostsTZS: 0,
           totalProfitTZS: 0,
           margins: [],
         };
       }
       byMonth[monthKey].count++;
-      // Convert revenue and profit to TZS using the exchange rate
+      // Convert revenue, costs and profit to TZS using the exchange rate
       const revenueTZS = rate ? revenue * rate : 0;
+      const costsTZS = rate ? totalCosts * rate : 0;
       const profitTZS = rate ? profit * rate : 0;
       byMonth[monthKey].totalRevenueTZS += revenueTZS;
+      byMonth[monthKey].totalCostsTZS += costsTZS;
       byMonth[monthKey].totalProfitTZS += profitTZS;
       byMonth[monthKey].margins.push(margin);
 
@@ -411,6 +418,123 @@ export function ProductionCostReportsView() {
             ) : (
               <div className="h-[300px] flex items-center justify-center text-muted-foreground">
                 No profit data for the selected period
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Additional Charts Section */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Revenue vs Costs Comparison Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Revenue vs Costs (TZS)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {aggregatedData && Object.keys(aggregatedData.byMonth).length > 0 ? (
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart
+                    data={Object.entries(aggregatedData.byMonth)
+                      .sort(([a], [b]) => a.localeCompare(b))
+                      .map(([monthKey, data]) => ({
+                        month: format(new Date(monthKey + '-01'), 'MMM yyyy'),
+                        revenue: data.totalRevenueTZS,
+                        costs: data.totalCostsTZS,
+                      }))}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fontSize: 12 }}
+                      className="text-muted-foreground"
+                    />
+                    <YAxis
+                      tick={{ fontSize: 12 }}
+                      className="text-muted-foreground"
+                      tickFormatter={(value) => (value / 1000000).toFixed(1) + 'M'}
+                    />
+                    <Tooltip
+                      formatter={(value: number, name: string) => [formatTZS(value), name === 'revenue' ? 'Revenue' : 'Costs']}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '6px',
+                      }}
+                    />
+                    <Legend formatter={(value) => value === 'revenue' ? 'Revenue' : 'Costs'} />
+                    <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="costs" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                No data for the selected period
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Profit Margin Trend Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Profit Margin Trend (%)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {aggregatedData && Object.keys(aggregatedData.byMonth).length > 0 ? (
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={Object.entries(aggregatedData.byMonth)
+                      .sort(([a], [b]) => a.localeCompare(b))
+                      .map(([monthKey, data]) => {
+                        const avgMargin = data.margins.length > 0
+                          ? data.margins.reduce((a, b) => a + b, 0) / data.margins.length
+                          : 0;
+                        return {
+                          month: format(new Date(monthKey + '-01'), 'MMM yyyy'),
+                          margin: avgMargin,
+                        };
+                      })}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fontSize: 12 }}
+                      className="text-muted-foreground"
+                    />
+                    <YAxis
+                      tick={{ fontSize: 12 }}
+                      className="text-muted-foreground"
+                      tickFormatter={(value) => value.toFixed(0) + '%'}
+                      domain={['auto', 'auto']}
+                    />
+                    <Tooltip
+                      formatter={(value: number) => [value.toFixed(1) + '%', 'Avg Margin']}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '6px',
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="margin"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                No margin data for the selected period
               </div>
             )}
           </CardContent>
