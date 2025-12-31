@@ -24,6 +24,7 @@ import AirCargo from "./pages/admin/AirCargo";
 import PurchaseTracker from "./pages/admin/PurchaseTracker";
 import ProductionCost from "./pages/admin/ProductionCost";
 import MultiCurrency from "./pages/admin/MultiCurrency";
+import RealTime from "./pages/admin/RealTime";
 
 import NotFound from "./pages/NotFound";
 import MainLayout from "./layouts/MainLayout";
@@ -188,6 +189,14 @@ const App = () => (
               element={
                 <MainLayout requireAuth adminOnly>
                   <MultiCurrency />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/admin/real-time"
+              element={
+                <MainLayout requireAuth adminOnly>
+                  <RealTime />
                 </MainLayout>
               }
             />
