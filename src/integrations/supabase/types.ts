@@ -738,6 +738,104 @@ export type Database = {
           },
         ]
       }
+      real_time_days: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          op_date: string
+          opening_cash: number
+          opening_crdb: number
+          opening_crdb_usd: number
+          opening_mpesa_271: number
+          opening_nmb_card: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          op_date: string
+          opening_cash?: number
+          opening_crdb?: number
+          opening_crdb_usd?: number
+          opening_mpesa_271?: number
+          opening_nmb_card?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          op_date?: string
+          opening_cash?: number
+          opening_crdb?: number
+          opening_crdb_usd?: number
+          opening_mpesa_271?: number
+          opening_nmb_card?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      real_time_entries: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          day_id: string
+          description: string
+          id: string
+          item: string
+          payment_account: Database["public"]["Enums"]["payment_account"]
+          reference_no: string | null
+          sort_order: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          day_id: string
+          description: string
+          id?: string
+          item: string
+          payment_account: Database["public"]["Enums"]["payment_account"]
+          reference_no?: string | null
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          day_id?: string
+          description?: string
+          id?: string
+          item?: string
+          payment_account?: Database["public"]["Enums"]["payment_account"]
+          reference_no?: string | null
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "real_time_entries_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "real_time_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       self_purchases: {
         Row: {
           admin_notes: string | null
@@ -936,6 +1034,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "superadmin"
+      payment_account: "CASH" | "NMB_CARD" | "MPESA_271" | "CRDB" | "CRDB_USD"
       purchase_region: "UK" | "US" | "UAE" | "CN" | "EU" | "AU"
       purchase_status:
         | "PENDING"
@@ -1073,6 +1172,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "superadmin"],
+      payment_account: ["CASH", "NMB_CARD", "MPESA_271", "CRDB", "CRDB_USD"],
       purchase_region: ["UK", "US", "UAE", "CN", "EU", "AU"],
       purchase_status: [
         "PENDING",
