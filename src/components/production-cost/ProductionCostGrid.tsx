@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Table,
   TableBody,
@@ -24,14 +24,13 @@ import {
   ProductionCostWithConsignment,
   calculateForeignCosts,
   calculateLocalCosts,
-  calculateProfit,
-  calculateProfitMargin,
   formatForeignCurrency,
   formatTZS,
   FOREIGN_CURRENCY_FIELDS,
 } from '@/types/production-cost';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useExchangeRates } from '@/hooks/useExchangeRates';
 
 interface ProductionCostGridProps {
   data: ProductionCostWithConsignment[];
@@ -40,10 +39,16 @@ interface ProductionCostGridProps {
   onInlineUpdate: (id: string, field: string, value: number) => void;
 }
 
+// Cache for exchange rates to avoid repeated lookups
+type RateCache = Record<string, number | null>;
+
 export const ProductionCostGrid = ({ data, onEdit, onDelete, onInlineUpdate }: ProductionCostGridProps) => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
   const [cellValue, setCellValue] = useState<string>('');
+  const [rateCache, setRateCache] = useState<RateCache>({});
+  
+  const { getRate } = useExchangeRates();
 
   // Foreign currency fields
   const foreignCostFields = [
@@ -60,6 +65,34 @@ export const ProductionCostGrid = ({ data, onEdit, onDelete, onInlineUpdate }: P
     { key: 'dar_ferry_to_office_transport_cost', label: 'Dar→Office' },
     { key: 'labour_helpers_cost', label: 'Labour' },
   ];
+
+  // Fetch exchange rates for all rows
+  useEffect(() => {
+    const fetchRates = async () => {
+      const newCache: RateCache = {};
+      
+      for (const row of data) {
+        const cacheKey = `TZS_${row.currency}_${row.cost_date}`;
+        if (rateCache[cacheKey] !== undefined) {
+          newCache[cacheKey] = rateCache[cacheKey];
+          continue;
+        }
+        
+        try {
+          const rate = await getRate('TZS', row.currency, new Date(row.cost_date));
+          newCache[cacheKey] = rate;
+        } catch {
+          newCache[cacheKey] = null;
+        }
+      }
+      
+      setRateCache((prev) => ({ ...prev, ...newCache }));
+    };
+
+    if (data.length > 0) {
+      fetchRates();
+    }
+  }, [data, getRate]);
 
   const handleCellClick = (id: string, field: string, currentValue: number) => {
     setEditingCell({ id, field });
@@ -106,7 +139,7 @@ export const ProductionCostGrid = ({ data, onEdit, onDelete, onInlineUpdate }: P
                   {field.label}
                 </TableHead>
               ))}
-              <TableHead className="text-right min-w-[100px] bg-green-100 dark:bg-green-900/50 font-semibold">Local Total</TableHead>
+              <TableHead className="text-right min-w-[140px] bg-green-100 dark:bg-green-900/50 font-semibold">Local Total</TableHead>
               <TableHead className="text-right min-w-[90px] bg-purple-50 dark:bg-purple-950/30">Revenue</TableHead>
               <TableHead className="text-right min-w-[100px] bg-purple-100 dark:bg-purple-900/50">Profit</TableHead>
               <TableHead className="text-right min-w-[70px]">Margin</TableHead>
@@ -127,8 +160,22 @@ export const ProductionCostGrid = ({ data, onEdit, onDelete, onInlineUpdate }: P
                 const foreignTotal = calculateForeignCosts(row);
                 const localTotal = calculateLocalCosts(row);
                 const revenue = Number(row.revenue_total) || 0;
-                const profit = calculateProfit(revenue, foreignTotal);
-                const profitMargin = calculateProfitMargin(revenue, profit);
+                
+                // Get TZS to foreign currency rate
+                const cacheKey = `TZS_${row.currency}_${row.cost_date}`;
+                const tzsToForeignRate = rateCache[cacheKey];
+                
+                // Convert local costs to foreign currency
+                const localTotalConverted = tzsToForeignRate ? localTotal * tzsToForeignRate : null;
+                
+                // Calculate accurate profit: Revenue - (Foreign Costs + Converted Local Costs)
+                const totalCosts = localTotalConverted !== null 
+                  ? foreignTotal + localTotalConverted 
+                  : foreignTotal;
+                const profit = revenue - totalCosts;
+                
+                // Calculate profit margin
+                const profitMargin = revenue > 0 ? ((profit / revenue) * 100).toFixed(1) + '%' : 'N/A';
 
                 return (
                   <TableRow key={row.id} className="group">
@@ -208,7 +255,16 @@ export const ProductionCostGrid = ({ data, onEdit, onDelete, onInlineUpdate }: P
                       );
                     })}
                     <TableCell className="text-right font-semibold bg-green-100/70 dark:bg-green-900/40 text-green-700 dark:text-green-300 text-sm">
-                      {formatTZS(localTotal)}
+                      <div className="flex flex-col items-end">
+                        <span>{formatTZS(localTotal)}</span>
+                        {localTotalConverted !== null ? (
+                          <span className="text-xs text-muted-foreground">
+                            ≈ {formatForeignCurrency(localTotalConverted, row.currency)}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-orange-500">No rate</span>
+                        )}
+                      </div>
                     </TableCell>
                     {/* Revenue */}
                     <TableCell className="text-right p-0 bg-purple-50/50 dark:bg-purple-950/20">
