@@ -52,26 +52,29 @@ export const ProductionCostGrid = ({ data, onEdit, onDelete, onInlineUpdate }: P
     
     const date = parseISO(costDate);
     
-    // Try direct rate
-    const directRate = exchangeRates.find(r => 
-      r.base_currency === baseCurrency && 
-      r.quote_currency === quoteCurrency &&
-      r.is_active &&
-      !isAfter(parseISO(r.effective_from), date) &&
-      (!r.effective_to || !isBefore(parseISO(r.effective_to), date))
-    );
+    // Filter and sort rates by effective_from descending to get the most recent applicable rate
+    const findRate = (base: string, quote: string) => {
+      return exchangeRates
+        .filter(r => 
+          r.base_currency === base && 
+          r.quote_currency === quote &&
+          r.is_active
+        )
+        .sort((a, b) => parseISO(b.effective_from).getTime() - parseISO(a.effective_from).getTime())
+        .find(r => {
+          const effectiveFrom = parseISO(r.effective_from);
+          const effectiveTo = r.effective_to ? parseISO(r.effective_to) : null;
+          // Rate is valid if: effective_from <= cost_date AND (no end date OR cost_date <= effective_to)
+          return !isAfter(effectiveFrom, date) && (!effectiveTo || !isAfter(date, effectiveTo));
+        });
+    };
     
+    // Try direct rate (e.g., TZS -> USD)
+    const directRate = findRate(baseCurrency, quoteCurrency);
     if (directRate) return directRate.rate;
     
-    // Try inverse rate
-    const inverseRate = exchangeRates.find(r => 
-      r.base_currency === quoteCurrency && 
-      r.quote_currency === baseCurrency &&
-      r.is_active &&
-      !isAfter(parseISO(r.effective_from), date) &&
-      (!r.effective_to || !isBefore(parseISO(r.effective_to), date))
-    );
-    
+    // Try inverse rate (e.g., USD -> TZS, then invert for TZS -> USD)
+    const inverseRate = findRate(quoteCurrency, baseCurrency);
     if (inverseRate) return 1 / inverseRate.rate;
     
     return null;
