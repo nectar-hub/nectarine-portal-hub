@@ -15,11 +15,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Search, UserPlus, Check, X } from "lucide-react";
+import { Search, UserPlus, Shield, ShieldCheck, User as UserIcon } from "lucide-react";
 import LoadingState from "@/components/admin/LoadingState";
 import ErrorState from "@/components/admin/ErrorState";
 import AccessDenied from "@/components/admin/AccessDenied";
+
+type UserRole = 'user' | 'admin' | 'superadmin';
 
 type User = {
   id: string;
@@ -28,15 +37,16 @@ type User = {
   phone: string | null;
   is_admin: boolean;
   created_at: string;
+  role: UserRole;
 };
 
 const Users = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isSuperadmin } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAdmin) {
@@ -73,18 +83,37 @@ const Users = () => {
       setError(null);
       console.log("Fetching users...");
       
-      const { data, error } = await supabase
+      // Fetch profiles
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, email, full_name, phone, is_admin, created_at, updated_at')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error("Error fetching users:", error);
-        throw error;
-      }
+      if (profilesError) throw profilesError;
+
+      // Fetch all user roles
+      const { data: roles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+
+      if (rolesError) throw rolesError;
+
+      // Map roles to users - priority: superadmin > admin > user
+      const usersWithRoles = (profiles || []).map(profile => {
+        const userRoles = roles?.filter(r => r.user_id === profile.id).map(r => r.role) || [];
+        let role: UserRole = 'user';
+        
+        if (userRoles.includes('superadmin')) {
+          role = 'superadmin';
+        } else if (userRoles.includes('admin') || profile.is_admin) {
+          role = 'admin';
+        }
+        
+        return { ...profile, role };
+      });
       
-      console.log("Users fetched:", data?.length || 0);
-      setUsers(data || []);
+      console.log("Users fetched:", usersWithRoles.length);
+      setUsers(usersWithRoles);
     } catch (error: any) {
       console.error("Error fetching users:", error);
       setError(error.message || "Failed to load users");
@@ -98,57 +127,80 @@ const Users = () => {
     }
   };
 
-  const toggleAdminStatus = async (userId: string, currentStatus: boolean) => {
+  const updateUserRole = async (userId: string, newRole: UserRole) => {
     try {
-      setIsUpdating(true);
+      setUpdatingUserId(userId);
       
-      // Update profiles table
+      // First, remove all existing admin/superadmin roles for this user
+      const { error: deleteError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId)
+        .in('role', ['admin', 'superadmin']);
+
+      if (deleteError) throw deleteError;
+
+      // Update is_admin in profiles
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ is_admin: !currentStatus })
+        .update({ is_admin: newRole !== 'user' })
         .eq('id', userId);
 
       if (profileError) throw profileError;
 
-      // Update user_roles table
-      if (!currentStatus) {
-        // Adding admin role
-        const { error: roleError } = await supabase
+      // Add new role if not 'user'
+      if (newRole === 'admin' || newRole === 'superadmin') {
+        const { error: insertError } = await supabase
           .from('user_roles')
-          .insert({ user_id: userId, role: 'admin' });
-        
-        if (roleError && roleError.code !== '23505') { // Ignore duplicate key error
-          throw roleError;
-        }
-      } else {
-        // Removing admin role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .delete()
-          .eq('user_id', userId)
-          .eq('role', 'admin');
-        
-        if (roleError) throw roleError;
+          .insert({ user_id: userId, role: newRole });
+
+        if (insertError) throw insertError;
       }
 
       // Update local state
       setUsers(users.map(user => 
-        user.id === userId ? { ...user, is_admin: !currentStatus } : user
+        user.id === userId ? { ...user, role: newRole, is_admin: newRole !== 'user' } : user
       ));
 
       toast({
         title: "Success",
-        description: `User admin status updated`,
+        description: `User role updated to ${newRole}`,
       });
     } catch (error: any) {
-      console.error("Error updating user:", error);
+      console.error("Error updating user role:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to update user",
+        description: error.message || "Failed to update user role",
         variant: "destructive"
       });
     } finally {
-      setIsUpdating(false);
+      setUpdatingUserId(null);
+    }
+  };
+
+  const getRoleBadge = (role: UserRole) => {
+    switch (role) {
+      case 'superadmin':
+        return (
+          <Badge className="bg-purple-500 hover:bg-purple-600">
+            <ShieldCheck className="h-3 w-3 mr-1" />
+            Superadmin
+          </Badge>
+        );
+      case 'admin':
+        return (
+          <Badge className="bg-blue-500 hover:bg-blue-600">
+            <Shield className="h-3 w-3 mr-1" />
+            Admin
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="outline">
+            <UserIcon className="h-3 w-3 mr-1" />
+            User
+          </Badge>
+        );
     }
   };
 
@@ -168,6 +220,7 @@ const Users = () => {
           <h1 className="text-3xl font-bold text-foreground">User Management</h1>
           <p className="text-muted-foreground mt-1">
             View and manage users in the system
+            {isSuperadmin && " • You can assign admin and superadmin roles"}
           </p>
         </div>
 
@@ -220,7 +273,7 @@ const Users = () => {
                     <TableHead>Phone</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Joined</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    {isSuperadmin && <TableHead className="text-right">Change Role</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -232,31 +285,44 @@ const Users = () => {
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.phone || 'N/A'}</TableCell>
                       <TableCell>
-                        <Badge variant={user.is_admin ? "default" : "outline"}>
-                          {user.is_admin ? 'Admin' : 'User'}
-                        </Badge>
+                        {getRoleBadge(user.role)}
                       </TableCell>
                       <TableCell>
                         {new Date(user.created_at).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => toggleAdminStatus(user.id, user.is_admin)}
-                            disabled={isUpdating}
+                      {isSuperadmin && (
+                        <TableCell className="text-right">
+                          <Select
+                            value={user.role}
+                            onValueChange={(value: UserRole) => updateUserRole(user.id, value)}
+                            disabled={updatingUserId === user.id}
                           >
-                            {user.is_admin ? 
-                              <X className="h-4 w-4 text-red-500" /> : 
-                              <Check className="h-4 w-4 text-green-500" />
-                            }
-                            <span className="ml-2">
-                              {user.is_admin ? 'Remove Admin' : 'Make Admin'}
-                            </span>
-                          </Button>
-                        </div>
-                      </TableCell>
+                            <SelectTrigger className="w-[140px] ml-auto">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="user">
+                                <div className="flex items-center">
+                                  <UserIcon className="h-3 w-3 mr-2" />
+                                  User
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="admin">
+                                <div className="flex items-center">
+                                  <Shield className="h-3 w-3 mr-2" />
+                                  Admin
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="superadmin">
+                                <div className="flex items-center">
+                                  <ShieldCheck className="h-3 w-3 mr-2" />
+                                  Superadmin
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
