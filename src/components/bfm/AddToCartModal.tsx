@@ -43,16 +43,19 @@ export const AddToCartModal = ({ open, onOpenChange, scrapedData, productUrl, is
   const [shipping, setShipping] = useState('0');
   const [notes, setNotes] = useState('');
 
-  // Huntington Beach, CA (Orange County) combined sales tax rate
-  const CA_TAX_RATE = 0.0775;
+  // Tax rates by currency/region
+  const TAX_RATES: Record<string, { rate: number; label: string }> = {
+    USD: { rate: 0.0775, label: 'CA Sales Tax 7.75%' },
+    GBP: { rate: 0.20, label: 'UK VAT 20%' },
+  };
 
-  const isUSOrder = currency === 'USD';
+  const taxInfo = TAX_RATES[currency];
 
-  // Auto-calculate CA tax when price/quantity/currency changes
+  // Auto-calculate tax when price/quantity/currency changes
   useEffect(() => {
-    if (isUSOrder && unitPrice) {
+    if (taxInfo && unitPrice) {
       const price = parseFloat(unitPrice) || 0;
-      const calculatedTax = Math.round(price * quantity * CA_TAX_RATE * 100) / 100;
+      const calculatedTax = Math.round(price * quantity * taxInfo.rate * 100) / 100;
       setTax(calculatedTax.toString());
     }
   }, [unitPrice, quantity, currency]);
@@ -180,9 +183,9 @@ export const AddToCartModal = ({ open, onOpenChange, scrapedData, productUrl, is
                 <Input type="number" step="0.01" value={unitPrice} onChange={e => setUnitPrice(e.target.value)} placeholder="0.00" />
               </div>
               <div className="space-y-2">
-                <Label>Est. Tax {isUSOrder && <span className="text-xs text-muted-foreground">(CA 7.75%)</span>}</Label>
+                <Label>Est. Tax {taxInfo && <span className="text-xs text-muted-foreground">({taxInfo.label})</span>}</Label>
                 <Input type="number" step="0.01" value={tax} onChange={e => setTax(e.target.value)} placeholder="0.00" />
-                {isUSOrder && <p className="text-xs text-muted-foreground">Auto-calculated for Huntington Beach, CA</p>}
+                {taxInfo && <p className="text-xs text-muted-foreground">Auto-calculated: {taxInfo.label}</p>}
               </div>
             </div>
 
