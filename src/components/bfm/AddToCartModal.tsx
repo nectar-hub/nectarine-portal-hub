@@ -26,6 +26,7 @@ interface AddToCartModalProps {
     currency: string;
     estimated_tax: number;
     estimated_shipping: number;
+    estimated_regulatory_fees: number;
     notes: string | null;
   }) => void;
 }
@@ -41,11 +42,12 @@ export const AddToCartModal = ({ open, onOpenChange, scrapedData, productUrl, is
   const [currency, setCurrency] = useState('USD');
   const [tax, setTax] = useState('0');
   const [shipping, setShipping] = useState('0');
+  const [regulatoryFees, setRegulatoryFees] = useState('0');
   const [notes, setNotes] = useState('');
 
   // Tax rates by currency/region
   const TAX_RATES: Record<string, { rate: number; label: string }> = {
-    USD: { rate: 0.0775, label: 'CA Sales Tax + Regulatory Fees 7.75%' },
+    USD: { rate: 0.0775, label: 'CA Sales Tax 7.75%' },
     GBP: { rate: 0.20, label: 'UK VAT 20%' },
     EUR: { rate: 0.21, label: 'EU VAT 21%' },
   };
@@ -90,6 +92,7 @@ export const AddToCartModal = ({ open, onOpenChange, scrapedData, productUrl, is
       currency,
       estimated_tax: parseFloat(tax) || 0,
       estimated_shipping: parseFloat(shipping) || 0,
+      estimated_regulatory_fees: parseFloat(regulatoryFees) || 0,
       notes: notes || null,
     });
     onOpenChange(false);
@@ -190,9 +193,16 @@ export const AddToCartModal = ({ open, onOpenChange, scrapedData, productUrl, is
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Est. Shipping</Label>
-              <Input type="number" step="0.01" value={shipping} onChange={e => setShipping(e.target.value)} placeholder="0.00" />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Est. Shipping</Label>
+                <Input type="number" step="0.01" value={shipping} onChange={e => setShipping(e.target.value)} placeholder="0.00" />
+              </div>
+              <div className="space-y-2">
+                <Label>Regulatory Fees {currency === 'USD' && <span className="text-xs text-muted-foreground">(USA only)</span>}</Label>
+                <Input type="number" step="0.01" value={regulatoryFees} onChange={e => setRegulatoryFees(e.target.value)} placeholder="0.00" />
+                {currency === 'USD' && <p className="text-xs text-muted-foreground">Gov't required fees & taxes on certain products</p>}
+              </div>
             </div>
 
             <div className="space-y-2">

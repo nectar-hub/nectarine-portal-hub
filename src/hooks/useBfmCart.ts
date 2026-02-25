@@ -84,7 +84,7 @@ export const useBfmCart = () => {
   });
 
   const cartTotal = (cartQuery.data || []).reduce((sum, item) => {
-    const lineTotal = (item.unit_price || 0) * item.quantity + item.estimated_tax + item.estimated_shipping;
+    const lineTotal = (item.unit_price || 0) * item.quantity + item.estimated_tax + item.estimated_shipping + (item.estimated_regulatory_fees || 0);
     return sum + lineTotal;
   }, 0);
 

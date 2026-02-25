@@ -22,6 +22,7 @@ const BfmCheckout = () => {
   const subtotal = items.reduce((s, i) => s + (i.unit_price || 0) * i.quantity, 0);
   const totalTax = items.reduce((s, i) => s + i.estimated_tax, 0);
   const totalShipping = items.reduce((s, i) => s + i.estimated_shipping, 0);
+  const totalRegulatoryFees = items.reduce((s, i) => s + (i.estimated_regulatory_fees || 0), 0);
   const cartCurrency = items.length > 0 ? items[0].currency : 'USD';
 
   const handlePlaceOrder = async () => {
@@ -97,6 +98,9 @@ const BfmCheckout = () => {
             <Separator className="my-3" />
             <div className="flex justify-between text-sm"><span>Subtotal</span><span>{cartCurrency} {subtotal.toFixed(2)}</span></div>
             <div className="flex justify-between text-sm"><span>Est. Tax</span><span>{cartCurrency} {totalTax.toFixed(2)}</span></div>
+            {totalRegulatoryFees > 0 && (
+              <div className="flex justify-between text-sm"><span>Regulatory Fees</span><span>{cartCurrency} {totalRegulatoryFees.toFixed(2)}</span></div>
+            )}
             <div className="flex justify-between text-sm"><span>Est. Shipping</span><span>{cartCurrency} {totalShipping.toFixed(2)}</span></div>
             <Separator className="my-3" />
             <div className="flex justify-between font-semibold text-lg"><span>Grand Total</span><span>{cartCurrency} {cartTotal.toFixed(2)}</span></div>

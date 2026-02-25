@@ -180,6 +180,7 @@ export type Database = {
         Row: {
           created_at: string
           currency: string
+          estimated_regulatory_fees: number
           estimated_shipping: number
           estimated_tax: number
           id: string
@@ -198,6 +199,7 @@ export type Database = {
         Insert: {
           created_at?: string
           currency?: string
+          estimated_regulatory_fees?: number
           estimated_shipping?: number
           estimated_tax?: number
           id?: string
@@ -216,6 +218,7 @@ export type Database = {
         Update: {
           created_at?: string
           currency?: string
+          estimated_regulatory_fees?: number
           estimated_shipping?: number
           estimated_tax?: number
           id?: string
@@ -244,6 +247,7 @@ export type Database = {
           product_name: string
           product_url: string
           quantity: number
+          regulatory_fees: number
           shipping: number
           store_name: string | null
           tax: number
@@ -261,6 +265,7 @@ export type Database = {
           product_name: string
           product_url: string
           quantity?: number
+          regulatory_fees?: number
           shipping?: number
           store_name?: string | null
           tax?: number
@@ -278,6 +283,7 @@ export type Database = {
           product_name?: string
           product_url?: string
           quantity?: number
+          regulatory_fees?: number
           shipping?: number
           store_name?: string | null
           tax?: number

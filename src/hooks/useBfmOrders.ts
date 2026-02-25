@@ -55,7 +55,8 @@ export const useBfmOrders = (adminMode = false) => {
       const subtotal = cartItems.reduce((s, i) => s + (i.unit_price || 0) * i.quantity, 0);
       const totalTax = cartItems.reduce((s, i) => s + i.estimated_tax, 0);
       const totalShipping = cartItems.reduce((s, i) => s + i.estimated_shipping, 0);
-      const grandTotal = subtotal + totalTax + totalShipping;
+      const totalRegulatoryFees = cartItems.reduce((s, i) => s + (i.estimated_regulatory_fees || 0), 0);
+      const grandTotal = subtotal + totalTax + totalShipping + totalRegulatoryFees;
 
       // Create order
       const { data: order, error: orderError } = await supabase
@@ -91,7 +92,8 @@ export const useBfmOrders = (adminMode = false) => {
         currency: item.currency,
         tax: item.estimated_tax,
         shipping: item.estimated_shipping,
-        line_total: (item.unit_price || 0) * item.quantity + item.estimated_tax + item.estimated_shipping,
+        regulatory_fees: item.estimated_regulatory_fees || 0,
+        line_total: (item.unit_price || 0) * item.quantity + item.estimated_tax + item.estimated_shipping + (item.estimated_regulatory_fees || 0),
       }));
 
       const { error: itemsError } = await supabase
