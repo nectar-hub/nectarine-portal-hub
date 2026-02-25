@@ -270,63 +270,27 @@ const BfmShop = () => {
                 <p className="text-sm text-muted-foreground">Loading page...</p>
               </div>
             ) : browseResult ? (
-              <div className="flex h-full">
-                {/* Main content */}
-                <ScrollArea className="flex-1 h-full">
-                  <div className="p-4">
-                    {/* Screenshot */}
-                    {browseResult.screenshot && (
-                      <div className="mb-6">
-                        <img
-                          src={`data:image/png;base64,${browseResult.screenshot}`}
-                          alt="Page screenshot"
-                          className="w-full rounded-lg border shadow-sm"
-                        />
-                      </div>
-                    )}
-
-                    {/* Markdown content */}
-                    {browseResult.markdown && (
-                      <div className="prose prose-sm max-w-none dark:prose-invert">
-                        {browseResult.markdown.split('\n').map((line, i) => {
-                          if (line.startsWith('# ')) return <h1 key={i} className="text-xl font-bold mt-4 mb-2">{line.slice(2)}</h1>;
-                          if (line.startsWith('## ')) return <h2 key={i} className="text-lg font-semibold mt-3 mb-2">{line.slice(3)}</h2>;
-                          if (line.startsWith('### ')) return <h3 key={i} className="text-base font-medium mt-2 mb-1">{line.slice(4)}</h3>;
-                          if (line.startsWith('![')) {
-                            const match = line.match(/!\[([^\]]*)\]\(([^)]+)\)/);
-                            if (match) return <img key={i} src={match[2]} alt={match[1]} className="max-w-full rounded my-2" />;
-                          }
-                          if (line.trim() === '') return <br key={i} />;
-                          return <p key={i} className="text-sm mb-1">{line}</p>;
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
-
-                {/* Links sidebar */}
-                {browseResult.links && browseResult.links.length > 0 && (
-                  <div className="w-64 border-l bg-muted/30 flex-shrink-0 hidden lg:block">
-                    <div className="p-2 border-b">
-                      <p className="text-xs font-medium text-muted-foreground">Links on page ({browseResult.links.length})</p>
+              <ScrollArea className="flex-1 h-full">
+                <div className="p-0">
+                  {/* Screenshot is the primary view — shows the page as it actually looks */}
+                  {browseResult.screenshot ? (
+                    <img
+                      src={`data:image/png;base64,${browseResult.screenshot}`}
+                      alt="Page screenshot"
+                      className="w-full"
+                    />
+                  ) : browseResult.markdown ? (
+                    /* Fallback: show a simple text preview if no screenshot */
+                    <div className="p-4 whitespace-pre-wrap text-sm text-muted-foreground font-mono leading-relaxed">
+                      {browseResult.markdown.slice(0, 3000)}
                     </div>
-                    <ScrollArea className="h-full">
-                      <div className="p-2 space-y-1">
-                        {browseResult.links.slice(0, 50).map((link, i) => (
-                          <button
-                            key={i}
-                            onClick={() => handleLinkClick(link)}
-                            className="block w-full text-left text-xs text-nectarine-600 hover:text-nectarine-700 hover:bg-muted p-1.5 rounded truncate"
-                            title={link}
-                          >
-                            {link.replace(/^https?:\/\//, '').slice(0, 60)}
-                          </button>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  </div>
-                )}
-              </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full p-8">
+                      <p className="text-muted-foreground text-sm">No content available for this page.</p>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
             ) : (
               /* Welcome / Empty state */
               <div className="flex flex-col items-center justify-center h-full gap-6 p-8">
