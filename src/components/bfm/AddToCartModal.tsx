@@ -43,6 +43,20 @@ export const AddToCartModal = ({ open, onOpenChange, scrapedData, productUrl, is
   const [shipping, setShipping] = useState('0');
   const [notes, setNotes] = useState('');
 
+  // Huntington Beach, CA (Orange County) combined sales tax rate
+  const CA_TAX_RATE = 0.0775;
+
+  const isUSOrder = currency === 'USD';
+
+  // Auto-calculate CA tax when price/quantity/currency changes
+  useEffect(() => {
+    if (isUSOrder && unitPrice) {
+      const price = parseFloat(unitPrice) || 0;
+      const calculatedTax = Math.round(price * quantity * CA_TAX_RATE * 100) / 100;
+      setTax(calculatedTax.toString());
+    }
+  }, [unitPrice, quantity, currency]);
+
   useEffect(() => {
     if (scrapedData) {
       setProductName(scrapedData.product_name || '');
@@ -166,8 +180,9 @@ export const AddToCartModal = ({ open, onOpenChange, scrapedData, productUrl, is
                 <Input type="number" step="0.01" value={unitPrice} onChange={e => setUnitPrice(e.target.value)} placeholder="0.00" />
               </div>
               <div className="space-y-2">
-                <Label>Est. Tax</Label>
+                <Label>Est. Tax {isUSOrder && <span className="text-xs text-muted-foreground">(CA 7.75%)</span>}</Label>
                 <Input type="number" step="0.01" value={tax} onChange={e => setTax(e.target.value)} placeholder="0.00" />
+                {isUSOrder && <p className="text-xs text-muted-foreground">Auto-calculated for Huntington Beach, CA</p>}
               </div>
             </div>
 
