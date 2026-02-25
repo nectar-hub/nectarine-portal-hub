@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
 import { useBfmCart } from '@/hooks/useBfmCart';
@@ -7,38 +7,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
 import {
   ShoppingCart, ArrowLeft, ArrowRight, RotateCcw, Globe,
-  Plus, ExternalLink, Loader2, Link2, Home,
+  Plus, ExternalLink, Loader2, AlertTriangle,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { ScrapedProduct } from '@/types/bfm';
 
-interface BrowseResult {
-  markdown: string;
-  screenshot: string;
-  links: string[];
-  metadata: {
-    title?: string;
-    description?: string;
-    ogImage?: string;
-    sourceURL?: string;
-  };
-}
-
 const BfmShop = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { addItem, cartCount, cartTotal } = useBfmCart();
+  const { addItem, cartCount } = useBfmCart();
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Browser state
   const [urlInput, setUrlInput] = useState('');
   const [currentUrl, setCurrentUrl] = useState('');
-  const [isBrowsing, setIsBrowsing] = useState(false);
-  const [browseResult, setBrowseResult] = useState<BrowseResult | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [iframeError, setIframeError] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [historyIdx, setHistoryIdx] = useState(-1);
 
@@ -48,43 +35,29 @@ const BfmShop = () => {
   const [scrapedData, setScrapedData] = useState<ScrapedProduct | null>(null);
   const [captureUrl, setCaptureUrl] = useState('');
 
-  const browseTo = useCallback(async (targetUrl: string) => {
-    if (!targetUrl.trim()) return;
-
-    let formatted = targetUrl.trim();
+  const formatUrl = (raw: string) => {
+    let formatted = raw.trim();
     if (!formatted.startsWith('http://') && !formatted.startsWith('https://')) {
       formatted = `https://${formatted}`;
     }
+    return formatted;
+  };
+
+  const navigateTo = useCallback((targetUrl: string) => {
+    if (!targetUrl.trim()) return;
+    const formatted = formatUrl(targetUrl);
 
     setCurrentUrl(formatted);
     setUrlInput(formatted);
-    setIsBrowsing(true);
-    setBrowseResult(null);
+    setIsLoading(true);
+    setIframeError(false);
 
-    try {
-      const { data, error } = await supabase.functions.invoke('firecrawl-scrape', {
-        body: { url: formatted, mode: 'browse' },
-      });
-
-      if (error) throw error;
-
-      if (data?.success && data?.data) {
-        setBrowseResult(data.data);
-        // Add to history
-        setHistory(prev => {
-          const newHistory = [...prev.slice(0, historyIdx + 1), formatted];
-          setHistoryIdx(newHistory.length - 1);
-          return newHistory;
-        });
-      } else {
-        toast({ title: 'Failed to load page', description: data?.error || 'Unknown error', variant: 'destructive' });
-      }
-    } catch (err: any) {
-      console.error('Browse error:', err);
-      toast({ title: 'Failed to load page', description: err.message, variant: 'destructive' });
-    } finally {
-      setIsBrowsing(false);
-    }
+    // Update history
+    setHistory(prev => {
+      const newHistory = [...prev.slice(0, historyIdx + 1), formatted];
+      setHistoryIdx(newHistory.length - 1);
+      return newHistory;
+    });
   }, [historyIdx]);
 
   const goBack = () => {
@@ -94,7 +67,8 @@ const BfmShop = () => {
       const prevUrl = history[newIdx];
       setCurrentUrl(prevUrl);
       setUrlInput(prevUrl);
-      browseTo(prevUrl);
+      setIsLoading(true);
+      setIframeError(false);
     }
   };
 
@@ -105,12 +79,22 @@ const BfmShop = () => {
       const nextUrl = history[newIdx];
       setCurrentUrl(nextUrl);
       setUrlInput(nextUrl);
-      browseTo(nextUrl);
+      setIsLoading(true);
+      setIframeError(false);
     }
   };
 
+  const handleIframeLoad = () => {
+    setIsLoading(false);
+  };
+
+  const handleIframeError = () => {
+    setIsLoading(false);
+    setIframeError(true);
+  };
+
   const handleAddToCart = async () => {
-    const urlToCapture = currentUrl || urlInput;
+    const urlToCapture = currentUrl || formatUrl(urlInput);
     if (!urlToCapture.trim()) {
       toast({ title: 'No URL', description: 'Navigate to a product page or paste a URL first', variant: 'destructive' });
       return;
@@ -147,9 +131,14 @@ const BfmShop = () => {
     setScrapedData(null);
   };
 
-  const handleLinkClick = (link: string) => {
-    browseTo(link);
-  };
+  const quickStores = [
+    { name: 'Amazon', url: 'https://www.amazon.com' },
+    { name: 'eBay', url: 'https://www.ebay.com' },
+    { name: 'AliExpress', url: 'https://www.aliexpress.com' },
+    { name: 'Walmart', url: 'https://www.walmart.com' },
+    { name: 'Zara', url: 'https://www.zara.com' },
+    { name: 'ASOS', url: 'https://www.asos.com' },
+  ];
 
   return (
     <DashboardLayout>
@@ -186,30 +175,18 @@ const BfmShop = () => {
         <div className="bg-muted/50 border rounded-lg flex-1 flex flex-col overflow-hidden">
           {/* URL Bar */}
           <div className="flex items-center gap-1.5 p-2 bg-muted border-b">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 flex-shrink-0"
-              onClick={goBack}
-              disabled={historyIdx <= 0}
-            >
+            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={goBack} disabled={historyIdx <= 0}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 flex-shrink-0"
-              onClick={goForward}
-              disabled={historyIdx >= history.length - 1}
-            >
+            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={goForward} disabled={historyIdx >= history.length - 1}>
               <ArrowRight className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8 flex-shrink-0"
-              onClick={() => currentUrl && browseTo(currentUrl)}
-              disabled={isBrowsing || !currentUrl}
+              onClick={() => currentUrl && navigateTo(currentUrl)}
+              disabled={isLoading || !currentUrl}
             >
               <RotateCcw className="h-4 w-4" />
             </Button>
@@ -219,8 +196,8 @@ const BfmShop = () => {
               <Input
                 value={urlInput}
                 onChange={e => setUrlInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && browseTo(urlInput)}
-                placeholder="Enter a URL (e.g. amazon.com/product/...)"
+                onKeyDown={e => e.key === 'Enter' && navigateTo(urlInput)}
+                placeholder="Enter a URL (e.g. amazon.com)"
                 className="h-8 pl-8 text-sm bg-background"
               />
             </div>
@@ -228,10 +205,10 @@ const BfmShop = () => {
             <Button
               size="sm"
               className="h-8 flex-shrink-0"
-              onClick={() => browseTo(urlInput)}
-              disabled={isBrowsing || !urlInput.trim()}
+              onClick={() => navigateTo(urlInput)}
+              disabled={isLoading || !urlInput.trim()}
             >
-              {isBrowsing ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Go'}
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Go'}
             </Button>
 
             <div className="w-px h-6 bg-border mx-1" />
@@ -247,50 +224,58 @@ const BfmShop = () => {
             </Button>
           </div>
 
-          {/* Page title bar */}
-          {browseResult?.metadata?.title && (
-            <div className="flex items-center justify-between px-3 py-1.5 bg-background/50 border-b text-xs">
-              <span className="truncate font-medium">{browseResult.metadata.title}</span>
-              <a
-                href={currentUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-nectarine-500 hover:underline flex-shrink-0 ml-2"
-              >
-                <ExternalLink className="h-3 w-3" /> Open in new tab
-              </a>
-            </div>
-          )}
-
           {/* Content Area */}
-          <div className="flex-1 overflow-hidden">
-            {isBrowsing ? (
-              <div className="flex flex-col items-center justify-center h-full gap-3">
+          <div className="flex-1 overflow-hidden relative">
+            {/* Loading overlay */}
+            {isLoading && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/80 gap-3">
                 <Loader2 className="h-10 w-10 animate-spin text-nectarine-500" />
                 <p className="text-sm text-muted-foreground">Loading page...</p>
               </div>
-            ) : browseResult ? (
-              <ScrollArea className="flex-1 h-full">
-                <div className="p-0">
-                  {/* Screenshot is the primary view — shows the page as it actually looks */}
-                  {browseResult.screenshot ? (
-                    <img
-                      src={`data:image/png;base64,${browseResult.screenshot}`}
-                      alt="Page screenshot"
-                      className="w-full"
-                    />
-                  ) : browseResult.markdown ? (
-                    /* Fallback: show a simple text preview if no screenshot */
-                    <div className="p-4 whitespace-pre-wrap text-sm text-muted-foreground font-mono leading-relaxed">
-                      {browseResult.markdown.slice(0, 3000)}
+            )}
+
+            {currentUrl ? (
+              <>
+                {/* The actual iframe browser */}
+                <iframe
+                  ref={iframeRef}
+                  src={currentUrl}
+                  className="w-full h-full border-0"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+                  onLoad={handleIframeLoad}
+                  onError={handleIframeError}
+                  title="Shopping browser"
+                />
+
+                {/* Iframe blocked overlay — shown after load if site uses X-Frame-Options */}
+                {iframeError && (
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background gap-4 p-8">
+                    <AlertTriangle className="h-12 w-12 text-amber-500" />
+                    <div className="text-center max-w-md">
+                      <h3 className="font-semibold text-lg mb-2">This site can't be displayed here</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Some websites block embedded browsing for security reasons.
+                        You can open this store in a new tab, find your product, then paste the product URL back here.
+                      </p>
                     </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-full p-8">
-                      <p className="text-muted-foreground text-sm">No content available for this page.</p>
+                    <div className="flex gap-2">
+                      <Button variant="outline" asChild>
+                        <a href={currentUrl} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          Open in New Tab
+                        </a>
+                      </Button>
+                      <Button
+                        className="bg-nectarine-500 hover:bg-nectarine-600"
+                        onClick={handleAddToCart}
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Current URL to Cart
+                      </Button>
                     </div>
-                  )}
-                </div>
-              </ScrollArea>
+                  </div>
+                )}
+              </>
             ) : (
               /* Welcome / Empty state */
               <div className="flex flex-col items-center justify-center h-full gap-6 p-8">
@@ -300,27 +285,18 @@ const BfmShop = () => {
                 <div className="text-center max-w-md">
                   <h2 className="text-xl font-semibold mb-2">Shop Any Store</h2>
                   <p className="text-muted-foreground text-sm">
-                    Enter a product URL in the address bar above to browse any online store.
-                    When you find a product you like, click <strong>"Add to Nectarine Cart"</strong> to capture it.
+                    Enter a store URL in the address bar above to start browsing.
+                    Navigate the site just like a normal browser — find a product you like, then click
+                    <strong> "Add to Nectarine Cart"</strong> to capture it.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2 justify-center">
-                  {[
-                    { name: 'Amazon', url: 'https://www.amazon.com' },
-                    { name: 'eBay', url: 'https://www.ebay.com' },
-                    { name: 'AliExpress', url: 'https://www.aliexpress.com' },
-                    { name: 'Walmart', url: 'https://www.walmart.com' },
-                    { name: 'Zara', url: 'https://www.zara.com' },
-                    { name: 'ASOS', url: 'https://www.asos.com' },
-                  ].map(store => (
+                  {quickStores.map(store => (
                     <Button
                       key={store.name}
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        setUrlInput(store.url);
-                        browseTo(store.url);
-                      }}
+                      onClick={() => { setUrlInput(store.url); navigateTo(store.url); }}
                       className="text-xs"
                     >
                       <Globe className="mr-1 h-3 w-3" />
