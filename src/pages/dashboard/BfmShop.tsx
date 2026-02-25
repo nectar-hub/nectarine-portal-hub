@@ -3,38 +3,42 @@ import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
 import { useBfmCart } from '@/hooks/useBfmCart';
 import { AddToCartModal } from '@/components/bfm/AddToCartModal';
+import { ProductCard } from '@/components/bfm/ProductCard';
+import { StoreSelector } from '@/components/bfm/StoreSelector';
+import { SearchResultsSkeleton } from '@/components/bfm/SearchResultsSkeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import {
-  ShoppingCart, ArrowLeft, ArrowRight, RotateCcw, Globe,
-  Plus, ExternalLink, Loader2, Link2,
+  ShoppingCart, Search, Plus, Loader2, Link2, Globe,
+  RotateCcw, AlertCircle,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { ScrapedProduct } from '@/types/bfm';
-
-interface BrowseResult {
-  screenshot: string;
-  links: string[];
-  metadata: { title?: string; ogImage?: string };
-  markdown: string;
-}
+import type { SearchProduct, StoreKey, StoreSearchResult } from '@/types/store-search';
 
 const BfmShop = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { addItem, cartCount } = useBfmCart();
 
-  // Browser state
-  const [urlInput, setUrlInput] = useState('');
-  const [currentUrl, setCurrentUrl] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [browseData, setBrowseData] = useState<BrowseResult | null>(null);
-  const [history, setHistory] = useState<string[]>([]);
-  const [historyIdx, setHistoryIdx] = useState(-1);
+  // Search state
+  const [selectedStore, setSelectedStore] = useState<StoreKey>('amazon');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchProduct[]>([]);
+  const [searchMeta, setSearchMeta] = useState<{ query: string; store: string; search_url: string; next_page_url: string | null } | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
+  // Paste URL state
+  const [pasteUrl, setPasteUrl] = useState('');
+  const [isPasteScraping, setIsPasteScraping] = useState(false);
 
   // Cart modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,98 +46,133 @@ const BfmShop = () => {
   const [scrapedData, setScrapedData] = useState<ScrapedProduct | null>(null);
   const [captureUrl, setCaptureUrl] = useState('');
 
-  const formatUrl = (raw: string) => {
-    let formatted = raw.trim();
-    if (!formatted.startsWith('http://') && !formatted.startsWith('https://')) {
-      formatted = `https://${formatted}`;
-    }
-    return formatted;
-  };
+  const handleSearch = useCallback(async (page = 1) => {
+    if (!searchQuery.trim()) return;
 
-  const browseTo = useCallback(async (targetUrl: string, addToHistory = true) => {
-    if (!targetUrl.trim()) return;
-    const formatted = formatUrl(targetUrl);
-
-    setCurrentUrl(formatted);
-    setUrlInput(formatted);
-    setIsLoading(true);
-    setBrowseData(null);
-
-    if (addToHistory) {
-      setHistory(prev => {
-        const newHistory = [...prev.slice(0, historyIdx + 1), formatted];
-        setHistoryIdx(newHistory.length - 1);
-        return newHistory;
-      });
+    if (page === 1) {
+      setIsSearching(true);
+      setSearchResults([]);
+      setSearchError(null);
+    } else {
+      setIsLoadingMore(true);
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke('firecrawl-scrape', {
-        body: { url: formatted, mode: 'browse' },
+      const { data, error } = await supabase.functions.invoke('firecrawl-search', {
+        body: { store: selectedStore, query: searchQuery.trim(), page },
       });
 
       if (error) throw error;
 
-      if (data?.success && data?.data) {
-        const result = data.data as BrowseResult;
-        // Filter links to only valid http(s) links
-        const validLinks = (result.links || []).filter(
-          (l: string) => l.startsWith('http://') || l.startsWith('https://')
-        );
-        setBrowseData({ ...result, links: validLinks });
+      const result = data as StoreSearchResult;
+      if (!result.success) throw new Error(result.error || 'Search failed');
+
+      if (page === 1) {
+        setSearchResults(result.items);
       } else {
-        toast({ title: 'Could not load page', description: 'Try opening in a new tab instead', variant: 'destructive' });
+        setSearchResults(prev => [...prev, ...result.items]);
       }
+
+      setSearchMeta({
+        query: result.query,
+        store: result.store,
+        search_url: result.search_url,
+        next_page_url: result.next_page_url,
+      });
+      setCurrentPage(page);
+
+      // Track recent searches
+      setRecentSearches(prev => {
+        const updated = [searchQuery.trim(), ...prev.filter(s => s !== searchQuery.trim())].slice(0, 5);
+        return updated;
+      });
     } catch (err: any) {
-      console.error('Browse error:', err);
-      toast({ title: 'Failed to load page', description: err.message || 'Something went wrong', variant: 'destructive' });
+      console.error('Search error:', err);
+      setSearchError(err.message || 'Search failed. Try pasting a product URL instead.');
+      if (page === 1) setSearchResults([]);
     } finally {
-      setIsLoading(false);
+      setIsSearching(false);
+      setIsLoadingMore(false);
     }
-  }, [historyIdx]);
+  }, [searchQuery, selectedStore]);
 
-  const goBack = () => {
-    if (historyIdx > 0) {
-      const newIdx = historyIdx - 1;
-      setHistoryIdx(newIdx);
-      browseTo(history[newIdx], false);
-    }
-  };
-
-  const goForward = () => {
-    if (historyIdx < history.length - 1) {
-      const newIdx = historyIdx + 1;
-      setHistoryIdx(newIdx);
-      browseTo(history[newIdx], false);
-    }
-  };
-
-  const handleAddToCart = async () => {
-    const urlToCapture = currentUrl || formatUrl(urlInput);
-    if (!urlToCapture.trim()) {
-      toast({ title: 'No URL', description: 'Navigate to a product page or paste a URL first', variant: 'destructive' });
+  const handleProductAddToCart = async (product: SearchProduct) => {
+    const urlToScrape = product.product_url;
+    if (!urlToScrape) {
+      // No URL, open modal with what we have
+      setScrapedData({
+        product_name: product.product_name,
+        price: product.price,
+        currency: product.currency,
+        image_url: product.image_url,
+        store_name: product.store_name,
+        available_sizes: [],
+        available_colors: [],
+        description: '',
+        source_url: '',
+      });
+      setCaptureUrl('');
+      setIsModalOpen(true);
       return;
     }
 
-    setCaptureUrl(urlToCapture);
+    setCaptureUrl(urlToScrape);
+    setScrapedData({
+      product_name: product.product_name,
+      price: product.price,
+      currency: product.currency,
+      image_url: product.image_url,
+      store_name: product.store_name,
+      available_sizes: [],
+      available_colors: [],
+      description: '',
+      source_url: urlToScrape,
+    });
+    setIsModalOpen(true);
+    setIsScraping(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('firecrawl-scrape', {
+        body: { url: urlToScrape, mode: 'product' },
+      });
+
+      if (error) throw error;
+      if (data?.success && data?.data) {
+        setScrapedData(data.data as ScrapedProduct);
+      }
+    } catch (err: any) {
+      console.error('Product scrape error:', err);
+      // Keep the search data as fallback
+    } finally {
+      setIsScraping(false);
+    }
+  };
+
+  const handlePasteUrl = async () => {
+    if (!pasteUrl.trim()) return;
+
+    let formatted = pasteUrl.trim();
+    if (!formatted.startsWith('http://') && !formatted.startsWith('https://')) {
+      formatted = `https://${formatted}`;
+    }
+
+    setCaptureUrl(formatted);
     setScrapedData(null);
     setIsModalOpen(true);
     setIsScraping(true);
 
     try {
       const { data, error } = await supabase.functions.invoke('firecrawl-scrape', {
-        body: { url: urlToCapture, mode: 'product' },
+        body: { url: formatted, mode: 'product' },
       });
 
       if (error) throw error;
-
       if (data?.success && data?.data) {
         setScrapedData(data.data as ScrapedProduct);
       } else {
-        toast({ title: 'Auto-detect limited', description: 'Please fill in the product details manually' });
+        toast({ title: 'Auto-detect limited', description: 'Please fill in product details manually' });
       }
-    } catch (err: any) {
-      console.error('Scrape error:', err);
+    } catch {
       toast({ title: 'Auto-detect failed', description: 'Please fill in the details manually' });
     } finally {
       setIsScraping(false);
@@ -146,25 +185,15 @@ const BfmShop = () => {
     setScrapedData(null);
   };
 
-  const quickStores = [
-    { name: 'Amazon', url: 'https://www.amazon.com' },
-    { name: 'eBay', url: 'https://www.ebay.com' },
-    { name: 'AliExpress', url: 'https://www.aliexpress.com' },
-    { name: 'Walmart', url: 'https://www.walmart.com' },
-    { name: 'Zara', url: 'https://www.zara.com' },
-    { name: 'ASOS', url: 'https://www.asos.com' },
-  ];
-
-  const getDomain = (url: string) => {
-    try { return new URL(url).hostname; } catch { return url; }
-  };
-
   return (
     <DashboardLayout>
-      <div className="flex flex-col h-[calc(100vh-6rem)] gap-3">
-        {/* Top Bar */}
-        <div className="flex items-center justify-between flex-shrink-0">
-          <h1 className="text-xl font-bold">Buy For Me</h1>
+      <div className="flex flex-col gap-4 pb-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Buy For Me</h1>
+            <p className="text-sm text-muted-foreground">Search products across stores or paste a link</p>
+          </div>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -180,202 +209,212 @@ const BfmShop = () => {
                 </Badge>
               )}
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/dashboard/bfm-orders')}
-            >
+            <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/bfm-orders')}>
               My Orders
             </Button>
           </div>
         </div>
 
-        {/* Browser Chrome */}
-        <div className="bg-muted/50 border rounded-lg flex-1 flex flex-col overflow-hidden">
-          {/* URL Bar */}
-          <div className="flex items-center gap-1.5 p-2 bg-muted border-b">
-            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={goBack} disabled={historyIdx <= 0 || isLoading}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={goForward} disabled={historyIdx >= history.length - 1 || isLoading}>
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 flex-shrink-0"
-              onClick={() => currentUrl && browseTo(currentUrl, false)}
-              disabled={isLoading || !currentUrl}
-            >
-              <RotateCcw className="h-4 w-4" />
-            </Button>
+        <Tabs defaultValue="search" className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="search">
+              <Search className="mr-1.5 h-4 w-4" />
+              Store Search
+            </TabsTrigger>
+            <TabsTrigger value="paste">
+              <Link2 className="mr-1.5 h-4 w-4" />
+              Paste Product URL
+            </TabsTrigger>
+          </TabsList>
 
-            <div className="relative flex-1">
-              <Globe className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                value={urlInput}
-                onChange={e => setUrlInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && browseTo(urlInput)}
-                placeholder="Enter a URL (e.g. amazon.com)"
-                className="h-8 pl-8 text-sm bg-background"
-              />
+          {/* ===== SEARCH TAB ===== */}
+          <TabsContent value="search" className="space-y-4 mt-4">
+            {/* Store selector */}
+            <StoreSelector selected={selectedStore} onSelect={setSelectedStore} />
+
+            {/* Search bar */}
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                  placeholder={`Search on ${selectedStore.charAt(0).toUpperCase() + selectedStore.slice(1)}...`}
+                  className="pl-10"
+                />
+              </div>
+              <Button
+                onClick={() => handleSearch()}
+                disabled={isSearching || !searchQuery.trim()}
+                className="bg-nectarine-500 hover:bg-nectarine-600"
+              >
+                {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Search'}
+              </Button>
             </div>
 
-            <Button
-              size="sm"
-              className="h-8 flex-shrink-0"
-              onClick={() => browseTo(urlInput)}
-              disabled={isLoading || !urlInput.trim()}
-            >
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Go'}
-            </Button>
-
-            <div className="w-px h-6 bg-border mx-1" />
-
-            <Button
-              size="sm"
-              className="h-8 bg-nectarine-500 hover:bg-nectarine-600 flex-shrink-0"
-              onClick={handleAddToCart}
-              disabled={(!currentUrl && !urlInput.trim()) || isLoading}
-            >
-              <Plus className="mr-1 h-4 w-4" />
-              Add to Nectarine Cart
-            </Button>
-          </div>
-
-          {/* Content Area */}
-          <div className="flex-1 overflow-hidden relative flex">
-            {/* Loading overlay */}
-            {isLoading && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/80 gap-3">
-                <Loader2 className="h-10 w-10 animate-spin text-nectarine-500" />
-                <p className="text-sm text-muted-foreground">Loading page...</p>
+            {/* Recent searches */}
+            {recentSearches.length > 0 && !searchResults.length && !isSearching && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-muted-foreground">Recent:</span>
+                {recentSearches.map(s => (
+                  <Button
+                    key={s}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs px-2"
+                    onClick={() => { setSearchQuery(s); }}
+                  >
+                    {s}
+                  </Button>
+                ))}
               </div>
             )}
 
-            {browseData ? (
-              <>
-                {/* Page screenshot */}
-                <ScrollArea className="flex-1">
-                  <div className="p-0">
-                    {browseData.screenshot ? (
-                      <img
-                        src={browseData.screenshot}
-                        alt={browseData.metadata?.title || 'Page screenshot'}
-                        className="w-full h-auto"
-                      />
-                    ) : (
-                      <div className="p-6 text-sm text-muted-foreground whitespace-pre-wrap">
-                        {browseData.markdown || 'No content available for this page.'}
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
+            {/* Error state */}
+            {searchError && (
+              <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-destructive">Search failed</p>
+                  <p className="text-xs text-muted-foreground mt-1">{searchError}</p>
+                  <Button size="sm" variant="outline" className="mt-2 h-7 text-xs" onClick={() => handleSearch()}>
+                    <RotateCcw className="mr-1 h-3 w-3" /> Retry
+                  </Button>
+                </div>
+              </div>
+            )}
 
-                {/* Links sidebar */}
-                {browseData.links.length > 0 && (
-                  <div className="w-72 border-l bg-background flex flex-col flex-shrink-0">
-                    <div className="p-3 border-b flex items-center justify-between">
-                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                        <Link2 className="h-3.5 w-3.5" />
-                        Links on page
-                      </span>
-                      <Button variant="outline" size="sm" className="h-6 text-xs" asChild>
-                        <a href={currentUrl} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="mr-1 h-3 w-3" /> Open
-                        </a>
-                      </Button>
-                    </div>
-                    <ScrollArea className="flex-1">
-                      <div className="p-2 space-y-1">
-                        {browseData.links.slice(0, 50).map((link, i) => (
-                          <button
-                            key={i}
-                            onClick={() => browseTo(link)}
-                            disabled={isLoading}
-                            className="w-full text-left text-xs p-2 rounded-md hover:bg-muted transition-colors truncate block text-primary underline-offset-2 hover:underline disabled:opacity-50"
-                            title={link}
-                          >
-                            {getDomain(link) !== getDomain(currentUrl)
-                              ? getDomain(link)
-                              : link.replace(/https?:\/\/[^/]+/, '').slice(0, 60) || '/'
-                            }
-                          </button>
-                        ))}
-                      </div>
-                    </ScrollArea>
+            {/* Loading */}
+            {isSearching && <SearchResultsSkeleton />}
+
+            {/* Results */}
+            {!isSearching && searchResults.length > 0 && (
+              <>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    {searchResults.length} products found
+                    {searchMeta?.store && ` on ${searchMeta.store}`}
+                  </p>
+                  {searchMeta?.search_url && (
+                    <Button variant="ghost" size="sm" className="text-xs h-7" asChild>
+                      <a href={searchMeta.search_url} target="_blank" rel="noopener noreferrer">
+                        <Globe className="mr-1 h-3 w-3" /> Open on store
+                      </a>
+                    </Button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {searchResults.map((product, idx) => (
+                    <ProductCard
+                      key={`${product.product_url || idx}-${idx}`}
+                      product={product}
+                      onAddToCart={handleProductAddToCart}
+                    />
+                  ))}
+                </div>
+
+                {/* Load more */}
+                {searchMeta?.next_page_url && (
+                  <div className="flex justify-center pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => handleSearch(currentPage + 1)}
+                      disabled={isLoadingMore}
+                    >
+                      {isLoadingMore ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Plus className="mr-2 h-4 w-4" />
+                      )}
+                      Load More
+                    </Button>
                   </div>
                 )}
               </>
-            ) : !currentUrl ? (
-              /* Welcome / Empty state */
-              <div className="flex flex-col items-center justify-center h-full w-full gap-6 p-8">
-                <div className="bg-nectarine-100 dark:bg-nectarine-900/30 rounded-full p-6">
-                  <Globe className="h-12 w-12 text-nectarine-500" />
+            )}
+
+            {/* Empty state */}
+            {!isSearching && !searchError && searchResults.length === 0 && !searchMeta && (
+              <div className="flex flex-col items-center justify-center py-16 gap-4">
+                <div className="bg-nectarine-100 dark:bg-nectarine-900/30 rounded-full p-5">
+                  <Search className="h-10 w-10 text-nectarine-500" />
                 </div>
-                <div className="text-center max-w-md">
-                  <h2 className="text-xl font-semibold mb-2">Shop Any Store</h2>
-                  <p className="text-muted-foreground text-sm">
-                    Enter a store URL in the address bar above to start browsing.
-                    Find a product you like, then click
-                    <strong> "Add to Nectarine Cart"</strong> to capture it.
+                <div className="text-center max-w-sm">
+                  <h2 className="text-lg font-semibold mb-1">Search Any Store</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Select a store above, type what you're looking for, and hit Search.
+                    We'll find products for you to add to your Nectarine Cart.
                   </p>
-                </div>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {quickStores.map(store => (
-                    <Button
-                      key={store.name}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => { setUrlInput(store.url); browseTo(store.url); }}
-                      className="text-xs"
-                    >
-                      <Globe className="mr-1 h-3 w-3" />
-                      {store.name}
-                    </Button>
-                  ))}
-                </div>
-                <div className="mt-4 border-t pt-4 w-full max-w-md">
-                  <p className="text-xs text-muted-foreground text-center mb-3">
-                    Or paste a direct product link:
-                  </p>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Paste product URL here..."
-                      className="text-sm"
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') {
-                          const val = (e.target as HTMLInputElement).value;
-                          setCaptureUrl(val);
-                          setUrlInput(val);
-                          handleAddToCart();
-                        }
-                      }}
-                      onChange={e => {
-                        setCaptureUrl(e.target.value);
-                        setUrlInput(e.target.value);
-                      }}
-                    />
-                    <Button
-                      size="sm"
-                      className="bg-nectarine-500 hover:bg-nectarine-600"
-                      onClick={handleAddToCart}
-                    >
-                      <Plus className="mr-1 h-4 w-4" /> Quick Add
-                    </Button>
-                  </div>
                 </div>
               </div>
-            ) : null}
+            )}
+
+            {/* No results after search */}
+            {!isSearching && searchResults.length === 0 && searchMeta && !searchError && (
+              <div className="flex flex-col items-center justify-center py-12 gap-3">
+                <AlertCircle className="h-8 w-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">No products found. Try a different search term or store.</p>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ===== PASTE URL TAB ===== */}
+          <TabsContent value="paste" className="mt-4">
+            <div className="max-w-lg mx-auto space-y-6">
+              <div className="flex flex-col items-center text-center gap-3 py-8">
+                <div className="bg-nectarine-100 dark:bg-nectarine-900/30 rounded-full p-5">
+                  <Link2 className="h-10 w-10 text-nectarine-500" />
+                </div>
+                <h2 className="text-lg font-semibold">Paste a Product Link</h2>
+                <p className="text-sm text-muted-foreground max-w-sm">
+                  Found something on any online store? Paste the product URL and we'll
+                  extract the details for you.
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <Input
+                  value={pasteUrl}
+                  onChange={e => setPasteUrl(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handlePasteUrl()}
+                  placeholder="https://www.amazon.com/dp/..."
+                  className="flex-1"
+                />
+                <Button
+                  onClick={handlePasteUrl}
+                  disabled={isPasteScraping || !pasteUrl.trim()}
+                  className="bg-nectarine-500 hover:bg-nectarine-600"
+                >
+                  {isPasteScraping ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Plus className="mr-1 h-4 w-4" />}
+                  Fetch Product
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        {/* Cart CTA */}
+        {cartCount > 0 && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+            <Button
+              size="lg"
+              className="bg-nectarine-500 hover:bg-nectarine-600 shadow-xl rounded-full px-8"
+              onClick={() => navigate('/dashboard/cart')}
+            >
+              <ShoppingCart className="mr-2 h-5 w-5" />
+              Proceed to Checkout ({cartCount} items)
+            </Button>
           </div>
-        </div>
+        )}
       </div>
 
       <AddToCartModal
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
         scrapedData={scrapedData}
-        productUrl={captureUrl || currentUrl}
+        productUrl={captureUrl}
         isLoading={isScraping}
         onAddToCart={handleCartSubmit}
       />
