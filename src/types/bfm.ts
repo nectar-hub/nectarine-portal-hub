@@ -12,6 +12,7 @@ export interface BfmCartItem {
   currency: string;
   estimated_tax: number;
   estimated_shipping: number;
+  estimated_regulatory_fees: number;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -59,6 +60,7 @@ export interface BfmOrderItem {
   currency: string;
   tax: number;
   shipping: number;
+  regulatory_fees: number;
   line_total: number;
   created_at: string;
 }

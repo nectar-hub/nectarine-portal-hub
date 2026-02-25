@@ -16,6 +16,7 @@ const BfmCart = () => {
   const subtotal = items.reduce((s, i) => s + (i.unit_price || 0) * i.quantity, 0);
   const totalTax = items.reduce((s, i) => s + i.estimated_tax, 0);
   const totalShipping = items.reduce((s, i) => s + i.estimated_shipping, 0);
+  const totalRegulatoryFees = items.reduce((s, i) => s + (i.estimated_regulatory_fees || 0), 0);
   const cartCurrency = items.length > 0 ? items[0].currency : 'USD';
 
   const handleQtyChange = (id: string, newQty: number) => {
@@ -72,7 +73,7 @@ const BfmCart = () => {
             {/* Items */}
             <div className="lg:col-span-2 space-y-4">
               {items.map(item => {
-                const lineTotal = (item.unit_price || 0) * item.quantity + item.estimated_tax + item.estimated_shipping;
+                const lineTotal = (item.unit_price || 0) * item.quantity + item.estimated_tax + item.estimated_shipping + (item.estimated_regulatory_fees || 0);
                 return (
                   <Card key={item.id}>
                     <CardContent className="p-4">
@@ -144,6 +145,12 @@ const BfmCart = () => {
                     <span>Est. Tax</span>
                     <span>{cartCurrency} {totalTax.toFixed(2)}</span>
                   </div>
+                  {totalRegulatoryFees > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span>Regulatory Fees</span>
+                      <span>{cartCurrency} {totalRegulatoryFees.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm">
                     <span>Est. Shipping</span>
                     <span>{cartCurrency} {totalShipping.toFixed(2)}</span>
