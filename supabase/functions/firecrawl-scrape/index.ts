@@ -44,8 +44,8 @@ Deno.serve(async (req) => {
     if (mode === 'browse') {
       // Browse mode: get screenshot + markdown + links for rendering the page
       requestBody.formats = ['markdown', 'screenshot', 'links'];
-      requestBody.onlyMainContent = false; // Get full page for browsing
-      requestBody.screenshot = true;
+      requestBody.onlyMainContent = false;
+      requestBody.timeout = 30000;
     } else {
       // Product mode: extract structured product data
       requestBody.formats = ['extract', 'markdown'];
