@@ -11,7 +11,11 @@ import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import Dashboard from "./pages/dashboard/Dashboard";
-import BuyForMe from "./pages/dashboard/BuyForMe";
+import BfmShop from "./pages/dashboard/BfmShop";
+import BfmCart from "./pages/dashboard/BfmCart";
+import BfmCheckout from "./pages/dashboard/BfmCheckout";
+import BfmOrders from "./pages/dashboard/BfmOrders";
+import BfmAdmin from "./pages/admin/BfmAdmin";
 import ShippingAddress from "./pages/dashboard/ShippingAddress";
 import Orders from "./pages/dashboard/Orders";
 import SelfPurchases from "./pages/dashboard/SelfPurchases";
@@ -66,7 +70,31 @@ const App = () => (
               path="/dashboard/buy-for-me"
               element={
                 <MainLayout requireAuth>
-                  <BuyForMe />
+                  <BfmShop />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/dashboard/cart"
+              element={
+                <MainLayout requireAuth>
+                  <BfmCart />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/dashboard/checkout"
+              element={
+                <MainLayout requireAuth>
+                  <BfmCheckout />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/dashboard/bfm-orders"
+              element={
+                <MainLayout requireAuth>
+                  <BfmOrders />
                 </MainLayout>
               }
             />
@@ -104,6 +132,14 @@ const App = () => (
             />
             
             {/* Admin Routes */}
+            <Route
+              path="/admin/bfm-orders"
+              element={
+                <MainLayout requireAuth adminOnly>
+                  <BfmAdmin />
+                </MainLayout>
+              }
+            />
             <Route
               path="/admin/users"
               element={
