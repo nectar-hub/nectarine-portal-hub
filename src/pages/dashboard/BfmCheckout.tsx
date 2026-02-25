@@ -22,6 +22,7 @@ const BfmCheckout = () => {
   const subtotal = items.reduce((s, i) => s + (i.unit_price || 0) * i.quantity, 0);
   const totalTax = items.reduce((s, i) => s + i.estimated_tax, 0);
   const totalShipping = items.reduce((s, i) => s + i.estimated_shipping, 0);
+  const cartCurrency = items.length > 0 ? items[0].currency : 'USD';
 
   const handlePlaceOrder = async () => {
     const order = await createOrder.mutateAsync(items);
@@ -90,15 +91,15 @@ const BfmCheckout = () => {
             {items.map(item => (
               <div key={item.id} className="flex justify-between text-sm">
                 <span className="truncate mr-4">{item.product_name} × {item.quantity}</span>
-                <span className="flex-shrink-0">${((item.unit_price || 0) * item.quantity).toFixed(2)}</span>
+                <span className="flex-shrink-0">{cartCurrency} {((item.unit_price || 0) * item.quantity).toFixed(2)}</span>
               </div>
             ))}
             <Separator className="my-3" />
-            <div className="flex justify-between text-sm"><span>Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
-            <div className="flex justify-between text-sm"><span>Est. Tax</span><span>${totalTax.toFixed(2)}</span></div>
-            <div className="flex justify-between text-sm"><span>Est. Shipping</span><span>${totalShipping.toFixed(2)}</span></div>
+            <div className="flex justify-between text-sm"><span>Subtotal</span><span>{cartCurrency} {subtotal.toFixed(2)}</span></div>
+            <div className="flex justify-between text-sm"><span>Est. Tax</span><span>{cartCurrency} {totalTax.toFixed(2)}</span></div>
+            <div className="flex justify-between text-sm"><span>Est. Shipping</span><span>{cartCurrency} {totalShipping.toFixed(2)}</span></div>
             <Separator className="my-3" />
-            <div className="flex justify-between font-semibold text-lg"><span>Grand Total</span><span>${cartTotal.toFixed(2)}</span></div>
+            <div className="flex justify-between font-semibold text-lg"><span>Grand Total</span><span>{cartCurrency} {cartTotal.toFixed(2)}</span></div>
           </CardContent>
         </Card>
 
@@ -138,7 +139,7 @@ const BfmCheckout = () => {
               {createOrder.isPending ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Placing Order...</>
               ) : (
-                <>Place Order · ${cartTotal.toFixed(2)}</>
+                <>Place Order · {cartCurrency} {cartTotal.toFixed(2)}</>
               )}
             </Button>
           </CardFooter>
