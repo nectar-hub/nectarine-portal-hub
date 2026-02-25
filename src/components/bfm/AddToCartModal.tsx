@@ -45,7 +45,7 @@ export const AddToCartModal = ({ open, onOpenChange, scrapedData, productUrl, is
 
   // Tax rates by currency/region
   const TAX_RATES: Record<string, { rate: number; label: string }> = {
-    USD: { rate: 0.0775, label: 'CA Sales Tax 7.75%' },
+    USD: { rate: 0.0775, label: 'CA Sales Tax + Regulatory Fees 7.75%' },
     GBP: { rate: 0.20, label: 'UK VAT 20%' },
     EUR: { rate: 0.21, label: 'EU VAT 21%' },
   };
