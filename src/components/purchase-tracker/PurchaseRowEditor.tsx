@@ -86,7 +86,6 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
       from_region: purchase?.from_region || 'UK',
       dop: purchase?.dop ? new Date(purchase.dop) : undefined,
       purchased_by: purchase?.purchased_by || '',
-      dod: purchase?.dod ? new Date(purchase.dod) : undefined,
       status: purchase?.status || 'PENDING',
       remarks: purchase?.remarks || '',
       month_period_id: purchase?.month_period_id || defaultMonthPeriodId || '',
