@@ -9,12 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
 
 interface ProductionCostReportsFiltersProps {
   onFilterChange: (startDate: Date, endDate: Date) => void;
