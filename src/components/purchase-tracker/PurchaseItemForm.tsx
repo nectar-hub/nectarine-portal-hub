@@ -27,6 +27,8 @@ export function PurchaseItemForm({
 }: PurchaseItemFormProps) {
   const dodDate = item.dod ? new Date(item.dod) : undefined;
   const [dodOpen, setDodOpen] = useState(false);
+
+  return (
     <div className="space-y-4 p-4 border rounded-lg">
       <div className="flex justify-between items-center mb-2">
         <h4 className="font-medium">Item {index + 1}</h4>
