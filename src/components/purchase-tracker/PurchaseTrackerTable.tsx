@@ -142,7 +142,7 @@ export function PurchaseTrackerTable({ purchases, clients, selectedPeriodId, onR
             <TableHead className="min-w-[120px]">TOTAL AMOUNT</TableHead>
             <TableHead className="min-w-[120px]">DOP</TableHead>
             <TableHead className="min-w-[140px]">PURCHASED BY</TableHead>
-            <TableHead className="min-w-[130px]">STATUS</TableHead>
+            <TableHead className="min-w-[130px]">STATUSTUS</TableHead>
             <TableHead className="min-w-[130px]">STATUS</TableHead>
             <TableHead className="min-w-[200px]">REMARKS</TableHead>
             <TableHead className="min-w-[150px]">ACTIONS</TableHead>
@@ -176,7 +176,7 @@ export function PurchaseTrackerTable({ purchases, clients, selectedPeriodId, onR
                 <TableCell>{totalAmount(row)}</TableCell>
                 <TableCell>{formatDate(row.dop)}</TableCell>
                 <TableCell>{row.purchased_by}</TableCell>
-                <TableCell>{formatDate(row.dod)}</TableCell>
+                <TableCell>
                 <TableCell>
                   <Badge className={`${(PURCHASE_STATUS_COLORS as any)[String(row.status)] || 'bg-muted'} text-white`}>
                     {String(row.status || 'PENDING').replace(/_/g, ' ')}
