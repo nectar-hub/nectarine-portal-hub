@@ -34,7 +34,40 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
-const formSchema = z.object({
+function ControlledDatePopover({ field, placeholder }: { field: any; placeholder: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <FormControl>
+          <Button
+            variant="outline"
+            className={cn(
+              'w-full pl-3 text-left font-normal',
+              !field.value && 'text-muted-foreground'
+            )}
+          >
+            {field.value ? format(field.value, 'PPP') : placeholder}
+            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+          </Button>
+        </FormControl>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={field.value || undefined}
+          onSelect={(date) => {
+            field.onChange(date);
+            setOpen(false);
+          }}
+          initialFocus
+          className="pointer-events-auto"
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
   base_currency: z.string().min(1, 'Base currency is required'),
   quote_currency: z.string().min(1, 'Quote currency is required'),
   rate: z.number().positive('Rate must be positive'),
