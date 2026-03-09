@@ -136,6 +136,8 @@ const ShipmentRow = ({ shipment, clients }: ShipmentRowProps) => {
               size="icon"
               className="h-8 w-8"
               onClick={() => setIsEditOpen(true)}
+              disabled={shipment.status === 'DELIVERED'}
+              title={shipment.status === 'DELIVERED' ? 'Cannot edit delivered shipments' : 'Edit shipment'}
             >
               <Edit className="h-4 w-4" />
             </Button>
