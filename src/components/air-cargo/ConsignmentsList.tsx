@@ -16,6 +16,35 @@ interface ConsignmentsListProps {
 const ConsignmentsList = ({ onSelectConsignment, selectedConsignmentId }: ConsignmentsListProps) => {
   const [showDialog, setShowDialog] = useState(false);
   const [editingConsignment, setEditingConsignment] = useState<any>(null);
+  const queryClient = useQueryClient();
+
+  const handleStatusChange = async (consignmentId: string, newStatus: string) => {
+    try {
+      const { error: consError } = await supabase
+        .from('air_cargo_consignments')
+        .update({ status: newStatus })
+        .eq('id', consignmentId);
+
+      if (consError) throw consError;
+
+      if (newStatus === 'CLOSED') {
+        const { error: shipError } = await supabase
+          .from('air_cargo_shipments')
+          .update({ status: 'DELIVERED' })
+          .eq('consignment_id', consignmentId);
+
+        if (shipError) throw shipError;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['air-cargo-consignments'] });
+      queryClient.invalidateQueries({ queryKey: ['air-cargo-shipments'] });
+      queryClient.invalidateQueries({ queryKey: ['air-cargo-shipments-counts'] });
+      toast.success(`Consignment ${newStatus === 'CLOSED' ? 'closed — all shipments marked as delivered' : 'reopened'}`);
+    } catch (err) {
+      console.error('Status update failed:', err);
+      toast.error('Failed to update consignment status');
+    }
+  };
 
   const { data: consignments, isLoading, refetch } = useQuery({
     queryKey: ['air-cargo-consignments'],
