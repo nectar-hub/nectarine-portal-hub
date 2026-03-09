@@ -434,6 +434,9 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
                   )}
                 />
 
+                <FormField
+                  control={form.control}
+                  name="status"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status *</FormLabel>
