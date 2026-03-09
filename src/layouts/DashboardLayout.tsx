@@ -46,8 +46,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const userNavItems = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Buy For Me', href: '/dashboard/buy-for-me', icon: ShoppingCart },
-    { name: 'My Cart', href: '/dashboard/cart', icon: ShoppingBag },
-    { name: 'BFM Orders', href: '/dashboard/bfm-orders', icon: ClipboardList },
     { name: 'My Orders', href: '/dashboard/orders', icon: ClipboardList },
     { name: 'Self Purchases', href: '/dashboard/track-packages', icon: Package },
     { name: 'My Shipping Address', href: '/dashboard/shipping-address', icon: MapPin },
@@ -59,7 +57,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { name: 'Dashboard', href: '/admin', icon: Home, superadminOnly: false },
     { name: 'All Requests', href: '/admin/requests', icon: ClipboardList, superadminOnly: false },
     { name: 'Buy For Me Requests', href: '/admin/buy-requests', icon: ShoppingBag, superadminOnly: false },
-    { name: 'BFM Orders', href: '/admin/bfm-orders', icon: ShoppingCart, superadminOnly: false },
     { name: 'Self Purchases', href: '/admin/self-purchases', icon: Package, superadminOnly: false },
     { name: 'Users', href: '/admin/users', icon: Users, superadminOnly: false },
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3, superadminOnly: false },
