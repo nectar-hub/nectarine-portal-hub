@@ -1,12 +1,7 @@
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, Plus, Copy, Download, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { DatePicker } from '@/components/ui/date-picker';
 import { cn } from '@/lib/utils';
 
 interface RealTimeDaySelectorProps {
