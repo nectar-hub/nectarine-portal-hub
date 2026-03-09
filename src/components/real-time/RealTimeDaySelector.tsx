@@ -47,23 +47,11 @@ export const RealTimeDaySelector = ({
           </div>
         </div>
         
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm">
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              Change Date
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={(date) => date && onDateChange(date)}
-              initialFocus
-              className="pointer-events-auto"
-            />
-          </PopoverContent>
-        </Popover>
+        <DatePicker
+          value={selectedDate}
+          onChange={(date) => date && onDateChange(date)}
+          placeholder="Change Date"
+        />
       </div>
 
       <div className="flex flex-wrap items-center gap-2 pt-2 border-t">

@@ -80,28 +80,6 @@ export function ProductionCostReportsFilters({ onFilterChange }: ProductionCostR
             placeholder="End date"
             className="w-[180px]"
           />
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  'w-[180px] justify-start text-left font-normal',
-                  !customEndDate && 'text-muted-foreground'
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {customEndDate ? format(customEndDate, 'PPP') : 'End date'}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={customEndDate}
-                onSelect={(date) => date && setCustomEndDate(date)}
-                initialFocus
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
 
           <Button onClick={handleCustomDateApply}>Apply</Button>
         </>
