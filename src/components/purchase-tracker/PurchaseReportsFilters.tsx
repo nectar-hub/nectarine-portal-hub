@@ -63,54 +63,22 @@ const PurchaseReportsFilters = ({ onFilterChange }: PurchaseReportsFiltersProps)
         <>
           <div className="space-y-2">
             <label className="text-sm font-medium">Start Date</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    'w-[180px] justify-start text-left font-normal',
-                    !customStartDate && 'text-muted-foreground'
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {customStartDate ? format(customStartDate, 'PPP') : 'Pick a date'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={customStartDate}
-                  onSelect={setCustomStartDate}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <DatePicker
+              value={customStartDate}
+              onChange={setCustomStartDate}
+              placeholder="Pick a date"
+              className="w-[180px]"
+            />
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium">End Date</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    'w-[180px] justify-start text-left font-normal',
-                    !customEndDate && 'text-muted-foreground'
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {customEndDate ? format(customEndDate, 'PPP') : 'Pick a date'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={customEndDate}
-                  onSelect={setCustomEndDate}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <DatePicker
+              value={customEndDate}
+              onChange={setCustomEndDate}
+              placeholder="Pick a date"
+              className="w-[180px]"
+            />
           </div>
 
           <Button onClick={handleCustomDateApply}>Apply</Button>
