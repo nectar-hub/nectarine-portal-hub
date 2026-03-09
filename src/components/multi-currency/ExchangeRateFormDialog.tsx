@@ -68,6 +68,7 @@ function ControlledDatePopover({ field, placeholder }: { field: any; placeholder
   );
 }
 
+const formSchema = z.object({
   base_currency: z.string().min(1, 'Base currency is required'),
   quote_currency: z.string().min(1, 'Quote currency is required'),
   rate: z.number().positive('Rate must be positive'),
