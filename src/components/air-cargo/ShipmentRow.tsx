@@ -67,6 +67,7 @@ const ShipmentRow = ({ shipment, clients }: ShipmentRowProps) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['air-cargo-shipments'] });
+      queryClient.invalidateQueries({ queryKey: ['air-cargo-shipments-counts'] });
       toast.success('Shipment deleted');
     },
     onError: (error: any) => {
@@ -85,6 +86,7 @@ const ShipmentRow = ({ shipment, clients }: ShipmentRowProps) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['air-cargo-shipments'] });
+      queryClient.invalidateQueries({ queryKey: ['air-cargo-shipments-counts'] });
       toast.success('Shipment duplicated');
     },
     onError: (error: any) => {

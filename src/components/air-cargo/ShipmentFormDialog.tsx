@@ -169,6 +169,7 @@ const ShipmentFormDialog = ({ open, onOpenChange, clients, shipment, consignment
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['air-cargo-shipments'] });
+      queryClient.invalidateQueries({ queryKey: ['air-cargo-shipments-counts'] });
       toast.success(shipment ? 'Shipment updated' : 'Shipment added');
       onOpenChange(false);
       form.reset();
