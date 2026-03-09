@@ -134,7 +134,6 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
       from_region: values.from_region,
       dop: values.dop ? format(values.dop, 'yyyy-MM-dd') : null,
       purchased_by: values.purchased_by || null,
-      dod: values.dod ? format(values.dod, 'yyyy-MM-dd') : null,
       status: values.status,
       remarks: values.remarks || null,
       month_period_id: values.month_period_id || null,
