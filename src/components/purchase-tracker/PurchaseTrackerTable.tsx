@@ -229,6 +229,7 @@ export function PurchaseTrackerTable({ purchases, clients, selectedPeriodId, onR
                                   {item.amount != null ? `${currency.symbol}${Number(item.amount).toFixed(2)}` : ''}
                                 </TableCell>
                                 <TableCell>{item.store_order_no}</TableCell>
+                                <TableCell>{formatDate((item as any).dod)}</TableCell>
                                 <TableCell>
                                   {item.source_link ? (
                                     <a
