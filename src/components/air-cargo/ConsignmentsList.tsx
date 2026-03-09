@@ -169,9 +169,23 @@ const ConsignmentsList = ({ onSelectConsignment, selectedConsignmentId }: Consig
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Badge variant={consignment.status === 'OPEN' ? 'default' : 'secondary'}>
-                      {consignment.status}
-                    </Badge>
+                    <Select
+                      value={consignment.status}
+                      onValueChange={(value) => {
+                        handleStatusChange(consignment.id, value);
+                      }}
+                    >
+                      <SelectTrigger 
+                        className="h-8 w-[110px] text-xs"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="OPEN">OPEN</SelectItem>
+                        <SelectItem value="CLOSED">CLOSED</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <div 
