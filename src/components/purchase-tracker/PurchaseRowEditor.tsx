@@ -47,6 +47,8 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
   const [showAddClient, setShowAddClient] = useState(false);
   const [localClients, setLocalClients] = useState(clients);
   const [items, setItems] = useState<Partial<PurchaseTrackerItem>[]>([]);
+  const [invoiceDateOpen, setInvoiceDateOpen] = useState(false);
+  const [dopOpen, setDopOpen] = useState(false);
   const isEditing = !!purchase;
 
   // Fetch month periods
