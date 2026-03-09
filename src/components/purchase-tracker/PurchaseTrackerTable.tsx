@@ -62,7 +62,6 @@ export function PurchaseTrackerTable({ purchases, clients, selectedPeriodId, onR
           purchased_by: data.purchased_by || null,
           dop: data.dop || null,
           remarks: data.remarks || null,
-          remarks: data.remarks || null,
           // Clear deprecated fields
           item_description: null,
           qty: null,
