@@ -207,31 +207,7 @@ export function ExchangeRateFormDialog({
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Effective From</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              'w-full pl-3 text-left font-normal',
-                              !field.value && 'text-muted-foreground'
-                            )}
-                          >
-                            {field.value ? format(field.value, 'PPP') : 'Pick a date'}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <ControlledDatePopover field={field} placeholder="Pick a date" />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -243,31 +219,7 @@ export function ExchangeRateFormDialog({
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Effective To (Optional)</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              'w-full pl-3 text-left font-normal',
-                              !field.value && 'text-muted-foreground'
-                            )}
-                          >
-                            {field.value ? format(field.value, 'PPP') : 'No end date'}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value || undefined}
-                          onSelect={field.onChange}
-                          initialFocus
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <ControlledDatePopover field={field} placeholder="No end date" />
                     <FormMessage />
                   </FormItem>
                 )}
