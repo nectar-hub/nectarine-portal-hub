@@ -125,7 +125,7 @@ export function PurchaseItemForm({
                 selected={dodDate}
                 onSelect={(date) => {
                   onChange(index, "dod", date ? format(date, "yyyy-MM-dd") : "");
-                }}
+                  setDodOpen(false);
                 initialFocus
                 className={cn("p-3 pointer-events-auto")}
               />
