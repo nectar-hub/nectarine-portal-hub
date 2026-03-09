@@ -208,12 +208,13 @@ export function PurchaseTrackerTable({ purchases, clients, selectedPeriodId, onR
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>ITEM DESCRIPTION</TableHead>
-                            <TableHead>QTY</TableHead>
-                            <TableHead>STORE</TableHead>
-                            <TableHead>AMOUNT</TableHead>
-                            <TableHead>STORE ORDER NO.</TableHead>
-                            <TableHead>LINK</TableHead>
+                             <TableHead>ITEM DESCRIPTION</TableHead>
+                             <TableHead>QTY</TableHead>
+                             <TableHead>STORE</TableHead>
+                             <TableHead>AMOUNT</TableHead>
+                             <TableHead>STORE ORDER NO.</TableHead>
+                             <TableHead>DOD</TableHead>
+                             <TableHead>LINK</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
