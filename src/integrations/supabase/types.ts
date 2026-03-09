@@ -176,6 +176,235 @@ export type Database = {
           },
         ]
       }
+      bfm_cart_items: {
+        Row: {
+          created_at: string
+          currency: string
+          estimated_regulatory_fees: number
+          estimated_shipping: number
+          estimated_tax: number
+          id: string
+          notes: string | null
+          product_image_url: string | null
+          product_name: string
+          product_url: string
+          quantity: number
+          store_name: string | null
+          unit_price: number | null
+          updated_at: string
+          user_id: string
+          variant_color: string | null
+          variant_size: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          estimated_regulatory_fees?: number
+          estimated_shipping?: number
+          estimated_tax?: number
+          id?: string
+          notes?: string | null
+          product_image_url?: string | null
+          product_name: string
+          product_url: string
+          quantity?: number
+          store_name?: string | null
+          unit_price?: number | null
+          updated_at?: string
+          user_id: string
+          variant_color?: string | null
+          variant_size?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          estimated_regulatory_fees?: number
+          estimated_shipping?: number
+          estimated_tax?: number
+          id?: string
+          notes?: string | null
+          product_image_url?: string | null
+          product_name?: string
+          product_url?: string
+          quantity?: number
+          store_name?: string | null
+          unit_price?: number | null
+          updated_at?: string
+          user_id?: string
+          variant_color?: string | null
+          variant_size?: string | null
+        }
+        Relationships: []
+      }
+      bfm_order_items: {
+        Row: {
+          created_at: string
+          currency: string
+          id: string
+          line_total: number
+          order_id: string
+          product_image_url: string | null
+          product_name: string
+          product_url: string
+          quantity: number
+          regulatory_fees: number
+          shipping: number
+          store_name: string | null
+          tax: number
+          unit_price: number
+          variant_color: string | null
+          variant_size: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          id?: string
+          line_total?: number
+          order_id: string
+          product_image_url?: string | null
+          product_name: string
+          product_url: string
+          quantity?: number
+          regulatory_fees?: number
+          shipping?: number
+          store_name?: string | null
+          tax?: number
+          unit_price?: number
+          variant_color?: string | null
+          variant_size?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: string
+          line_total?: number
+          order_id?: string
+          product_image_url?: string | null
+          product_name?: string
+          product_url?: string
+          quantity?: number
+          regulatory_fees?: number
+          shipping?: number
+          store_name?: string | null
+          tax?: number
+          unit_price?: number
+          variant_color?: string | null
+          variant_size?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bfm_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "bfm_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bfm_orders: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          currency: string
+          grand_total: number
+          id: string
+          notes: string | null
+          order_number: string
+          payment_method: Database["public"]["Enums"]["bfm_payment_method"]
+          payment_status: Database["public"]["Enums"]["bfm_payment_status"]
+          status: Database["public"]["Enums"]["bfm_order_status"]
+          subtotal: number
+          total_shipping: number
+          total_tax: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          currency?: string
+          grand_total?: number
+          id?: string
+          notes?: string | null
+          order_number: string
+          payment_method?: Database["public"]["Enums"]["bfm_payment_method"]
+          payment_status?: Database["public"]["Enums"]["bfm_payment_status"]
+          status?: Database["public"]["Enums"]["bfm_order_status"]
+          subtotal?: number
+          total_shipping?: number
+          total_tax?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          currency?: string
+          grand_total?: number
+          id?: string
+          notes?: string | null
+          order_number?: string
+          payment_method?: Database["public"]["Enums"]["bfm_payment_method"]
+          payment_status?: Database["public"]["Enums"]["bfm_payment_status"]
+          status?: Database["public"]["Enums"]["bfm_order_status"]
+          subtotal?: number
+          total_shipping?: number
+          total_tax?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      bfm_payments: {
+        Row: {
+          amount: number
+          checkout_url: string | null
+          created_at: string
+          currency: string
+          id: string
+          method: Database["public"]["Enums"]["bfm_payment_method"]
+          order_id: string
+          provider: string
+          provider_reference: string | null
+          status: Database["public"]["Enums"]["bfm_provider_payment_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          checkout_url?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          method?: Database["public"]["Enums"]["bfm_payment_method"]
+          order_id: string
+          provider?: string
+          provider_reference?: string | null
+          status?: Database["public"]["Enums"]["bfm_provider_payment_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          checkout_url?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          method?: Database["public"]["Enums"]["bfm_payment_method"]
+          order_id?: string
+          provider?: string
+          provider_reference?: string | null
+          status?: Database["public"]["Enums"]["bfm_provider_payment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bfm_payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "bfm_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buy_request_items: {
         Row: {
           buy_request_id: string
@@ -1034,6 +1263,24 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "superadmin"
+      bfm_order_status:
+        | "DRAFT"
+        | "SUBMITTED"
+        | "AWAITING_PAYMENT"
+        | "PAID"
+        | "PURCHASED"
+        | "IN_TRANSIT"
+        | "READY_FOR_PICKUP"
+        | "DELIVERED"
+        | "CANCELLED"
+      bfm_payment_method: "OFFLINE" | "DPO"
+      bfm_payment_status: "UNPAID" | "PENDING" | "PAID" | "FAILED" | "REFUNDED"
+      bfm_provider_payment_status:
+        | "INITIATED"
+        | "PENDING"
+        | "SUCCESS"
+        | "FAILED"
+        | "CANCELLED"
       payment_account: "CASH" | "NMB_CARD" | "MPESA_271" | "CRDB" | "CRDB_USD"
       purchase_region: "UK" | "US" | "UAE" | "CN" | "EU" | "AU"
       purchase_status:
@@ -1172,6 +1419,26 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "superadmin"],
+      bfm_order_status: [
+        "DRAFT",
+        "SUBMITTED",
+        "AWAITING_PAYMENT",
+        "PAID",
+        "PURCHASED",
+        "IN_TRANSIT",
+        "READY_FOR_PICKUP",
+        "DELIVERED",
+        "CANCELLED",
+      ],
+      bfm_payment_method: ["OFFLINE", "DPO"],
+      bfm_payment_status: ["UNPAID", "PENDING", "PAID", "FAILED", "REFUNDED"],
+      bfm_provider_payment_status: [
+        "INITIATED",
+        "PENDING",
+        "SUCCESS",
+        "FAILED",
+        "CANCELLED",
+      ],
       payment_account: ["CASH", "NMB_CARD", "MPESA_271", "CRDB", "CRDB_USD"],
       purchase_region: ["UK", "US", "UAE", "CN", "EU", "AU"],
       purchase_status: [
