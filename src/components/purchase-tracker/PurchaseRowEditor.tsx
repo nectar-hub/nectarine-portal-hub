@@ -29,7 +29,6 @@ const formSchema = z.object({
   from_region: z.enum(['UK', 'US', 'UAE', 'CN', 'EU', 'AU']),
   dop: z.date().optional(),
   purchased_by: z.string().optional(),
-  dod: z.date().optional(),
   status: z.enum(['PENDING', 'ORDERED', 'RECEIVED', 'IN_TRANSIT', 'READY', 'DELIVERED', 'CANCELLED']),
   remarks: z.string().optional(),
   month_period_id: z.string().min(1, 'Month period is required'),
@@ -87,7 +86,6 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
       from_region: purchase?.from_region || 'UK',
       dop: purchase?.dop ? new Date(purchase.dop) : undefined,
       purchased_by: purchase?.purchased_by || '',
-      dod: purchase?.dod ? new Date(purchase.dod) : undefined,
       status: purchase?.status || 'PENDING',
       remarks: purchase?.remarks || '',
       month_period_id: purchase?.month_period_id || defaultMonthPeriodId || '',
@@ -136,7 +134,6 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
       from_region: values.from_region,
       dop: values.dop ? format(values.dop, 'yyyy-MM-dd') : null,
       purchased_by: values.purchased_by || null,
-      dod: values.dod ? format(values.dod, 'yyyy-MM-dd') : null,
       status: values.status,
       remarks: values.remarks || null,
       month_period_id: values.month_period_id || null,
@@ -183,6 +180,7 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
         store_name: item.store_name || null,
         store_order_no: item.store_order_no || null,
         source_link: item.source_link || null,
+        dod: item.dod || null,
       }));
 
       const { error: itemsError } = await supabase
@@ -220,6 +218,7 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
         store_name: item.store_name || null,
         store_order_no: item.store_order_no || null,
         source_link: item.source_link || null,
+        dod: item.dod || null,
       }));
 
       const { error: itemsError } = await supabase
@@ -430,42 +429,6 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
                       <FormControl>
                         <Input {...field} value={field.value || ''} placeholder="Enter purchaser name" />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="dod"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Date of Delivery</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                'pl-3 text-left font-normal',
-                                !field.value && 'text-muted-foreground'
-                              )}
-                            >
-                              {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                            className={cn("p-3 pointer-events-auto")}
-                          />
-                        </PopoverContent>
-                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}

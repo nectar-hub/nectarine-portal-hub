@@ -61,7 +61,6 @@ export function PurchaseTrackerTable({ purchases, clients, selectedPeriodId, onR
           invoice_no: data.invoice_no || null,
           purchased_by: data.purchased_by || null,
           dop: data.dop || null,
-          dod: data.dod || null,
           remarks: data.remarks || null,
           // Clear deprecated fields
           item_description: null,
@@ -142,7 +141,7 @@ export function PurchaseTrackerTable({ purchases, clients, selectedPeriodId, onR
             <TableHead className="min-w-[120px]">TOTAL AMOUNT</TableHead>
             <TableHead className="min-w-[120px]">DOP</TableHead>
             <TableHead className="min-w-[140px]">PURCHASED BY</TableHead>
-            <TableHead className="min-w-[120px]">DOD</TableHead>
+            <TableHead className="min-w-[130px]">STATUSTUS</TableHead>
             <TableHead className="min-w-[130px]">STATUS</TableHead>
             <TableHead className="min-w-[200px]">REMARKS</TableHead>
             <TableHead className="min-w-[150px]">ACTIONS</TableHead>
@@ -176,7 +175,6 @@ export function PurchaseTrackerTable({ purchases, clients, selectedPeriodId, onR
                 <TableCell>{totalAmount(row)}</TableCell>
                 <TableCell>{formatDate(row.dop)}</TableCell>
                 <TableCell>{row.purchased_by}</TableCell>
-                <TableCell>{formatDate(row.dod)}</TableCell>
                 <TableCell>
                   <Badge className={`${(PURCHASE_STATUS_COLORS as any)[String(row.status)] || 'bg-muted'} text-white`}>
                     {String(row.status || 'PENDING').replace(/_/g, ' ')}
@@ -203,17 +201,18 @@ export function PurchaseTrackerTable({ purchases, clients, selectedPeriodId, onR
               {/* Expanded row showing items */}
               {expandedRows.has(row.id) && hasItems(row) && (
                 <TableRow key={`${row.id}-items`} className="bg-muted/50">
-                  <TableCell colSpan={13} className="p-0">
+                  <TableCell colSpan={12} className="p-0">
                     <div className="p-4">
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>ITEM DESCRIPTION</TableHead>
-                            <TableHead>QTY</TableHead>
-                            <TableHead>STORE</TableHead>
-                            <TableHead>AMOUNT</TableHead>
-                            <TableHead>STORE ORDER NO.</TableHead>
-                            <TableHead>LINK</TableHead>
+                             <TableHead>ITEM DESCRIPTION</TableHead>
+                             <TableHead>QTY</TableHead>
+                             <TableHead>STORE</TableHead>
+                             <TableHead>AMOUNT</TableHead>
+                             <TableHead>STORE ORDER NO.</TableHead>
+                             <TableHead>DOD</TableHead>
+                             <TableHead>LINK</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -230,6 +229,7 @@ export function PurchaseTrackerTable({ purchases, clients, selectedPeriodId, onR
                                   {item.amount != null ? `${currency.symbol}${Number(item.amount).toFixed(2)}` : ''}
                                 </TableCell>
                                 <TableCell>{item.store_order_no}</TableCell>
+                                <TableCell>{formatDate((item as any).dod)}</TableCell>
                                 <TableCell>
                                   {item.source_link ? (
                                     <a

@@ -10,6 +10,7 @@ export interface PurchaseTrackerItem {
   store_name?: string | null;
   store_order_no?: string | null;
   source_link?: string | null;
+  dod?: string | null;
   created_at?: string;
   updated_at?: string;
 }
