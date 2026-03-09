@@ -1,0 +1,1 @@
+ALTER TABLE public.purchase_tracker_items ADD COLUMN dod date DEFAULT NULL;
