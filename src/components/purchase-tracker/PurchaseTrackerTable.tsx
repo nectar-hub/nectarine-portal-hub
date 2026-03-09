@@ -61,7 +61,7 @@ export function PurchaseTrackerTable({ purchases, clients, selectedPeriodId, onR
           invoice_no: data.invoice_no || null,
           purchased_by: data.purchased_by || null,
           dop: data.dop || null,
-          dod: data.dod || null,
+          remarks: data.remarks || null,
           remarks: data.remarks || null,
           // Clear deprecated fields
           item_description: null,
