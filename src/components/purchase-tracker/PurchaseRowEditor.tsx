@@ -29,7 +29,6 @@ const formSchema = z.object({
   from_region: z.enum(['UK', 'US', 'UAE', 'CN', 'EU', 'AU']),
   dop: z.date().optional(),
   purchased_by: z.string().optional(),
-  dod: z.date().optional(),
   status: z.enum(['PENDING', 'ORDERED', 'RECEIVED', 'IN_TRANSIT', 'READY', 'DELIVERED', 'CANCELLED']),
   remarks: z.string().optional(),
   month_period_id: z.string().min(1, 'Month period is required'),
