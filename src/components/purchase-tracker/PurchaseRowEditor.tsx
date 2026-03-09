@@ -180,6 +180,7 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
         store_name: item.store_name || null,
         store_order_no: item.store_order_no || null,
         source_link: item.source_link || null,
+        dod: item.dod || null,
       }));
 
       const { error: itemsError } = await supabase
