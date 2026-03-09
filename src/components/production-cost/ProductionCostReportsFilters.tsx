@@ -67,31 +67,19 @@ export function ProductionCostReportsFilters({ onFilterChange }: ProductionCostR
 
       {selectedPeriod === 'custom' && (
         <>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  'w-[180px] justify-start text-left font-normal',
-                  !customStartDate && 'text-muted-foreground'
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {customStartDate ? format(customStartDate, 'PPP') : 'Start date'}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={customStartDate}
-                onSelect={(date) => date && setCustomStartDate(date)}
-                initialFocus
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
+          <DatePicker
+            value={customStartDate}
+            onChange={(date) => date && setCustomStartDate(date)}
+            placeholder="Start date"
+            className="w-[180px]"
+          />
 
-          <Popover>
+          <DatePicker
+            value={customEndDate}
+            onChange={(date) => date && setCustomEndDate(date)}
+            placeholder="End date"
+            className="w-[180px]"
+          />
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
