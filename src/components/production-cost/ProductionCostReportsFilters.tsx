@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Select,
   SelectContent,
@@ -10,12 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
 
 interface ProductionCostReportsFiltersProps {
   onFilterChange: (startDate: Date, endDate: Date) => void;
@@ -67,53 +60,19 @@ export function ProductionCostReportsFilters({ onFilterChange }: ProductionCostR
 
       {selectedPeriod === 'custom' && (
         <>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  'w-[180px] justify-start text-left font-normal',
-                  !customStartDate && 'text-muted-foreground'
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {customStartDate ? format(customStartDate, 'PPP') : 'Start date'}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={customStartDate}
-                onSelect={(date) => date && setCustomStartDate(date)}
-                initialFocus
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
+          <DatePicker
+            value={customStartDate}
+            onChange={(date) => date && setCustomStartDate(date)}
+            placeholder="Start date"
+            className="w-[180px]"
+          />
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  'w-[180px] justify-start text-left font-normal',
-                  !customEndDate && 'text-muted-foreground'
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {customEndDate ? format(customEndDate, 'PPP') : 'End date'}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={customEndDate}
-                onSelect={(date) => date && setCustomEndDate(date)}
-                initialFocus
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
+          <DatePicker
+            value={customEndDate}
+            onChange={(date) => date && setCustomEndDate(date)}
+            placeholder="End date"
+            className="w-[180px]"
+          />
 
           <Button onClick={handleCustomDateApply}>Apply</Button>
         </>

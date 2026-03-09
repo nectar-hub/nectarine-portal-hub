@@ -12,9 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { DatePicker } from '@/components/ui/date-picker';
+import { ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatCurrency, formatRate } from '@/lib/currency-utils';
@@ -111,26 +110,11 @@ export function ConversionPreview({ currencies, baseCurrency }: ConversionPrevie
 
           <div className="space-y-2">
             <Label>Rate Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn('w-full justify-start text-left font-normal')}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {format(date, 'PPP')}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={(d) => d && setDate(d)}
-                  initialFocus
-                  className="pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
+            <DatePicker
+              value={date}
+              onChange={(d) => d && setDate(d)}
+              className="w-full"
+            />
           </div>
         </div>
 

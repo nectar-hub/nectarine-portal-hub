@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +26,7 @@ export function PurchaseItemForm({
   showRemoveButton,
 }: PurchaseItemFormProps) {
   const dodDate = item.dod ? new Date(item.dod) : undefined;
+  const [dodOpen, setDodOpen] = useState(false);
 
   return (
     <div className="space-y-4 p-4 border rounded-lg">
@@ -105,7 +107,7 @@ export function PurchaseItemForm({
 
         <div className="flex flex-col gap-2">
           <Label>Date of Delivery</Label>
-          <Popover>
+          <Popover open={dodOpen} onOpenChange={setDodOpen}>
             <PopoverTrigger asChild>
               <Button
                 type="button"
@@ -125,6 +127,7 @@ export function PurchaseItemForm({
                 selected={dodDate}
                 onSelect={(date) => {
                   onChange(index, "dod", date ? format(date, "yyyy-MM-dd") : "");
+                  setDodOpen(false);
                 }}
                 initialFocus
                 className={cn("p-3 pointer-events-auto")}

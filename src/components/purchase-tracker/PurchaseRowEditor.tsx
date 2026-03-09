@@ -47,6 +47,8 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
   const [showAddClient, setShowAddClient] = useState(false);
   const [localClients, setLocalClients] = useState(clients);
   const [items, setItems] = useState<Partial<PurchaseTrackerItem>[]>([]);
+  const [invoiceDateOpen, setInvoiceDateOpen] = useState(false);
+  const [dopOpen, setDopOpen] = useState(false);
   const isEditing = !!purchase;
 
   // Fetch month periods
@@ -253,7 +255,7 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Invoice Date *</FormLabel>
-                      <Popover>
+                      <Popover open={invoiceDateOpen} onOpenChange={setInvoiceDateOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
@@ -272,7 +274,10 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
                           <Calendar
                             mode="single"
                             selected={field.value}
-                            onSelect={field.onChange}
+                            onSelect={(date) => {
+                              field.onChange(date);
+                              setInvoiceDateOpen(false);
+                            }}
                             initialFocus
                             className={cn("p-3 pointer-events-auto")}
                           />
@@ -390,7 +395,7 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Date of Purchase</FormLabel>
-                      <Popover>
+                      <Popover open={dopOpen} onOpenChange={setDopOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
@@ -409,7 +414,10 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
                           <Calendar
                             mode="single"
                             selected={field.value}
-                            onSelect={field.onChange}
+                            onSelect={(date) => {
+                              field.onChange(date);
+                              setDopOpen(false);
+                            }}
                             initialFocus
                             className={cn("p-3 pointer-events-auto")}
                           />
