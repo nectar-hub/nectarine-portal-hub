@@ -105,7 +105,7 @@ export function PurchaseItemForm({
 
         <div className="flex flex-col gap-2">
           <Label>Date of Delivery</Label>
-          <Popover>
+          <Popover open={dodOpen} onOpenChange={setDodOpen}>
             <PopoverTrigger asChild>
               <Button
                 type="button"
