@@ -201,7 +201,7 @@ export function PurchaseTrackerTable({ purchases, clients, selectedPeriodId, onR
               {/* Expanded row showing items */}
               {expandedRows.has(row.id) && hasItems(row) && (
                 <TableRow key={`${row.id}-items`} className="bg-muted/50">
-                  <TableCell colSpan={13} className="p-0">
+                  <TableCell colSpan={12} className="p-0">
                     <div className="p-4">
                       <Table>
                         <TableHeader>
