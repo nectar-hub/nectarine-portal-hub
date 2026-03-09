@@ -25,8 +25,7 @@ export function PurchaseItemForm({
   showRemoveButton,
 }: PurchaseItemFormProps) {
   const dodDate = item.dod ? new Date(item.dod) : undefined;
-
-  return (
+  const [dodOpen, setDodOpen] = useState(false);
     <div className="space-y-4 p-4 border rounded-lg">
       <div className="flex justify-between items-center mb-2">
         <h4 className="font-medium">Item {index + 1}</h4>
