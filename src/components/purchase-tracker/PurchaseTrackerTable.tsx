@@ -177,7 +177,6 @@ export function PurchaseTrackerTable({ purchases, clients, selectedPeriodId, onR
                 <TableCell>{formatDate(row.dop)}</TableCell>
                 <TableCell>{row.purchased_by}</TableCell>
                 <TableCell>
-                <TableCell>
                   <Badge className={`${(PURCHASE_STATUS_COLORS as any)[String(row.status)] || 'bg-muted'} text-white`}>
                     {String(row.status || 'PENDING').replace(/_/g, ' ')}
                   </Badge>
