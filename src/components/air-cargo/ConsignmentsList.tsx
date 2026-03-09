@@ -32,16 +32,17 @@ const ConsignmentsList = ({ onSelectConsignment, selectedConsignmentId }: Consig
   const { data: shipmentCounts, refetch: refetchCounts } = useQuery({
     queryKey: ['air-cargo-shipments-counts'],
     queryFn: async () => {
+      // Use aggregated DB view to avoid the 1000-row PostgREST default limit
       const { data, error } = await supabase
-        .from('air_cargo_shipments')
-        .select('consignment_id');
+        .from('air_cargo_consignment_weights')
+        .select('consignment_id, shipment_count');
 
       if (error) throw error;
 
       const counts: Record<string, number> = {};
-      data.forEach((shipment) => {
-        if (shipment.consignment_id) {
-          counts[shipment.consignment_id] = (counts[shipment.consignment_id] || 0) + 1;
+      (data || []).forEach((row) => {
+        if (row.consignment_id) {
+          counts[row.consignment_id] = Number(row.shipment_count || 0);
         }
       });
 
