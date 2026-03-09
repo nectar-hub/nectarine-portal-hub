@@ -1,0 +1,1 @@
+GRANT SELECT ON public.air_cargo_consignment_weights TO authenticated;
