@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Package, Pencil } from 'lucide-react';
 import ConsignmentFormDialog from './ConsignmentFormDialog';
-import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 
 interface ConsignmentsListProps {
   onSelectConsignment: (consignmentId: string) => void;
@@ -15,6 +16,35 @@ interface ConsignmentsListProps {
 const ConsignmentsList = ({ onSelectConsignment, selectedConsignmentId }: ConsignmentsListProps) => {
   const [showDialog, setShowDialog] = useState(false);
   const [editingConsignment, setEditingConsignment] = useState<any>(null);
+  const queryClient = useQueryClient();
+
+  const handleStatusChange = async (consignmentId: string, newStatus: string) => {
+    try {
+      const { error: consError } = await supabase
+        .from('air_cargo_consignments')
+        .update({ status: newStatus })
+        .eq('id', consignmentId);
+
+      if (consError) throw consError;
+
+      if (newStatus === 'CLOSED') {
+        const { error: shipError } = await supabase
+          .from('air_cargo_shipments')
+          .update({ status: 'DELIVERED' })
+          .eq('consignment_id', consignmentId);
+
+        if (shipError) throw shipError;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['air-cargo-consignments'] });
+      queryClient.invalidateQueries({ queryKey: ['air-cargo-shipments'] });
+      queryClient.invalidateQueries({ queryKey: ['air-cargo-shipments-counts'] });
+      toast.success(`Consignment ${newStatus === 'CLOSED' ? 'closed — all shipments marked as delivered' : 'reopened'}`);
+    } catch (err) {
+      console.error('Status update failed:', err);
+      toast.error('Failed to update consignment status');
+    }
+  };
 
   const { data: consignments, isLoading, refetch } = useQuery({
     queryKey: ['air-cargo-consignments'],
@@ -139,9 +169,23 @@ const ConsignmentsList = ({ onSelectConsignment, selectedConsignmentId }: Consig
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Badge variant={consignment.status === 'OPEN' ? 'default' : 'secondary'}>
-                      {consignment.status}
-                    </Badge>
+                    <Select
+                      value={consignment.status}
+                      onValueChange={(value) => {
+                        handleStatusChange(consignment.id, value);
+                      }}
+                    >
+                      <SelectTrigger 
+                        className="h-8 w-[110px] text-xs"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="OPEN">OPEN</SelectItem>
+                        <SelectItem value="CLOSED">CLOSED</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <div 
