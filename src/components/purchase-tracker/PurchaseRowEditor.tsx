@@ -395,7 +395,7 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Date of Purchase</FormLabel>
-                      <Popover>
+                      <Popover open={dopOpen} onOpenChange={setDopOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
@@ -414,7 +414,10 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
                           <Calendar
                             mode="single"
                             selected={field.value}
-                            onSelect={field.onChange}
+                            onSelect={(date) => {
+                              field.onChange(date);
+                              setDopOpen(false);
+                            }}
                             initialFocus
                             className={cn("p-3 pointer-events-auto")}
                           />
