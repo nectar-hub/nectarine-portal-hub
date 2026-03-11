@@ -204,7 +204,7 @@ const App = () => (
             <Route
               path="/admin/real-time"
               element={
-                <MainLayout requireAuth adminOnly superadminOnly>
+                <MainLayout requireAuth adminOnly>
                   <RealTime />
                 </MainLayout>
               }

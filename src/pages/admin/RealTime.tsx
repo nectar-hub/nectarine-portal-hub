@@ -11,8 +11,10 @@ import { exportDayToXLSX, exportMonthToXLSX } from '@/lib/real-time-export';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useAuth } from '@/context/AuthContext';
 import type { RealTimeDay, RealTimeEntry, RealTimeEntryRow, DaySummary } from '@/types/real-time';
-import { Loader2, Clock, CalendarDays, BarChart3 } from 'lucide-react';
+import { Loader2, Clock, CalendarDays, BarChart3, Lock } from 'lucide-react';
 
 const safeNum = (val: number | null | undefined): number => {
   if (val === null || val === undefined || isNaN(Number(val))) return 0;

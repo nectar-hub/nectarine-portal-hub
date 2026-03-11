@@ -64,7 +64,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { name: 'Shipping Addresses', href: '/admin/shipping-addresses', icon: MapPin, superadminOnly: false },
     { name: 'Air Cargo', href: '/admin/air-cargo', icon: Plane, superadminOnly: false },
     { name: 'Purchase Tracker', href: '/admin/purchase-tracker', icon: ShoppingBasket, superadminOnly: false },
-    { name: 'Real Time', href: '/admin/real-time', icon: Clock, superadminOnly: true },
+    { name: 'Real Time', href: '/admin/real-time', icon: Clock, superadminOnly: false },
     { name: 'Production Cost', href: '/admin/production-cost', icon: DollarSign, superadminOnly: true },
     { name: 'Multi-Currency', href: '/admin/multi-currency', icon: Coins, superadminOnly: false },
     { name: 'Settings', href: '/admin/settings', icon: Settings, superadminOnly: false },
