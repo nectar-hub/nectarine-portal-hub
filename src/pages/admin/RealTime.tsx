@@ -22,6 +22,7 @@ const safeNum = (val: number | null | undefined): number => {
 };
 
 const RealTime = () => {
+  const { isSuperadmin } = useAuth();
   const {
     selectedDate,
     setSelectedDate,
