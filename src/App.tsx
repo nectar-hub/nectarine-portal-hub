@@ -103,6 +103,14 @@ const App = () => (
                 </MainLayout>
               }
             />
+            <Route
+              path="/dashboard/currency-converter"
+              element={
+                <MainLayout requireAuth>
+                  <CurrencyConverter />
+                </MainLayout>
+              }
+            />
             
             {/* Admin Routes */}
             <Route
