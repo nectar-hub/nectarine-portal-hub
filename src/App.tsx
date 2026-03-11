@@ -16,6 +16,7 @@ import ShippingAddress from "./pages/dashboard/ShippingAddress";
 import Orders from "./pages/dashboard/Orders";
 import SelfPurchases from "./pages/dashboard/SelfPurchases";
 import Account from "./pages/dashboard/Account";
+import CurrencyConverter from "./pages/dashboard/CurrencyConverter";
 import Users from "./pages/admin/Users";
 import Requests from "./pages/admin/Requests";
 import Analytics from "./pages/admin/Analytics";
@@ -99,6 +100,14 @@ const App = () => (
               element={
                 <MainLayout requireAuth>
                   <Account />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/dashboard/currency-converter"
+              element={
+                <MainLayout requireAuth>
+                  <CurrencyConverter />
                 </MainLayout>
               }
             />
