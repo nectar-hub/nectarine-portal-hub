@@ -183,51 +183,64 @@ const RealTime = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="daily" className="w-full">
+        <Tabs defaultValue={isSuperadmin ? "daily" : "reports"} className="w-full">
           <TabsList>
-            <TabsTrigger value="daily" className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4" />
-              Daily Entry
-            </TabsTrigger>
+            {isSuperadmin && (
+              <TabsTrigger value="daily" className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4" />
+                Daily Entry
+              </TabsTrigger>
+            )}
             <TabsTrigger value="reports" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Monthly Reports
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="daily" className="space-y-6 mt-6">
-            <RealTimeDaySelector
-              selectedDate={selectedDate}
-              onDateChange={setSelectedDate}
-              hasDay={!!currentDay}
-              onCreateDay={() => createDay()}
-              onCopyPreviousDay={() => copyPreviousDay()}
-              onExportDay={handleExportDay}
-              onExportMonth={handleExportMonth}
-              isCreatingDay={isCreatingDay}
-              isCopyingDay={isCopyingDay}
-            />
+          {!isSuperadmin && (
+            <Alert className="mt-4 mb-2">
+              <Lock className="h-4 w-4" />
+              <AlertDescription>
+                Daily entry management is restricted to superadmins. You can view Monthly Reports.
+              </AlertDescription>
+            </Alert>
+          )}
 
-            <RealTimeOpeningBalances
-              day={currentDay}
-              openingTotal={openingTotal}
-              onUpdateBalances={updateOpeningBalances}
-            />
+          {isSuperadmin && (
+            <TabsContent value="daily" className="space-y-6 mt-6">
+              <RealTimeDaySelector
+                selectedDate={selectedDate}
+                onDateChange={setSelectedDate}
+                hasDay={!!currentDay}
+                onCreateDay={() => createDay()}
+                onCopyPreviousDay={() => copyPreviousDay()}
+                onExportDay={handleExportDay}
+                onExportMonth={handleExportMonth}
+                isCreatingDay={isCreatingDay}
+                isCopyingDay={isCopyingDay}
+              />
 
-            <RealTimeGrid
-              day={currentDay}
-              entries={entryRows}
-              openingTotal={openingTotal}
-              onAddEntry={addEntry}
-              onUpdateEntry={updateEntry}
-              onDeleteEntry={deleteEntry}
-            />
+              <RealTimeOpeningBalances
+                day={currentDay}
+                openingTotal={openingTotal}
+                onUpdateBalances={updateOpeningBalances}
+              />
 
-            <RealTimeSummary
-              summary={daySummary}
-              hasDay={!!currentDay}
-            />
-          </TabsContent>
+              <RealTimeGrid
+                day={currentDay}
+                entries={entryRows}
+                openingTotal={openingTotal}
+                onAddEntry={addEntry}
+                onUpdateEntry={updateEntry}
+                onDeleteEntry={deleteEntry}
+              />
+
+              <RealTimeSummary
+                summary={daySummary}
+                hasDay={!!currentDay}
+              />
+            </TabsContent>
+          )}
 
           <TabsContent value="reports" className="mt-6">
             <RealTimeMonthlyReports />
