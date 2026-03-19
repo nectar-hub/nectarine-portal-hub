@@ -252,6 +252,17 @@ const RealTime = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {isSuperadmin && (
+        <BankStatementImportDialog
+          open={showImportDialog}
+          onOpenChange={setShowImportDialog}
+          onImportComplete={() => {
+            queryClient.invalidateQueries({ queryKey: ['real-time-day'] });
+            queryClient.invalidateQueries({ queryKey: ['real-time-entries'] });
+          }}
+        />
+      )}
     </DashboardLayout>
   );
 };
