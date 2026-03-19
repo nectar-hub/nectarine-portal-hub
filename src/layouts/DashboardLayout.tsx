@@ -69,6 +69,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { name: 'Real Time', href: '/admin/real-time', icon: Clock, superadminOnly: false },
     { name: 'Production Cost', href: '/admin/production-cost', icon: DollarSign, superadminOnly: true },
     { name: 'Multi-Currency', href: '/admin/multi-currency', icon: Coins, superadminOnly: false },
+    { name: 'Shipping Calculator', href: '/dashboard/shipping-calculator', icon: Calculator, superadminOnly: false },
     { name: 'Settings', href: '/admin/settings', icon: Settings, superadminOnly: false },
   ];
 
