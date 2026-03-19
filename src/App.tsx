@@ -112,6 +112,14 @@ const App = () => (
                 </MainLayout>
               }
             />
+            <Route
+              path="/dashboard/shipping-calculator"
+              element={
+                <MainLayout requireAuth>
+                  <ShippingCalculator />
+                </MainLayout>
+              }
+            />
             
             {/* Admin Routes */}
             <Route
