@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Upload, FileText, AlertTriangle, Check, Loader2 } from 'lucide-react';
+import type { PaymentAccount as PaymentAccountType } from '@/types/real-time';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -26,6 +27,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { parseBankStatement, type ParsedStatement, type ParsedTransaction } from '@/lib/bank-statement-parser';
 import { PAYMENT_ACCOUNTS, PAYMENT_ACCOUNT_LABELS, type PaymentAccount } from '@/types/real-time';
 import { format } from 'date-fns';
+
+const safeNum = (val: number | null | undefined): number => {
+  if (val === null || val === undefined || isNaN(Number(val))) return 0;
+  return Number(val);
+};
 
 interface BankStatementImportDialogProps {
   open: boolean;
@@ -118,16 +124,50 @@ export const BankStatementImportDialog = ({
         continue;
       }
 
-      // Create the day
+      // Find the most recent previous day to copy closing balances as opening
+      const { data: prevDay } = await supabase
+        .from('real_time_days')
+        .select('*')
+        .lt('op_date', dateStr)
+        .order('op_date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      let openingBalances = {
+        opening_cash: 0,
+        opening_nmb_card: 0,
+        opening_mpesa_271: 0,
+        opening_crdb: 0,
+        opening_crdb_usd: 0,
+      };
+
+      if (prevDay) {
+        // Get previous day's entries to calculate closing balances
+        const { data: prevEntries } = await supabase
+          .from('real_time_entries')
+          .select('payment_account, amount')
+          .eq('day_id', prevDay.id);
+
+        const sumByAccount = (account: string) =>
+          (prevEntries || [])
+            .filter((e) => e.payment_account === account)
+            .reduce((s, e) => s + safeNum(e.amount), 0);
+
+        openingBalances = {
+          opening_cash: safeNum(prevDay.opening_cash) + sumByAccount('CASH'),
+          opening_nmb_card: safeNum(prevDay.opening_nmb_card) + sumByAccount('NMB_CARD'),
+          opening_mpesa_271: safeNum(prevDay.opening_mpesa_271) + sumByAccount('MPESA_271'),
+          opening_crdb: safeNum(prevDay.opening_crdb) + sumByAccount('CRDB'),
+          opening_crdb_usd: safeNum(prevDay.opening_crdb_usd) + sumByAccount('CRDB_USD'),
+        };
+      }
+
+      // Create the day with opening balances from previous day's closing
       const { data: newDay, error: dayError } = await supabase
         .from('real_time_days')
         .insert({
           op_date: dateStr,
-          opening_cash: 0,
-          opening_nmb_card: 0,
-          opening_mpesa_271: 0,
-          opening_crdb: 0,
-          opening_crdb_usd: 0,
+          ...openingBalances,
           notes: `Imported from ${parsedData.bankName} statement (Account: ${parsedData.accountNumber})`,
         })
         .select()
