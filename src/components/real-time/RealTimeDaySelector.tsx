@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Plus, Copy, Download, FileSpreadsheet } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, Copy, Download, FileSpreadsheet, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,7 @@ interface RealTimeDaySelectorProps {
   onCopyPreviousDay: () => void;
   onExportDay: () => void;
   onExportMonth: () => void;
+  onImportStatement?: () => void;
   isCreatingDay?: boolean;
   isCopyingDay?: boolean;
 }
@@ -24,6 +25,7 @@ export const RealTimeDaySelector = ({
   onCopyPreviousDay,
   onExportDay,
   onExportMonth,
+  onImportStatement,
   isCreatingDay,
   isCopyingDay,
 }: RealTimeDaySelectorProps) => {
@@ -79,6 +81,13 @@ export const RealTimeDaySelector = ({
               Export Month
             </Button>
           </>
+        )}
+
+        {onImportStatement && (
+          <Button onClick={onImportStatement} variant="outline" size="sm">
+            <Upload className="mr-2 h-4 w-4" />
+            Import Statement
+          </Button>
         )}
       </div>
     </div>

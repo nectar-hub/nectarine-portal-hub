@@ -1,11 +1,13 @@
+import { useState } from 'react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { RealTimeDaySelector } from '@/components/real-time/RealTimeDaySelector';
 import { RealTimeOpeningBalances } from '@/components/real-time/RealTimeOpeningBalances';
 import { RealTimeGrid } from '@/components/real-time/RealTimeGrid';
 import { RealTimeSummary } from '@/components/real-time/RealTimeSummary';
 import { RealTimeMonthlyReports } from '@/components/real-time/RealTimeMonthlyReports';
+import { BankStatementImportDialog } from '@/components/real-time/BankStatementImportDialog';
 import { useRealTime } from '@/hooks/useRealTime';
 import { exportDayToXLSX, exportMonthToXLSX } from '@/lib/real-time-export';
 import { supabase } from '@/integrations/supabase/client';
