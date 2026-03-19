@@ -45,6 +45,8 @@ export function ShippingRatesManager({ rates, loading, onAdd, onUpdate, onDelete
     setCountryCode("");
     setCountryName("");
     setRatePerKg("");
+    setCurrencyCode("USD");
+    setCurrencySymbol("$");
     setDialogOpen(true);
   };
 
