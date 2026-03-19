@@ -25,6 +25,8 @@ const safeNum = (val: number | null | undefined): number => {
 
 const RealTime = () => {
   const { isSuperadmin } = useAuth();
+  const queryClient = useQueryClient();
+  const [showImportDialog, setShowImportDialog] = useState(false);
   const {
     selectedDate,
     setSelectedDate,
