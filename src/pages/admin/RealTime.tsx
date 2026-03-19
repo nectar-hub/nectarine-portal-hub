@@ -220,6 +220,7 @@ const RealTime = () => {
                 onCopyPreviousDay={() => copyPreviousDay()}
                 onExportDay={handleExportDay}
                 onExportMonth={handleExportMonth}
+                onImportStatement={() => setShowImportDialog(true)}
                 isCreatingDay={isCreatingDay}
                 isCopyingDay={isCopyingDay}
               />
