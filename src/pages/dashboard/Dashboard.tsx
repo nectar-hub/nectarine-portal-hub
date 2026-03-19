@@ -11,6 +11,32 @@ import { LoadingSpinner } from "@/components/dashboard/LoadingSpinner";
 const Dashboard = () => {
   const { user, profile, isAdmin } = useAuth();
   const { stats, loading } = useDashboardStats(isAdmin ? undefined : user?.id);
+  const { activities, loading: activitiesLoading } = useRecentActivity(
+    isAdmin ? undefined : user?.id,
+    isAdmin
+  );
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    if (diffHours < 1) return 'Just now';
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'approved': case 'completed': case 'delivered': return 'bg-green-100 text-green-800';
+      case 'rejected': case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'processing': case 'in_transit': case 'shipped': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-muted text-muted-foreground';
+    }
+  };
 
   if (loading) {
     return (
