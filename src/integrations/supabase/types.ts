@@ -1163,6 +1163,42 @@ export type Database = {
         }
         Relationships: []
       }
+      shipping_rates: {
+        Row: {
+          country_code: string
+          country_name: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          rate_per_kg: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          country_code: string
+          country_name: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          rate_per_kg?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          country_code?: string
+          country_name?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          rate_per_kg?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
