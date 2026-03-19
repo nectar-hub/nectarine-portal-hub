@@ -164,8 +164,29 @@ export function ShippingRatesManager({ rates, loading, onAdd, onUpdate, onDelete
               <Input placeholder="e.g. United States" value={countryName} onChange={(e) => setCountryName(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Rate per kg ($)</Label>
+              <Label>Rate per kg</Label>
               <Input type="number" min="0" step="0.5" placeholder="e.g. 12" value={ratePerKg} onChange={(e) => setRatePerKg(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Currency Code</Label>
+                <Select value={currencyCode} onValueChange={(v) => {
+                  setCurrencyCode(v);
+                  const symbols: Record<string, string> = { USD: '$', GBP: '£', EUR: '€' };
+                  setCurrencySymbol(symbols[v] || '$');
+                }}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD ($)</SelectItem>
+                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Symbol</Label>
+                <Input value={currencySymbol} onChange={(e) => setCurrencySymbol(e.target.value)} placeholder="$" maxLength={3} />
+              </div>
             </div>
           </div>
           <DialogFooter>
