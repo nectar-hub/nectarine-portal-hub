@@ -23,6 +23,7 @@ import {
   DollarSign,
   Coins,
   Clock,
+  Calculator,
 } from 'lucide-react';
 
 type DashboardLayoutProps = {
