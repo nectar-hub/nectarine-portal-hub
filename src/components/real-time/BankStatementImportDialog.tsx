@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Upload, FileText, AlertTriangle, Check, Loader2 } from 'lucide-react';
+import type { PaymentAccount as PaymentAccountType } from '@/types/real-time';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
