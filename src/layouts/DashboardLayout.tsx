@@ -23,6 +23,7 @@ import {
   DollarSign,
   Coins,
   Clock,
+  Calculator,
 } from 'lucide-react';
 
 type DashboardLayoutProps = {
@@ -49,6 +50,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { name: 'My Orders', href: '/dashboard/orders', icon: ClipboardList },
     { name: 'Self Purchases', href: '/dashboard/track-packages', icon: Package },
     { name: 'My Shipping Address', href: '/dashboard/shipping-address', icon: MapPin },
+    { name: 'Shipping Calculator', href: '/dashboard/shipping-calculator', icon: Calculator },
     { name: 'Currency Converter', href: '/dashboard/currency-converter', icon: Coins },
     { name: 'My Account', href: '/dashboard/account', icon: Settings },
   ];
@@ -67,6 +69,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { name: 'Real Time', href: '/admin/real-time', icon: Clock, superadminOnly: false },
     { name: 'Production Cost', href: '/admin/production-cost', icon: DollarSign, superadminOnly: true },
     { name: 'Multi-Currency', href: '/admin/multi-currency', icon: Coins, superadminOnly: false },
+    { name: 'Shipping Calculator', href: '/dashboard/shipping-calculator', icon: Calculator, superadminOnly: false },
     { name: 'Settings', href: '/admin/settings', icon: Settings, superadminOnly: false },
   ];
 
