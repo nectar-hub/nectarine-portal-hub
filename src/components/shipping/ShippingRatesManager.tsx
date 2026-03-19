@@ -36,6 +36,8 @@ export function ShippingRatesManager({ rates, loading, onAdd, onUpdate, onDelete
   const [countryCode, setCountryCode] = useState("");
   const [countryName, setCountryName] = useState("");
   const [ratePerKg, setRatePerKg] = useState("");
+  const [currencyCode, setCurrencyCode] = useState("USD");
+  const [currencySymbol, setCurrencySymbol] = useState("$");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const openAdd = () => {
