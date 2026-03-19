@@ -5,28 +5,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Settings } from "lucide-react";
 
 interface Props {
   rates: ShippingRate[];
   loading: boolean;
-  onAdd: (code: string, name: string, rate: number) => Promise<boolean>;
-  onUpdate: (id: string, updates: Partial<Pick<ShippingRate, "country_code" | "country_name" | "rate_per_kg" | "is_active">>) => Promise<boolean>;
+  onAdd: (code: string, name: string, rate: number, currencyCode?: string, currencySymbol?: string) => Promise<boolean>;
+  onUpdate: (id: string, updates: Partial<Pick<ShippingRate, "country_code" | "country_name" | "rate_per_kg" | "is_active" | "currency_code" | "currency_symbol">>) => Promise<boolean>;
   onDelete: (id: string) => Promise<boolean>;
 }
 
@@ -36,6 +29,8 @@ export function ShippingRatesManager({ rates, loading, onAdd, onUpdate, onDelete
   const [countryCode, setCountryCode] = useState("");
   const [countryName, setCountryName] = useState("");
   const [ratePerKg, setRatePerKg] = useState("");
+  const [currencyCode, setCurrencyCode] = useState("USD");
+  const [currencySymbol, setCurrencySymbol] = useState("$");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const openAdd = () => {
@@ -43,6 +38,8 @@ export function ShippingRatesManager({ rates, loading, onAdd, onUpdate, onDelete
     setCountryCode("");
     setCountryName("");
     setRatePerKg("");
+    setCurrencyCode("USD");
+    setCurrencySymbol("$");
     setDialogOpen(true);
   };
 
@@ -51,6 +48,8 @@ export function ShippingRatesManager({ rates, loading, onAdd, onUpdate, onDelete
     setCountryCode(rate.country_code);
     setCountryName(rate.country_name);
     setRatePerKg(String(rate.rate_per_kg));
+    setCurrencyCode(rate.currency_code);
+    setCurrencySymbol(rate.currency_symbol);
     setDialogOpen(true);
   };
 
@@ -64,9 +63,11 @@ export function ShippingRatesManager({ rates, loading, onAdd, onUpdate, onDelete
         country_code: countryCode.trim().toUpperCase(),
         country_name: countryName.trim(),
         rate_per_kg: rate,
+        currency_code: currencyCode,
+        currency_symbol: currencySymbol,
       });
     } else {
-      success = await onAdd(countryCode.trim().toUpperCase(), countryName.trim(), rate);
+      success = await onAdd(countryCode.trim().toUpperCase(), countryName.trim(), rate, currencyCode, currencySymbol);
     }
     if (success) setDialogOpen(false);
   };
@@ -102,6 +103,7 @@ export function ShippingRatesManager({ rates, loading, onAdd, onUpdate, onDelete
                 <TableRow>
                   <TableHead>Code</TableHead>
                   <TableHead>Country</TableHead>
+                  <TableHead>Currency</TableHead>
                   <TableHead>Rate / kg</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -111,7 +113,8 @@ export function ShippingRatesManager({ rates, loading, onAdd, onUpdate, onDelete
                   <TableRow key={r.id}>
                     <TableCell className="font-mono">{r.country_code}</TableCell>
                     <TableCell>{r.country_name}</TableCell>
-                    <TableCell>${r.rate_per_kg}</TableCell>
+                    <TableCell>{r.currency_symbol} {r.currency_code}</TableCell>
+                    <TableCell>{r.currency_symbol}{r.rate_per_kg}</TableCell>
                     <TableCell className="text-right space-x-1">
                       <Button variant="ghost" size="icon" onClick={() => openEdit(r)}>
                         <Pencil className="h-4 w-4" />
@@ -124,7 +127,7 @@ export function ShippingRatesManager({ rates, loading, onAdd, onUpdate, onDelete
                 ))}
                 {rates.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                       No shipping rates configured
                     </TableCell>
                   </TableRow>
@@ -154,8 +157,29 @@ export function ShippingRatesManager({ rates, loading, onAdd, onUpdate, onDelete
               <Input placeholder="e.g. United States" value={countryName} onChange={(e) => setCountryName(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Rate per kg ($)</Label>
+              <Label>Rate per kg</Label>
               <Input type="number" min="0" step="0.5" placeholder="e.g. 12" value={ratePerKg} onChange={(e) => setRatePerKg(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Currency Code</Label>
+                <Select value={currencyCode} onValueChange={(v) => {
+                  setCurrencyCode(v);
+                  const symbols: Record<string, string> = { USD: '$', GBP: '£', EUR: '€' };
+                  setCurrencySymbol(symbols[v] || '$');
+                }}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD ($)</SelectItem>
+                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Symbol</Label>
+                <Input value={currencySymbol} onChange={(e) => setCurrencySymbol(e.target.value)} placeholder="$" maxLength={3} />
+              </div>
             </div>
           </div>
           <DialogFooter>

@@ -7,6 +7,8 @@ export interface ShippingRate {
   country_code: string;
   country_name: string;
   rate_per_kg: number;
+  currency_code: string;
+  currency_symbol: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -36,10 +38,10 @@ export function useShippingRates() {
     fetchRates();
   }, [fetchRates]);
 
-  const addRate = async (countryCode: string, countryName: string, ratePerKg: number) => {
+  const addRate = async (countryCode: string, countryName: string, ratePerKg: number, currencyCode: string = 'USD', currencySymbol: string = '$') => {
     const { error } = await supabase
       .from("shipping_rates" as any)
-      .insert({ country_code: countryCode, country_name: countryName, rate_per_kg: ratePerKg } as any);
+      .insert({ country_code: countryCode, country_name: countryName, rate_per_kg: ratePerKg, currency_code: currencyCode, currency_symbol: currencySymbol } as any);
     if (error) {
       toast({ title: "Error adding rate", description: error.message, variant: "destructive" });
       return false;
@@ -49,7 +51,7 @@ export function useShippingRates() {
     return true;
   };
 
-  const updateRate = async (id: string, updates: Partial<Pick<ShippingRate, "country_code" | "country_name" | "rate_per_kg" | "is_active">>) => {
+  const updateRate = async (id: string, updates: Partial<Pick<ShippingRate, "country_code" | "country_name" | "rate_per_kg" | "is_active" | "currency_code" | "currency_symbol">>) => {
     const { error } = await supabase
       .from("shipping_rates" as any)
       .update(updates as any)
