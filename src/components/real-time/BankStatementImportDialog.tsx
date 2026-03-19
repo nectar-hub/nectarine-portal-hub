@@ -48,7 +48,7 @@ export const BankStatementImportDialog = ({
   const [selectedAccount, setSelectedAccount] = useState<PaymentAccount>('CRDB');
   const [isParsing, setIsParsing] = useState(false);
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
-  const [importResults, setImportResults] = useState<{ created: number; skipped: number; entries: number }>({ created: 0, skipped: 0, entries: 0 });
+  const [importResults, setImportResults] = useState<{ created: number; appended: number; entries: number }>({ created: 0, appended: 0, entries: 0 });
   const [selectedTransactions, setSelectedTransactions] = useState<Set<number>>(new Set());
 
   const reset = useCallback(() => {
