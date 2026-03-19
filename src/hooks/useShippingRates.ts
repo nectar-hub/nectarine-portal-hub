@@ -7,6 +7,8 @@ export interface ShippingRate {
   country_code: string;
   country_name: string;
   rate_per_kg: number;
+  currency_code: string;
+  currency_symbol: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
