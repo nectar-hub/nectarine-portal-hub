@@ -51,7 +51,7 @@ export function useShippingRates() {
     return true;
   };
 
-  const updateRate = async (id: string, updates: Partial<Pick<ShippingRate, "country_code" | "country_name" | "rate_per_kg" | "is_active">>) => {
+  const updateRate = async (id: string, updates: Partial<Pick<ShippingRate, "country_code" | "country_name" | "rate_per_kg" | "is_active" | "currency_code" | "currency_symbol">>) => {
     const { error } = await supabase
       .from("shipping_rates" as any)
       .update(updates as any)
