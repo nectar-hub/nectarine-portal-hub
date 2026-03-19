@@ -349,21 +349,21 @@ export const BankStatementImportDialog = ({
                         {items.map(({ idx, tx }) => (
                           <div
                             key={idx}
-                            className="flex items-center gap-2 text-xs py-1 border-b border-border/50"
+                            className="flex items-center gap-2 text-xs py-1.5 border-b border-border/50"
                           >
                             <Checkbox
                               checked={selectedTransactions.has(idx)}
                               onCheckedChange={() => toggleTransaction(idx)}
                             />
-                            <Badge variant="secondary" className="text-[10px] shrink-0">
+                            <span className="font-medium shrink-0 w-28 truncate">
                               {tx.item}
-                            </Badge>
+                            </span>
                             <span className="truncate flex-1 text-muted-foreground">
                               {tx.description}
                             </span>
                             <span
-                              className={`font-mono shrink-0 ${
-                                tx.amount >= 0 ? 'text-green-600' : 'text-red-600'
+                              className={`font-mono shrink-0 font-medium ${
+                                tx.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                               }`}
                             >
                               {tx.amount >= 0 ? '+' : ''}
