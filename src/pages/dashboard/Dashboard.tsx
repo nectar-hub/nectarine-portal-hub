@@ -174,9 +174,39 @@ const Dashboard = () => {
                   <CardDescription>Latest actions in the system</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex flex-col items-center justify-center py-6 text-center">
-                    <p className="text-muted-foreground">No recent activity to display</p>
-                  </div>
+                  {activitiesLoading ? (
+                    <div className="flex justify-center py-6"><LoadingSpinner /></div>
+                  ) : activities.length > 0 ? (
+                    <div className="space-y-3 max-h-72 overflow-y-auto">
+                      {activities.map((activity) => (
+                        <div key={activity.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                          <div className="flex items-center gap-3 min-w-0">
+                            {activity.type === 'buy_request' ? (
+                              <ShoppingCart className="h-4 w-4 text-muted-foreground shrink-0" />
+                            ) : (
+                              <Package className="h-4 w-4 text-muted-foreground shrink-0" />
+                            )}
+                            <div className="min-w-0">
+                              <p className="font-medium text-sm truncate">{activity.title}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {activity.type === 'buy_request' ? 'Buy Request' : 'Self Purchase'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Badge variant="secondary" className={`text-xs ${getStatusColor(activity.status)}`}>
+                              {activity.status}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">{formatDate(activity.created_at)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                      <p className="text-muted-foreground">No recent activity to display</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
