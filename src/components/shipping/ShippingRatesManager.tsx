@@ -55,6 +55,8 @@ export function ShippingRatesManager({ rates, loading, onAdd, onUpdate, onDelete
     setCountryCode(rate.country_code);
     setCountryName(rate.country_name);
     setRatePerKg(String(rate.rate_per_kg));
+    setCurrencyCode(rate.currency_code);
+    setCurrencySymbol(rate.currency_symbol);
     setDialogOpen(true);
   };
 
