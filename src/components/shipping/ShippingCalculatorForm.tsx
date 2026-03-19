@@ -19,6 +19,8 @@ interface ShippingEstimate {
   volumetricWeightKg: number;
   chargeableWeightKg: number;
   ratePerKg: number;
+  currencySymbol: string;
+  currencyCode: string;
   estimatedCost: number;
 }
 
