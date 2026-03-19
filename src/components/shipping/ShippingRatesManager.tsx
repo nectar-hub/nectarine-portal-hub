@@ -110,6 +110,7 @@ export function ShippingRatesManager({ rates, loading, onAdd, onUpdate, onDelete
                 <TableRow>
                   <TableHead>Code</TableHead>
                   <TableHead>Country</TableHead>
+                  <TableHead>Currency</TableHead>
                   <TableHead>Rate / kg</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -119,7 +120,8 @@ export function ShippingRatesManager({ rates, loading, onAdd, onUpdate, onDelete
                   <TableRow key={r.id}>
                     <TableCell className="font-mono">{r.country_code}</TableCell>
                     <TableCell>{r.country_name}</TableCell>
-                    <TableCell>${r.rate_per_kg}</TableCell>
+                    <TableCell>{r.currency_symbol} {r.currency_code}</TableCell>
+                    <TableCell>{r.currency_symbol}{r.rate_per_kg}</TableCell>
                     <TableCell className="text-right space-x-1">
                       <Button variant="ghost" size="icon" onClick={() => openEdit(r)}>
                         <Pencil className="h-4 w-4" />
