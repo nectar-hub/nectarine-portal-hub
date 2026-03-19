@@ -1,16 +1,42 @@
-
 import { useAuth } from "@/context/AuthContext";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Package, ClipboardList, Users, BarChart2, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useRecentActivity } from "@/hooks/useRecentActivity";
 import { LoadingSpinner } from "@/components/dashboard/LoadingSpinner";
-
 const Dashboard = () => {
   const { user, profile, isAdmin } = useAuth();
   const { stats, loading } = useDashboardStats(isAdmin ? undefined : user?.id);
+  const { activities, loading: activitiesLoading } = useRecentActivity(
+    isAdmin ? undefined : user?.id,
+    isAdmin
+  );
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    if (diffHours < 1) return 'Just now';
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'approved': case 'completed': case 'delivered': return 'bg-green-100 text-green-800';
+      case 'rejected': case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'processing': case 'in_transit': case 'shipped': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-muted text-muted-foreground';
+    }
+  };
 
   if (loading) {
     return (
@@ -148,9 +174,39 @@ const Dashboard = () => {
                   <CardDescription>Latest actions in the system</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex flex-col items-center justify-center py-6 text-center">
-                    <p className="text-muted-foreground">No recent activity to display</p>
-                  </div>
+                  {activitiesLoading ? (
+                    <div className="flex justify-center py-6"><LoadingSpinner /></div>
+                  ) : activities.length > 0 ? (
+                    <div className="space-y-3 max-h-72 overflow-y-auto">
+                      {activities.map((activity) => (
+                        <div key={activity.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                          <div className="flex items-center gap-3 min-w-0">
+                            {activity.type === 'buy_request' ? (
+                              <ShoppingCart className="h-4 w-4 text-muted-foreground shrink-0" />
+                            ) : (
+                              <Package className="h-4 w-4 text-muted-foreground shrink-0" />
+                            )}
+                            <div className="min-w-0">
+                              <p className="font-medium text-sm truncate">{activity.title}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {activity.type === 'buy_request' ? 'Buy Request' : 'Self Purchase'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Badge variant="secondary" className={`text-xs ${getStatusColor(activity.status)}`}>
+                              {activity.status}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">{formatDate(activity.created_at)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                      <p className="text-muted-foreground">No recent activity to display</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -190,12 +246,42 @@ const Dashboard = () => {
                   <CardDescription>Your recent purchase and shipping requests</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex flex-col items-center justify-center py-6 text-center">
-                    <p className="text-muted-foreground">No recent orders to display</p>
-                    <Link to="/dashboard/buy-for-me" className="mt-4">
-                      <Button>Create Your First Order</Button>
-                    </Link>
-                  </div>
+                  {activitiesLoading ? (
+                    <div className="flex justify-center py-6"><LoadingSpinner /></div>
+                  ) : activities.length > 0 ? (
+                    <div className="space-y-3 max-h-72 overflow-y-auto">
+                      {activities.map((activity) => (
+                        <div key={activity.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                          <div className="flex items-center gap-3 min-w-0">
+                            {activity.type === 'buy_request' ? (
+                              <ShoppingCart className="h-4 w-4 text-muted-foreground shrink-0" />
+                            ) : (
+                              <Package className="h-4 w-4 text-muted-foreground shrink-0" />
+                            )}
+                            <div className="min-w-0">
+                              <p className="font-medium text-sm truncate">{activity.title}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {activity.type === 'buy_request' ? 'Buy Request' : 'Self Purchase'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Badge variant="secondary" className={`text-xs ${getStatusColor(activity.status)}`}>
+                              {activity.status}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">{formatDate(activity.created_at)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                      <p className="text-muted-foreground">No recent orders to display</p>
+                      <Link to="/dashboard/buy-for-me" className="mt-4">
+                        <Button>Create Your First Order</Button>
+                      </Link>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
