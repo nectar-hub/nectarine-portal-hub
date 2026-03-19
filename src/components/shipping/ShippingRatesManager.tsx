@@ -25,8 +25,8 @@ import { Plus, Pencil, Trash2, Settings } from "lucide-react";
 interface Props {
   rates: ShippingRate[];
   loading: boolean;
-  onAdd: (code: string, name: string, rate: number) => Promise<boolean>;
-  onUpdate: (id: string, updates: Partial<Pick<ShippingRate, "country_code" | "country_name" | "rate_per_kg" | "is_active">>) => Promise<boolean>;
+  onAdd: (code: string, name: string, rate: number, currencyCode?: string, currencySymbol?: string) => Promise<boolean>;
+  onUpdate: (id: string, updates: Partial<Pick<ShippingRate, "country_code" | "country_name" | "rate_per_kg" | "is_active" | "currency_code" | "currency_symbol">>) => Promise<boolean>;
   onDelete: (id: string) => Promise<boolean>;
 }
 
