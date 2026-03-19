@@ -144,7 +144,7 @@ export const BankStatementImportDialog = ({
         day_id: newDay.id,
         item: tx.item,
         description: tx.description,
-        payment_account: selectedAccount as string,
+        payment_account: selectedAccount,
         amount: tx.amount,
         reference_no: tx.reference || null,
         sort_order: idx,
