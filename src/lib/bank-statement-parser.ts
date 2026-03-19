@@ -6,11 +6,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs
 
 export interface ParsedTransaction {
   date: string; // yyyy-MM-dd
-  reference: string;
   description: string;
   amount: number; // positive = credit/inflow, negative = debit/outflow
-  balance: number;
-  item: string; // auto-categorized
   paymentAccount: PaymentAccount;
 }
 
@@ -33,31 +30,6 @@ function detectPaymentAccount(bankName: string, currency: string): PaymentAccoun
   return 'CASH';
 }
 
-/** Auto-categorize a transaction into a short item label */
-function categorizeTransaction(text: string): string {
-  const t = text.toUpperCase();
-
-  if (t.includes('SALARY') || t.includes('SALARI')) return 'SALARY';
-  if (t.includes('SWIFT')) return 'SWIFT TRANSFER';
-  if (t.includes('GEPG') || t.includes('GEPG')) return 'GOVT PAYMENT';
-  if (t.includes('MT103')) return 'INTL TRANSFER';
-  if (t.includes('AIR FREIGHT') || t.includes('FREIGHT')) return 'AIR FREIGHT';
-  if (t.includes('REVERSAL') || t.includes('Reversal')) return 'REVERSAL';
-  if (t.includes('C2BMPESA') || t.includes('MPESA DEPOSIT')) return 'MPESA DEPOSIT';
-  if (t.includes('TIGOPESA') || t.includes('TIGO')) return 'TIGOPESA';
-  if (t.includes('MPESA')) return 'MPESA';
-  if (t.includes('AIRTELMONEY') || t.includes('AIRTEL')) return 'AIRTEL MONEY';
-  if (t.includes('HALOPESA') || t.includes('HALOTEL')) return 'HALOPESA';
-  if (t.includes('AGENCY FT')) return 'AGENCY DEPOSIT';
-  if (t.includes('ESB TIPS')) return 'BANK TRANSFER IN';
-  if (t.includes('SIMAPP FT') || t.includes('SIMUSSD FT')) return 'MOBILE TRANSFER IN';
-  if (t.includes('IB FT FROM') || t.includes('IB FT TO')) return 'BANK TRANSFER';
-  if (t.includes('DEPOSIT')) return 'DEPOSIT';
-  if (t.includes('TRANSFER')) return 'TRANSFER';
-
-  return 'TRANSACTION';
-}
-
 /** Parse amount string like "1,234,567.89" into number */
 function parseAmount(str: string): number {
   if (!str) return 0;
@@ -72,50 +44,6 @@ function parseDate(dateStr: string): string | null {
   if (!match) return null;
   const [, dd, mm, yyyy] = match;
   return `${yyyy}-${mm}-${dd}`;
-}
-
-/** Clean description: extract the meaningful parts only */
-function cleanDescription(rawRef: string, rawDesc: string): string {
-  const combined = `${rawRef} ${rawDesc}`;
-  
-  // Remove noise: REF codes, timestamps, 00:00:00, N/A, account numbers
-  let clean = combined
-    .replace(/REF:[a-f0-9]+/gi, '')
-    .replace(/BE [A-Z0-9]+/g, '')
-    .replace(/TZ#[^\s]+/g, '')
-    .replace(/Reversal:/gi, 'REVERSAL ')
-    .replace(/\d{2}:\d{2}:\d{2}/g, '')
-    .replace(/\d{2}\.\d{2}\.\d{4}/g, '')
-    .replace(/00:00:00/g, '')
-    .replace(/N\/A/g, '')
-    .replace(/CHARGE:/gi, '')
-    .replace(/[\d,]+\.\d{2}/g, '')
-    .replace(/AB\d+:[^:]+:?/g, '') // Agency FT codes
-    .replace(/\d{3}-[A-Z0-9]+/g, '') // ESB TIPS codes
-    .replace(/\b25[567]\d{9}\b/g, '') // Phone numbers
-    .replace(/ACC \d+/g, '')
-    .replace(/\bIB\b/g, '')
-    .replace(/\bFT\b/g, '')
-    .replace(/\bFROM\b/gi, 'from')
-    .replace(/\bTO\b/gi, 'to')
-    .replace(/\bVIA\b/gi, 'via')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  // Remove leading/trailing prepositions
-  clean = clean.replace(/^(from|to|via)\s+/i, '').replace(/\s+(from|to|via)$/i, '');
-
-  return clean.substring(0, 150) || 'Transaction';
-}
-
-/** Check if a transaction is a bank fee/charge/VAT (noise) */
-function isBankFee(text: string): boolean {
-  const t = text.toUpperCase();
-  return (
-    (t.includes('VAT') && t.includes('PAYABLE')) ||
-    (t.includes('CHARGE:') && !t.includes('REVERSAL')) ||
-    (t.includes('COMMISISON') || t.includes('COMMISSION'))
-  );
 }
 
 /** Extract text items with positions from a PDF file */
@@ -149,7 +77,11 @@ async function extractTextFromPDF(file: File): Promise<string[]> {
   return allLines;
 }
 
-/** Main parser - extracts transactions from CRDB-style bank statement PDF */
+/**
+ * Main parser - extracts transactions from CRDB-style bank statement PDF.
+ * Only extracts: Posting Date, Details (description), Debit (out), Credit (in).
+ * Item is left as default "TRANSACTION" for manual categorization.
+ */
 export async function parseBankStatement(file: File): Promise<ParsedStatement> {
   const lines = await extractTextFromPDF(file);
   
@@ -169,17 +101,16 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
 
   const detectedAccount = detectPaymentAccount(bankName, currency);
   
-  // Collect all balance values and amounts from the statement
-  // Strategy: find lines with date patterns, extract all numbers, use balance progression
+  // Parse transaction lines: look for lines starting with a date pattern
+  const datePattern = /^(\d{2}\.\d{2}\.\d{4})/;
+  const amountPattern = /[\d,]+\.\d{2}/g;
+  
   const rawTransactions: {
     date: string;
     fullText: string;
     amounts: number[];
-    isFee: boolean;
   }[] = [];
 
-  const datePattern = /^(\d{2}\.\d{2}\.\d{4})/;
-  
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
@@ -206,35 +137,27 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
     }
 
     // Extract all number patterns
-    const amountPattern = /[\d,]+\.\d{2}/g;
     const amounts = [...fullText.matchAll(amountPattern)].map(m => parseAmount(m[0]));
-
-    const fee = isBankFee(fullText);
 
     rawTransactions.push({
       date: parsedDate,
       fullText,
       amounts,
-      isFee: fee,
     });
 
     i = j;
   }
 
-  // Now determine direction using balance column (last number in each row)
-  // Balance is always the last amount. Compare consecutive balances.
+  // Determine direction using balance column (last number = balance)
   const transactions: ParsedTransaction[] = [];
   
   for (let idx = 0; idx < rawTransactions.length; idx++) {
     const raw = rawTransactions[idx];
     if (raw.amounts.length < 2) continue; // Need at least amount + balance
-    
-    // Skip bank fees/charges/VAT - they're noise
-    if (raw.isFee) continue;
 
     const balance = raw.amounts[raw.amounts.length - 1];
     
-    // Find the previous balance to determine direction
+    // Find the previous balance
     let prevBalance: number | null = null;
     for (let k = idx - 1; k >= 0; k--) {
       if (rawTransactions[k].amounts.length >= 2) {
@@ -243,18 +166,13 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
       }
     }
 
-    // Determine the transaction amount
-    // The actual movement amount is one of the non-balance numbers
     const candidateAmounts = raw.amounts.slice(0, -1).filter(a => a > 0);
     
     let txAmount = 0;
     if (prevBalance !== null) {
-      // Use balance difference to determine direction
       const diff = balance - prevBalance;
-      // Find the candidate amount closest to the absolute diff
       const absDiff = Math.abs(diff);
       if (candidateAmounts.length > 0) {
-        // Pick the amount that best matches the balance difference
         const bestMatch = candidateAmounts.reduce((best, amt) => 
           Math.abs(amt - absDiff) < Math.abs(best - absDiff) ? amt : best
         );
@@ -271,20 +189,21 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
 
     if (txAmount === 0) continue;
 
-    // Extract reference
-    const refMatch = raw.fullText.match(/REF:[a-f0-9]+|BE [A-Z0-9]+|TZ#[^\s#]+|BE#[^\s]+/i);
-    const reference = refMatch ? refMatch[0] : '';
+    // Extract description: remove the date prefix and numeric values, keep the text
+    let description = raw.fullText
+      .replace(/^\d{2}\.\d{2}\.\d{4}\s*/, '') // Remove leading date
+      .replace(/[\d,]+\.\d{2}/g, '')           // Remove all amounts
+      .replace(/\d{2}:\d{2}:\d{2}/g, '')       // Remove timestamps
+      .replace(/\s+/g, ' ')
+      .trim();
 
-    const description = cleanDescription(raw.fullText, '');
-    const item = categorizeTransaction(raw.fullText);
+    // Cap description length
+    description = description.substring(0, 200) || 'Transaction';
 
     transactions.push({
       date: raw.date,
-      reference,
       description,
       amount: txAmount,
-      balance,
-      item,
       paymentAccount: detectedAccount,
     });
   }

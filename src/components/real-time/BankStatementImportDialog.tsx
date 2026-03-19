@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { Upload, FileText, AlertTriangle, Check, Loader2 } from 'lucide-react';
-import type { PaymentAccount as PaymentAccountType } from '@/types/real-time';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -142,7 +141,6 @@ export const BankStatementImportDialog = ({
       };
 
       if (prevDay) {
-        // Get previous day's entries to calculate closing balances
         const { data: prevEntries } = await supabase
           .from('real_time_entries')
           .select('payment_account, amount')
@@ -162,13 +160,13 @@ export const BankStatementImportDialog = ({
         };
       }
 
-      // Create the day with opening balances from previous day's closing
+      // Create the day
       const { data: newDay, error: dayError } = await supabase
         .from('real_time_days')
         .insert({
           op_date: dateStr,
           ...openingBalances,
-          notes: `Imported from ${parsedData.bankName} statement (Account: ${parsedData.accountNumber})`,
+          notes: `Imported from ${parsedData.bankName} statement`,
         })
         .select()
         .single();
@@ -179,14 +177,14 @@ export const BankStatementImportDialog = ({
         continue;
       }
 
-      // Insert entries for this day
+      // Insert entries - item defaults to "TRANSACTION" for manual editing
       const entries = dayTransactions.map((tx, idx) => ({
         day_id: newDay.id,
-        item: tx.item,
+        item: 'TRANSACTION',
         description: tx.description,
         payment_account: selectedAccount,
         amount: tx.amount,
-        reference_no: tx.reference || null,
+        reference_no: null,
         sort_order: idx,
       }));
 
@@ -249,7 +247,7 @@ export const BankStatementImportDialog = ({
             Import Bank Statement
           </DialogTitle>
           <DialogDescription>
-            Upload a bank statement PDF to auto-create days and entries
+            Upload a PDF to import transactions. Item labels default to "TRANSACTION" for manual editing.
           </DialogDescription>
         </DialogHeader>
 
@@ -319,7 +317,7 @@ export const BankStatementImportDialog = ({
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                Days that already exist will be <strong>skipped</strong>. Only new days will be created.
+                Existing days will be <strong>skipped</strong>. Item labels are set to "TRANSACTION" — edit them manually after import.
               </AlertDescription>
             </Alert>
 
@@ -355,9 +353,6 @@ export const BankStatementImportDialog = ({
                               checked={selectedTransactions.has(idx)}
                               onCheckedChange={() => toggleTransaction(idx)}
                             />
-                            <span className="font-medium shrink-0 w-28 truncate">
-                              {tx.item}
-                            </span>
                             <span className="truncate flex-1 text-muted-foreground">
                               {tx.description}
                             </span>
@@ -393,9 +388,6 @@ export const BankStatementImportDialog = ({
             <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
             <p className="font-medium">
               Importing day {importProgress.current} of {importProgress.total}...
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Please wait while we create days and entries
             </p>
           </div>
         )}
