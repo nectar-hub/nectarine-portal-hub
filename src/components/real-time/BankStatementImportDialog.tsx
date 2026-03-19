@@ -48,7 +48,7 @@ export const BankStatementImportDialog = ({
   const [selectedAccount, setSelectedAccount] = useState<PaymentAccount>('CRDB');
   const [isParsing, setIsParsing] = useState(false);
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
-  const [importResults, setImportResults] = useState<{ created: number; skipped: number; entries: number }>({ created: 0, skipped: 0, entries: 0 });
+  const [importResults, setImportResults] = useState<{ created: number; appended: number; entries: number }>({ created: 0, appended: 0, entries: 0 });
   const [selectedTransactions, setSelectedTransactions] = useState<Set<number>>(new Set());
 
   const reset = useCallback(() => {
@@ -57,7 +57,7 @@ export const BankStatementImportDialog = ({
     setSelectedAccount('CRDB');
     setIsParsing(false);
     setImportProgress({ current: 0, total: 0 });
-    setImportResults({ created: 0, skipped: 0, entries: 0 });
+    setImportResults({ created: 0, appended: 0, entries: 0 });
     setSelectedTransactions(new Set());
   }, []);
 
@@ -104,7 +104,7 @@ export const BankStatementImportDialog = ({
     const dates = [...byDate.keys()].sort();
     setImportProgress({ current: 0, total: dates.length });
 
-    let created = 0, skipped = 0, totalEntries = 0;
+    let created = 0, appended = 0, totalEntries = 0;
 
     for (let i = 0; i < dates.length; i++) {
       const dateStr = dates[i];
@@ -118,74 +118,87 @@ export const BankStatementImportDialog = ({
         .eq('op_date', dateStr)
         .maybeSingle();
 
+      let dayId: string;
+
       if (existingDay) {
-        skipped++;
-        continue;
-      }
+        // Append to existing day - find max sort_order
+        dayId = existingDay.id;
+        appended++;
+      } else {
+        // Find the most recent previous day to copy closing balances as opening
+        const { data: prevDay } = await supabase
+          .from('real_time_days')
+          .select('*')
+          .lt('op_date', dateStr)
+          .order('op_date', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      // Find the most recent previous day to copy closing balances as opening
-      const { data: prevDay } = await supabase
-        .from('real_time_days')
-        .select('*')
-        .lt('op_date', dateStr)
-        .order('op_date', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      let openingBalances = {
-        opening_cash: 0,
-        opening_nmb_card: 0,
-        opening_mpesa_271: 0,
-        opening_crdb: 0,
-        opening_crdb_usd: 0,
-      };
-
-      if (prevDay) {
-        const { data: prevEntries } = await supabase
-          .from('real_time_entries')
-          .select('payment_account, amount')
-          .eq('day_id', prevDay.id);
-
-        const sumByAccount = (account: string) =>
-          (prevEntries || [])
-            .filter((e) => e.payment_account === account)
-            .reduce((s, e) => s + safeNum(e.amount), 0);
-
-        openingBalances = {
-          opening_cash: safeNum(prevDay.opening_cash) + sumByAccount('CASH'),
-          opening_nmb_card: safeNum(prevDay.opening_nmb_card) + sumByAccount('NMB_CARD'),
-          opening_mpesa_271: safeNum(prevDay.opening_mpesa_271) + sumByAccount('MPESA_271'),
-          opening_crdb: safeNum(prevDay.opening_crdb) + sumByAccount('CRDB'),
-          opening_crdb_usd: safeNum(prevDay.opening_crdb_usd) + sumByAccount('CRDB_USD'),
+        let openingBalances = {
+          opening_cash: 0,
+          opening_nmb_card: 0,
+          opening_mpesa_271: 0,
+          opening_crdb: 0,
+          opening_crdb_usd: 0,
         };
+
+        if (prevDay) {
+          const { data: prevEntries } = await supabase
+            .from('real_time_entries')
+            .select('payment_account, amount')
+            .eq('day_id', prevDay.id);
+
+          const sumByAccount = (account: string) =>
+            (prevEntries || [])
+              .filter((e) => e.payment_account === account)
+              .reduce((s, e) => s + safeNum(e.amount), 0);
+
+          openingBalances = {
+            opening_cash: safeNum(prevDay.opening_cash) + sumByAccount('CASH'),
+            opening_nmb_card: safeNum(prevDay.opening_nmb_card) + sumByAccount('NMB_CARD'),
+            opening_mpesa_271: safeNum(prevDay.opening_mpesa_271) + sumByAccount('MPESA_271'),
+            opening_crdb: safeNum(prevDay.opening_crdb) + sumByAccount('CRDB'),
+            opening_crdb_usd: safeNum(prevDay.opening_crdb_usd) + sumByAccount('CRDB_USD'),
+          };
+        }
+
+        const { data: newDay, error: dayError } = await supabase
+          .from('real_time_days')
+          .insert({
+            op_date: dateStr,
+            ...openingBalances,
+            notes: `Imported from ${parsedData.bankName} statement`,
+          })
+          .select()
+          .single();
+
+        if (dayError) {
+          console.error(`Failed to create day ${dateStr}:`, dayError);
+          continue;
+        }
+
+        dayId = newDay.id;
+        created++;
       }
 
-      // Create the day
-      const { data: newDay, error: dayError } = await supabase
-        .from('real_time_days')
-        .insert({
-          op_date: dateStr,
-          ...openingBalances,
-          notes: `Imported from ${parsedData.bankName} statement`,
-        })
-        .select()
-        .single();
+      // Get current max sort_order for this day
+      const { data: existingEntries } = await supabase
+        .from('real_time_entries')
+        .select('sort_order')
+        .eq('day_id', dayId)
+        .order('sort_order', { ascending: false })
+        .limit(1);
 
-      if (dayError) {
-        console.error(`Failed to create day ${dateStr}:`, dayError);
-        skipped++;
-        continue;
-      }
+      const startOrder = (existingEntries?.[0]?.sort_order ?? -1) + 1;
 
-      // Insert entries - item defaults to "TRANSACTION" for manual editing
       const entries = dayTransactions.map((tx, idx) => ({
-        day_id: newDay.id,
+        day_id: dayId,
         item: 'TRANSACTION',
         description: tx.description,
         payment_account: selectedAccount,
         amount: tx.amount,
         reference_no: null,
-        sort_order: idx,
+        sort_order: startOrder + idx,
       }));
 
       const { error: entriesError } = await supabase
@@ -195,12 +208,11 @@ export const BankStatementImportDialog = ({
       if (entriesError) {
         console.error(`Failed to insert entries for ${dateStr}:`, entriesError);
       } else {
-        created++;
         totalEntries += entries.length;
       }
     }
 
-    setImportResults({ created, skipped, entries: totalEntries });
+    setImportResults({ created, appended, entries: totalEntries });
     setStep('done');
   };
 
@@ -406,8 +418,8 @@ export const BankStatementImportDialog = ({
                 <p className="text-xs text-muted-foreground">Entries Added</p>
               </div>
               <div className="p-3 bg-muted rounded-lg">
-                <p className="text-2xl font-bold text-muted-foreground">{importResults.skipped}</p>
-                <p className="text-xs text-muted-foreground">Days Skipped</p>
+                <p className="text-2xl font-bold text-muted-foreground">{importResults.appended}</p>
+                <p className="text-xs text-muted-foreground">Days Appended</p>
               </div>
             </div>
             <DialogFooter className="justify-center">
