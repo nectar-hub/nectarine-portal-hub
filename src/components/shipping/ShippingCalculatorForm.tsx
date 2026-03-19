@@ -60,6 +60,8 @@ export function ShippingCalculatorForm({ rates, loading }: Props) {
       volumetricWeightKg: Math.round(volumetricWeight * 100) / 100,
       chargeableWeightKg: chargeableWeight,
       ratePerKg: country.rate_per_kg,
+      currencySymbol: country.currency_symbol,
+      currencyCode: country.currency_code,
       estimatedCost,
     });
   };
