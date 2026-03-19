@@ -166,15 +166,18 @@ export function ShippingCalculatorForm({ rates, loading }: Props) {
                 </div>
                 <div className="p-3 rounded-lg bg-muted">
                   <p className="text-xs text-muted-foreground">Rate per kg</p>
-                  <p className="text-lg font-semibold">${estimate.ratePerKg}</p>
+                  <p className="text-lg font-semibold">{estimate.currencySymbol}{estimate.ratePerKg}</p>
                 </div>
               </div>
 
               <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
                 <p className="text-sm text-muted-foreground">Estimated Shipping Cost</p>
-                <p className="text-3xl font-bold text-primary">${estimate.estimatedCost.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-primary">
+                  {estimate.currencySymbol}{estimate.estimatedCost.toFixed(2)}
+                  <span className="text-base font-normal text-muted-foreground ml-2">{estimate.currencyCode}</span>
+                </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {estimate.chargeableWeightKg} kg × ${estimate.ratePerKg}/kg
+                  {estimate.chargeableWeightKg} kg × {estimate.currencySymbol}{estimate.ratePerKg}/kg
                 </p>
               </div>
 
