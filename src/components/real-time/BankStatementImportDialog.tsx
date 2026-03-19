@@ -212,7 +212,7 @@ export const BankStatementImportDialog = ({
       }
     }
 
-    setImportResults({ created, skipped, entries: totalEntries });
+    setImportResults({ created, appended, entries: totalEntries });
     setStep('done');
   };
 
