@@ -57,7 +57,7 @@ export const BankStatementImportDialog = ({
     setSelectedAccount('CRDB');
     setIsParsing(false);
     setImportProgress({ current: 0, total: 0 });
-    setImportResults({ created: 0, skipped: 0, entries: 0 });
+    setImportResults({ created: 0, appended: 0, entries: 0 });
     setSelectedTransactions(new Set());
   }, []);
 
