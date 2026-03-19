@@ -1,13 +1,13 @@
-
 import { useAuth } from "@/context/AuthContext";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Package, ClipboardList, Users, BarChart2, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useRecentActivity } from "@/hooks/useRecentActivity";
 import { LoadingSpinner } from "@/components/dashboard/LoadingSpinner";
-
 const Dashboard = () => {
   const { user, profile, isAdmin } = useAuth();
   const { stats, loading } = useDashboardStats(isAdmin ? undefined : user?.id);
