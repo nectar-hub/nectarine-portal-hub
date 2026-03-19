@@ -418,8 +418,8 @@ export const BankStatementImportDialog = ({
                 <p className="text-xs text-muted-foreground">Entries Added</p>
               </div>
               <div className="p-3 bg-muted rounded-lg">
-                <p className="text-2xl font-bold text-muted-foreground">{importResults.skipped}</p>
-                <p className="text-xs text-muted-foreground">Days Skipped</p>
+                <p className="text-2xl font-bold text-muted-foreground">{importResults.appended}</p>
+                <p className="text-xs text-muted-foreground">Days Appended</p>
               </div>
             </div>
             <DialogFooter className="justify-center">
