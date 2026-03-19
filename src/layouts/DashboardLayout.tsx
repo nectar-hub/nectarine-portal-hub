@@ -50,6 +50,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { name: 'My Orders', href: '/dashboard/orders', icon: ClipboardList },
     { name: 'Self Purchases', href: '/dashboard/track-packages', icon: Package },
     { name: 'My Shipping Address', href: '/dashboard/shipping-address', icon: MapPin },
+    { name: 'Shipping Calculator', href: '/dashboard/shipping-calculator', icon: Calculator },
     { name: 'Currency Converter', href: '/dashboard/currency-converter', icon: Coins },
     { name: 'My Account', href: '/dashboard/account', icon: Settings },
   ];
