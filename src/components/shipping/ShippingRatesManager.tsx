@@ -70,9 +70,11 @@ export function ShippingRatesManager({ rates, loading, onAdd, onUpdate, onDelete
         country_code: countryCode.trim().toUpperCase(),
         country_name: countryName.trim(),
         rate_per_kg: rate,
+        currency_code: currencyCode,
+        currency_symbol: currencySymbol,
       });
     } else {
-      success = await onAdd(countryCode.trim().toUpperCase(), countryName.trim(), rate);
+      success = await onAdd(countryCode.trim().toUpperCase(), countryName.trim(), rate, currencyCode, currencySymbol);
     }
     if (success) setDialogOpen(false);
   };
