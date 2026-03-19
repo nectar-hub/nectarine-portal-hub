@@ -38,10 +38,10 @@ export function useShippingRates() {
     fetchRates();
   }, [fetchRates]);
 
-  const addRate = async (countryCode: string, countryName: string, ratePerKg: number) => {
+  const addRate = async (countryCode: string, countryName: string, ratePerKg: number, currencyCode: string = 'USD', currencySymbol: string = '$') => {
     const { error } = await supabase
       .from("shipping_rates" as any)
-      .insert({ country_code: countryCode, country_name: countryName, rate_per_kg: ratePerKg } as any);
+      .insert({ country_code: countryCode, country_name: countryName, rate_per_kg: ratePerKg, currency_code: currencyCode, currency_symbol: currencySymbol } as any);
     if (error) {
       toast({ title: "Error adding rate", description: error.message, variant: "destructive" });
       return false;
