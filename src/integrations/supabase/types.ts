@@ -1169,6 +1169,8 @@ export type Database = {
           country_name: string
           created_at: string
           created_by: string | null
+          currency_code: string
+          currency_symbol: string
           id: string
           is_active: boolean
           rate_per_kg: number
@@ -1180,6 +1182,8 @@ export type Database = {
           country_name: string
           created_at?: string
           created_by?: string | null
+          currency_code?: string
+          currency_symbol?: string
           id?: string
           is_active?: boolean
           rate_per_kg?: number
@@ -1191,6 +1195,8 @@ export type Database = {
           country_name?: string
           created_at?: string
           created_by?: string | null
+          currency_code?: string
+          currency_symbol?: string
           id?: string
           is_active?: boolean
           rate_per_kg?: number
