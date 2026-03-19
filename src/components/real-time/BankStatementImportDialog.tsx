@@ -28,6 +28,11 @@ import { parseBankStatement, type ParsedStatement, type ParsedTransaction } from
 import { PAYMENT_ACCOUNTS, PAYMENT_ACCOUNT_LABELS, type PaymentAccount } from '@/types/real-time';
 import { format } from 'date-fns';
 
+const safeNum = (val: number | null | undefined): number => {
+  if (val === null || val === undefined || isNaN(Number(val))) return 0;
+  return Number(val);
+};
+
 interface BankStatementImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
