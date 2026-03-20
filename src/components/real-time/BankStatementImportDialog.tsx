@@ -48,8 +48,9 @@ export const BankStatementImportDialog = ({
   const [selectedAccount, setSelectedAccount] = useState<PaymentAccount>('CRDB');
   const [isParsing, setIsParsing] = useState(false);
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
-  const [importResults, setImportResults] = useState<{ created: number; appended: number; entries: number }>({ created: 0, appended: 0, entries: 0 });
+  const [importResults, setImportResults] = useState<{ created: number; appended: number; replaced: number; entries: number }>({ created: 0, appended: 0, replaced: 0, entries: 0 });
   const [selectedTransactions, setSelectedTransactions] = useState<Set<number>>(new Set());
+  const [importMode, setImportMode] = useState<'replace' | 'append'>('replace');
 
   const reset = useCallback(() => {
     setStep('upload');
@@ -57,8 +58,9 @@ export const BankStatementImportDialog = ({
     setSelectedAccount('CRDB');
     setIsParsing(false);
     setImportProgress({ current: 0, total: 0 });
-    setImportResults({ created: 0, appended: 0, entries: 0 });
+    setImportResults({ created: 0, appended: 0, replaced: 0, entries: 0 });
     setSelectedTransactions(new Set());
+    setImportMode('replace');
   }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,7 +106,7 @@ export const BankStatementImportDialog = ({
     const dates = [...byDate.keys()].sort();
     setImportProgress({ current: 0, total: dates.length });
 
-    let created = 0, appended = 0, totalEntries = 0;
+    let created = 0, appended = 0, replaced = 0, totalEntries = 0;
 
     for (let i = 0; i < dates.length; i++) {
       const dateStr = dates[i];
@@ -121,9 +123,16 @@ export const BankStatementImportDialog = ({
       let dayId: string;
 
       if (existingDay) {
-        // Append to existing day - find max sort_order
         dayId = existingDay.id;
-        appended++;
+        if (importMode === 'replace') {
+          await supabase
+            .from('real_time_entries')
+            .delete()
+            .eq('day_id', dayId);
+          replaced++;
+        } else {
+          appended++;
+        }
       } else {
         // Find the most recent previous day to copy closing balances as opening
         const { data: prevDay } = await supabase
@@ -212,7 +221,7 @@ export const BankStatementImportDialog = ({
       }
     }
 
-    setImportResults({ created, appended, entries: totalEntries });
+    setImportResults({ created, appended, replaced, entries: totalEntries });
     setStep('done');
   };
 
@@ -326,10 +335,30 @@ export const BankStatementImportDialog = ({
               </Select>
             </div>
 
+            <div className="flex items-center gap-3">
+              <Label className="whitespace-nowrap">Import Mode:</Label>
+              <Select
+                value={importMode}
+                onValueChange={(v: 'replace' | 'append') => setImportMode(v)}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="replace">Replace existing</SelectItem>
+                  <SelectItem value="append">Append to existing</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                New days will be created automatically. Existing days will have entries <strong>appended</strong>. Item labels default to "TRANSACTION".
+                {importMode === 'replace' ? (
+                  <>New days will be created automatically. Existing entries on imported days will be <strong>cleared and replaced</strong>. Item labels default to "TRANSACTION".</>
+                ) : (
+                  <>New days will be created automatically. Existing days will have entries <strong>appended</strong>. Item labels default to "TRANSACTION".</>
+                )}
               </AlertDescription>
             </Alert>
 
@@ -408,7 +437,7 @@ export const BankStatementImportDialog = ({
           <div className="py-8 text-center space-y-4">
             <Check className="h-10 w-10 text-green-600 mx-auto" />
             <p className="font-medium text-lg">Import Complete!</p>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="p-3 bg-muted rounded-lg">
                 <p className="text-2xl font-bold text-green-600">{importResults.created}</p>
                 <p className="text-xs text-muted-foreground">Days Created</p>
@@ -416,6 +445,10 @@ export const BankStatementImportDialog = ({
               <div className="p-3 bg-muted rounded-lg">
                 <p className="text-2xl font-bold text-primary">{importResults.entries}</p>
                 <p className="text-xs text-muted-foreground">Entries Added</p>
+              </div>
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="text-2xl font-bold text-orange-600">{importResults.replaced}</p>
+                <p className="text-xs text-muted-foreground">Days Replaced</p>
               </div>
               <div className="p-3 bg-muted rounded-lg">
                 <p className="text-2xl font-bold text-muted-foreground">{importResults.appended}</p>
