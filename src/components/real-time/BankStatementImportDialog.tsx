@@ -106,7 +106,7 @@ export const BankStatementImportDialog = ({
     const dates = [...byDate.keys()].sort();
     setImportProgress({ current: 0, total: dates.length });
 
-    let created = 0, appended = 0, totalEntries = 0;
+    let created = 0, appended = 0, replaced = 0, totalEntries = 0;
 
     for (let i = 0; i < dates.length; i++) {
       const dateStr = dates[i];
