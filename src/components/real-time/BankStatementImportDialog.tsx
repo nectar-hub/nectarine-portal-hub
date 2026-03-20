@@ -123,9 +123,16 @@ export const BankStatementImportDialog = ({
       let dayId: string;
 
       if (existingDay) {
-        // Append to existing day - find max sort_order
         dayId = existingDay.id;
-        appended++;
+        if (importMode === 'replace') {
+          await supabase
+            .from('real_time_entries')
+            .delete()
+            .eq('day_id', dayId);
+          replaced++;
+        } else {
+          appended++;
+        }
       } else {
         // Find the most recent previous day to copy closing balances as opening
         const { data: prevDay } = await supabase
