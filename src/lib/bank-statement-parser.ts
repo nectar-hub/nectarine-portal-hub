@@ -1,13 +1,12 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import type { PaymentAccount } from '@/types/real-time';
 
-// Configure worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 export interface ParsedTransaction {
-  date: string; // yyyy-MM-dd
+  date: string;
   description: string;
-  amount: number; // positive = credit/inflow, negative = debit/outflow
+  amount: number;
   paymentAccount: PaymentAccount;
 }
 
@@ -19,7 +18,33 @@ export interface ParsedStatement {
   detectedAccount: PaymentAccount;
 }
 
-/** Detect payment account from bank name + currency */
+interface TextItem {
+  page: number;
+  x: number;
+  y: number;
+  text: string;
+}
+
+interface LineItemGroup {
+  page: number;
+  y: number;
+  text: string;
+  items: TextItem[];
+}
+
+interface ColumnLayout {
+  page: number;
+  headerY: number;
+  debitX: number;
+  creditX: number;
+  balanceX: number;
+}
+
+const LINE_Y_TOLERANCE = 3;
+const AMOUNT_PATTERN = /^(?:\(?-?)?\d[\d,.\s]*\d(?:[.,]\d{2})\)?$/;
+const DATE_PATTERN = /^(\d{2}[./]\d{2}[./]\d{4})/;
+const TIME_PATTERN = /^\d{2}:\d{2}:\d{2}$/;
+
 function detectPaymentAccount(bankName: string, currency: string): PaymentAccount {
   const bank = bankName.toUpperCase();
   if (bank.includes('CRDB') || bank.includes('CROB')) {
@@ -30,15 +55,39 @@ function detectPaymentAccount(bankName: string, currency: string): PaymentAccoun
   return 'CASH';
 }
 
-/** Parse amount string like "1,234,567.89" into number */
-function parseAmount(str: string): number {
-  if (!str) return 0;
-  const cleaned = str.replace(/,/g, '').trim();
-  const num = parseFloat(cleaned);
-  return isNaN(num) ? 0 : num;
+function normalizeText(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ');
 }
 
-/** Parse date from DD.MM.YYYY or DD/MM/YYYY to yyyy-MM-dd */
+function parseAmount(str: string): number {
+  if (!str) return 0;
+
+  let cleaned = str
+    .replace(/[()]/g, '')
+    .replace(/\s/g, '')
+    .replace(/[A-Za-z]/g, '')
+    .trim();
+
+  const lastDot = cleaned.lastIndexOf('.');
+  const lastComma = cleaned.lastIndexOf(',');
+
+  if (lastDot !== -1 || lastComma !== -1) {
+    if (lastDot > lastComma) {
+      cleaned = cleaned.replace(/,/g, '');
+    } else {
+      cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+    }
+  }
+
+  const num = parseFloat(cleaned);
+  return Number.isFinite(num) ? num : 0;
+}
+
 function parseDate(dateStr: string): string | null {
   const match = dateStr.match(/(\d{2})[./](\d{2})[./](\d{4})/);
   if (!match) return null;
@@ -46,25 +95,28 @@ function parseDate(dateStr: string): string | null {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-interface TextItem {
-  x: number;
-  y: number;
-  text: string;
+function cleanDescription(text: string): string {
+  const cleaned = text
+    .replace(/\b(?:debit|credit|balance|posting date|value date)\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return cleaned.substring(0, 200) || 'Transaction';
 }
 
-/** Extract all text items with precise x,y positions from PDF */
 async function extractTextItems(file: File): Promise<{ items: TextItem[]; pageCount: number }> {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const allItems: TextItem[] = [];
 
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
+  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+    const page = await pdf.getPage(pageNumber);
     const textContent = await page.getTextContent();
-    
+
     for (const item of textContent.items) {
       if (!('str' in item) || !item.str.trim()) continue;
       allItems.push({
+        page: pageNumber,
         x: Math.round(item.transform[4]),
         y: Math.round(item.transform[5]),
         text: item.str.trim(),
@@ -75,94 +127,118 @@ async function extractTextItems(file: File): Promise<{ items: TextItem[]; pageCo
   return { items: allItems, pageCount: pdf.numPages };
 }
 
-/** Detect column x-ranges by finding the header row containing "Debit" and "Credit" */
-function detectColumns(items: TextItem[]): { debitX: number; creditX: number; balanceX: number } | null {
-  // Find the header items
-  const debitHeader = items.find(i => /^debit$/i.test(i.text));
-  const creditHeader = items.find(i => /^credit$/i.test(i.text));
-  const balanceHeader = items.find(i => /^balance$/i.test(i.text));
+function groupItemsByLine(items: TextItem[]): LineItemGroup[] {
+  const pages = new Map<number, TextItem[]>();
 
-  if (debitHeader && creditHeader) {
-    return {
-      debitX: debitHeader.x,
-      creditX: creditHeader.x,
-      balanceX: balanceHeader?.x ?? creditHeader.x + 100,
-    };
+  for (const item of items) {
+    if (!pages.has(item.page)) pages.set(item.page, []);
+    pages.get(item.page)!.push(item);
   }
+
+  const lines: LineItemGroup[] = [];
+
+  for (const [page, pageItems] of [...pages.entries()].sort((a, b) => a[0] - b[0])) {
+    const lineMap = new Map<number, TextItem[]>();
+
+    for (const item of pageItems) {
+      let matchedY: number | null = null;
+      for (const existingY of lineMap.keys()) {
+        if (Math.abs(existingY - item.y) <= LINE_Y_TOLERANCE) {
+          matchedY = existingY;
+          break;
+        }
+      }
+
+      const key = matchedY ?? item.y;
+      if (!lineMap.has(key)) lineMap.set(key, []);
+      lineMap.get(key)!.push(item);
+    }
+
+    const sortedYs = [...lineMap.keys()].sort((a, b) => b - a);
+    for (const y of sortedYs) {
+      const lineItems = lineMap.get(y)!.sort((a, b) => a.x - b.x);
+      lines.push({
+        page,
+        y,
+        items: lineItems,
+        text: lineItems.map((item) => item.text).join(' ').replace(/\s+/g, ' ').trim(),
+      });
+    }
+  }
+
+  return lines;
+}
+
+function detectColumns(lines: LineItemGroup[]): ColumnLayout | null {
+  for (const line of lines) {
+    const normalizedLine = normalizeText(line.text);
+    if (!normalizedLine.includes('debit') || !normalizedLine.includes('credit')) continue;
+
+    const debitHeader = line.items.find((item) => normalizeText(item.text) === 'debit');
+    const creditHeader = line.items.find((item) => normalizeText(item.text) === 'credit');
+    const balanceHeader = line.items.find((item) => normalizeText(item.text) === 'balance');
+
+    if (debitHeader && creditHeader) {
+      return {
+        page: line.page,
+        headerY: line.y,
+        debitX: debitHeader.x,
+        creditX: creditHeader.x,
+        balanceX: balanceHeader?.x ?? creditHeader.x + Math.max(80, creditHeader.x - debitHeader.x),
+      };
+    }
+  }
+
   return null;
 }
 
-/** Classify an amount item as debit, credit, or balance based on its x position */
-function classifyAmount(itemX: number, cols: { debitX: number; creditX: number; balanceX: number }): 'debit' | 'credit' | 'balance' | 'unknown' {
-  const tolerance = 50;
-  const distDebit = Math.abs(itemX - cols.debitX);
-  const distCredit = Math.abs(itemX - cols.creditX);
-  const distBalance = Math.abs(itemX - cols.balanceX);
+function classifyAmount(
+  itemX: number,
+  cols: { debitX: number; creditX: number; balanceX: number }
+): 'debit' | 'credit' | 'balance' | 'unknown' {
+  const ordered = [
+    { key: 'debit' as const, x: cols.debitX },
+    { key: 'credit' as const, x: cols.creditX },
+    { key: 'balance' as const, x: cols.balanceX },
+  ].sort((a, b) => a.x - b.x);
 
-  const minDist = Math.min(distDebit, distCredit, distBalance);
-  if (minDist > tolerance) return 'unknown';
-  if (minDist === distDebit) return 'debit';
-  if (minDist === distCredit) return 'credit';
-  return 'balance';
+  const leftEdge = ordered[0].x - 70;
+  const rightEdge = ordered[2].x + 70;
+  if (itemX < leftEdge || itemX > rightEdge) return 'unknown';
+
+  const firstBoundary = (ordered[0].x + ordered[1].x) / 2;
+  const secondBoundary = (ordered[1].x + ordered[2].x) / 2;
+
+  if (itemX < firstBoundary) return ordered[0].key;
+  if (itemX < secondBoundary) return ordered[1].key;
+  return ordered[2].key;
 }
 
-/**
- * Main parser - extracts transactions from CRDB-style bank statement PDF.
- * Uses column x-positions to accurately identify Debit and Credit amounts.
- */
 export async function parseBankStatement(file: File): Promise<ParsedStatement> {
   const { items } = await extractTextItems(file);
+  const lines = groupItemsByLine(items);
 
-  // Detect bank and account info from top items
   let bankName = 'CRDB';
   let accountNumber = '';
   let currency = 'TZS';
 
-  // Sort items top-to-bottom for header scanning
-  const sortedByY = [...items].sort((a, b) => b.y - a.y);
-  const topItems = sortedByY.slice(0, 100);
+  const topLines = lines.slice(0, 40);
+  for (const line of topLines) {
+    if (/CRDB|CROB/i.test(line.text)) bankName = 'CRDB';
+    if (/\bNMB\b/i.test(line.text) && !/TRANSFER|FT|TO|FROM/i.test(line.text)) bankName = 'NMB';
 
-  for (const item of topItems) {
-    if (/CRDB|CROB/i.test(item.text)) bankName = 'CRDB';
-    if (/NMB/i.test(item.text) && !/TRANSFER|FT|TO|FROM/i.test(item.text)) bankName = 'NMB';
-    const accMatch = item.text.match(/Account:\s*(\d+)/i);
+    const accMatch = line.text.match(/Account\s*:?\s*(\d+)/i);
     if (accMatch) accountNumber = accMatch[1];
-    if (item.text.includes('USD')) currency = 'USD';
-    if (item.text.includes('TZS')) currency = 'TZS';
+    if (/\bUSD\b/i.test(line.text)) currency = 'USD';
+    if (/\bTZS\b/i.test(line.text)) currency = 'TZS';
   }
 
   const detectedAccount = detectPaymentAccount(bankName, currency);
-  const cols = detectColumns(items);
+  const cols = detectColumns(lines);
 
   if (!cols) {
-    console.warn('Could not detect Debit/Credit column headers, falling back to heuristic parsing');
-    return fallbackParse(items, bankName, accountNumber, currency, detectedAccount);
+    return fallbackParse(lines, bankName, accountNumber, currency, detectedAccount);
   }
-
-  console.log('Detected columns:', { debitX: cols.debitX, creditX: cols.creditX, balanceX: cols.balanceX });
-
-  // Group items by y-coordinate into lines
-  const lineMap = new Map<number, TextItem[]>();
-  for (const item of items) {
-    const y = item.y;
-    // Group items within 3px of each other vertically
-    let foundY: number | null = null;
-    for (const existingY of lineMap.keys()) {
-      if (Math.abs(existingY - y) <= 3) {
-        foundY = existingY;
-        break;
-      }
-    }
-    const key = foundY ?? y;
-    if (!lineMap.has(key)) lineMap.set(key, []);
-    lineMap.get(key)!.push(item);
-  }
-
-  // Sort lines top-to-bottom
-  const sortedYs = [...lineMap.keys()].sort((a, b) => b - a);
-
-  const datePattern = /(\d{2}[./]\d{2}[./]\d{4})/;
-  const amountPattern = /^[\d,]+\.\d{2}$/;
 
   const transactions: ParsedTransaction[] = [];
   let currentDate: string | null = null;
@@ -173,36 +249,40 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
 
   const flushTransaction = () => {
     if (currentDate && hasAmount) {
-      const description = descParts.join(' ').replace(/\s+/g, ' ').trim().substring(0, 200) || 'Transaction';
       const amount = currentCredit > 0 ? currentCredit : -currentDebit;
       if (amount !== 0) {
         transactions.push({
           date: currentDate,
-          description,
+          description: cleanDescription(descParts.join(' ')),
           amount,
           paymentAccount: detectedAccount,
         });
       }
     }
+
     descParts = [];
     currentDebit = 0;
     currentCredit = 0;
     hasAmount = false;
   };
 
-  for (const y of sortedYs) {
-    const lineItems = lineMap.get(y)!.sort((a, b) => a.x - b.x);
-    const lineText = lineItems.map(i => i.text).join(' ');
+  for (const line of lines) {
+    if (
+      line.page === cols.page &&
+      line.y >= cols.headerY - LINE_Y_TOLERANCE &&
+      normalizeText(line.text).includes('debit')
+    ) {
+      continue;
+    }
 
-    // Skip header/footer lines
-    if (/^(Transaction Summary|Transaction Records|Page\s+\d|Posting Date|Date\s+Value|Opening Balance)/i.test(lineText)) continue;
+    if (/^(Transaction Summary|Transaction Records|Page\s+\d|Posting Date|Date\s+Value|Opening Balance)/i.test(line.text)) {
+      continue;
+    }
 
-    // Check if this line starts a new transaction (has a date)
-    const dateMatch = lineText.match(datePattern);
+    const dateMatch = line.text.match(DATE_PATTERN);
     if (dateMatch) {
       const parsed = parseDate(dateMatch[1]);
       if (parsed) {
-        // Flush previous transaction
         flushTransaction();
         currentDate = parsed;
       }
@@ -210,27 +290,28 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
 
     if (!currentDate) continue;
 
-    // Process each item on this line
-    for (const item of lineItems) {
-      if (amountPattern.test(item.text)) {
+    for (const item of line.items) {
+      if (AMOUNT_PATTERN.test(item.text)) {
         const classification = classifyAmount(item.x, cols);
-        const amt = parseAmount(item.text);
-        if (classification === 'debit') {
-          currentDebit = amt;
+        const amount = parseAmount(item.text);
+
+        if (classification === 'debit' && amount > 0) {
+          currentDebit = amount;
           hasAmount = true;
-        } else if (classification === 'credit') {
-          currentCredit = amt;
+        } else if (classification === 'credit' && amount > 0) {
+          currentCredit = amount;
           hasAmount = true;
         }
-        // Skip balance column values
-      } else if (!datePattern.test(item.text) && !/^\d{2}:\d{2}:\d{2}$/.test(item.text)) {
-        // It's a text item (description), not a date or time
-        descParts.push(item.text);
+        continue;
       }
+
+      if (DATE_PATTERN.test(item.text) || TIME_PATTERN.test(item.text)) continue;
+      if (item.x >= Math.min(cols.debitX, cols.creditX) - 12) continue;
+
+      descParts.push(item.text);
     }
   }
 
-  // Flush last transaction
   flushTransaction();
 
   return {
@@ -242,55 +323,40 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
   };
 }
 
-/** Fallback parser when column headers can't be detected */
 function fallbackParse(
-  items: TextItem[],
+  lines: LineItemGroup[],
   bankName: string,
   accountNumber: string,
   currency: string,
   detectedAccount: PaymentAccount
 ): ParsedStatement {
-  // Group into lines
-  const lineMap = new Map<number, TextItem[]>();
-  for (const item of items) {
-    let foundY: number | null = null;
-    for (const existingY of lineMap.keys()) {
-      if (Math.abs(existingY - item.y) <= 3) { foundY = existingY; break; }
-    }
-    const key = foundY ?? item.y;
-    if (!lineMap.has(key)) lineMap.set(key, []);
-    lineMap.get(key)!.push(item);
-  }
-
-  const sortedYs = [...lineMap.keys()].sort((a, b) => b - a);
-  const datePattern = /^(\d{2}[./]\d{2}[./]\d{4})/;
-  const amountPattern = /[\d,]+\.\d{2}/g;
   const transactions: ParsedTransaction[] = [];
-
   const rawTx: { date: string; fullText: string; amounts: number[] }[] = [];
 
   let i = 0;
-  const lines = sortedYs.map(y => {
-    const items2 = lineMap.get(y)!.sort((a, b) => a.x - b.x);
-    return items2.map(it => it.text).join(' ').trim();
-  });
-
   while (i < lines.length) {
-    const line = lines[i];
-    const dateMatch = line.match(datePattern);
-    if (!dateMatch) { i++; continue; }
+    const line = lines[i].text;
+    const dateMatch = line.match(DATE_PATTERN);
+    if (!dateMatch) {
+      i++;
+      continue;
+    }
+
     const parsedDate = parseDate(dateMatch[1]);
-    if (!parsedDate) { i++; continue; }
+    if (!parsedDate) {
+      i++;
+      continue;
+    }
 
     let fullText = line;
     let j = i + 1;
-    while (j < lines.length && !lines[j].match(datePattern)) {
-      if (/^(Transaction Summary|Transaction Records|Page|CRDB|CROB|Posting Date)/i.test(lines[j])) break;
-      fullText += ' ' + lines[j];
+    while (j < lines.length && !lines[j].text.match(DATE_PATTERN)) {
+      if (/^(Transaction Summary|Transaction Records|Page|CRDB|CROB|Posting Date)/i.test(lines[j].text)) break;
+      fullText += ` ${lines[j].text}`;
       j++;
     }
 
-    const amounts = [...fullText.matchAll(amountPattern)].map(m => parseAmount(m[0]));
+    const amounts = [...fullText.matchAll(/\d[\d,.]*[.,]\d{2}/g)].map((match) => parseAmount(match[0]));
     rawTx.push({ date: parsedDate, fullText, amounts });
     i = j;
   }
@@ -308,36 +374,41 @@ function fallbackParse(
       }
     }
 
-    const candidateAmounts = raw.amounts.slice(0, -1).filter(a => a > 0);
+    const candidateAmounts = raw.amounts.slice(0, -1).filter((amount) => amount > 0);
     let txAmount = 0;
+
     if (prevBalance !== null) {
       const diff = balance - prevBalance;
       const absDiff = Math.abs(diff);
       if (candidateAmounts.length > 0) {
-        const bestMatch = candidateAmounts.reduce((best, amt) =>
-          Math.abs(amt - absDiff) < Math.abs(best - absDiff) ? amt : best
+        const bestMatch = candidateAmounts.reduce((best, amount) =>
+          Math.abs(amount - absDiff) < Math.abs(best - absDiff) ? amount : best
         );
         txAmount = diff > 0 ? Math.abs(bestMatch) : -Math.abs(bestMatch);
       } else {
         txAmount = diff;
       }
     } else {
-      const isCredit = raw.fullText.match(/SIMAPP FT|SIMUSSD FT|ESB TIPS|AGENCY FT|DEPOSIT|MT103/i);
+      const isCredit = /SIMAPP FT|SIMUSSD FT|ESB TIPS|AGENCY FT|DEPOSIT|MT103/i.test(raw.fullText);
       const mainAmount = candidateAmounts.length > 0 ? Math.max(...candidateAmounts) : 0;
       txAmount = isCredit ? mainAmount : -mainAmount;
     }
 
     if (txAmount === 0) continue;
 
-    let description = raw.fullText
-      .replace(/^\d{2}[./]\d{2}[./]\d{4}\s*/g, '')
-      .replace(/[\d,]+\.\d{2}/g, '')
-      .replace(/\d{2}:\d{2}:\d{2}/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-    description = description.substring(0, 200) || 'Transaction';
+    const description = cleanDescription(
+      raw.fullText
+        .replace(/^\d{2}[./]\d{2}[./]\d{4}\s*/g, '')
+        .replace(/\d[\d,.]*[.,]\d{2}/g, '')
+        .replace(/\d{2}:\d{2}:\d{2}/g, '')
+    );
 
-    transactions.push({ date: raw.date, description, amount: txAmount, paymentAccount: detectedAccount });
+    transactions.push({
+      date: raw.date,
+      description,
+      amount: txAmount,
+      paymentAccount: detectedAccount,
+    });
   }
 
   return { bankName, accountNumber, currency, transactions, detectedAccount };
