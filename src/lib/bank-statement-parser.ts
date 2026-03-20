@@ -20,12 +20,12 @@ export interface ParsedStatement {
 
 interface TextItem {
   page: number;
-  x: number;
-  y: number;
+  row: number;  // vertical position (used for row grouping)
+  col: number;  // horizontal position (used for column classification)
   text: string;
 }
 
-const LINE_Y_TOLERANCE = 3;
+const LINE_TOLERANCE = 5;
 const DATE_PATTERN = /^(\d{2})[./](\d{2})[./](\d{4})$/;
 const AMOUNT_PATTERN = /^[\d,]+\.\d{2}$/;
 
@@ -41,8 +41,7 @@ function detectPaymentAccount(bankName: string, currency: string): PaymentAccoun
 
 function parseAmount(str: string): number {
   if (!str) return 0;
-  const cleaned = str.replace(/,/g, '');
-  const num = parseFloat(cleaned);
+  const num = parseFloat(str.replace(/,/g, ''));
   return Number.isFinite(num) ? num : 0;
 }
 
@@ -53,10 +52,34 @@ function parseDate(dateStr: string): string | null {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+/**
+ * Detect if the PDF uses rotated coordinates.
+ * In rotated PDFs, column headers (Debit, Credit) share the same x but differ in y.
+ * In normal PDFs, they share the same y but differ in x.
+ */
+function detectRotation(items: { x: number; y: number; text: string }[]): boolean {
+  const debitItems = items.filter(i => i.text.toLowerCase() === 'debit');
+  const creditItems = items.filter(i => i.text.toLowerCase() === 'credit');
+
+  if (debitItems.length === 0 || creditItems.length === 0) return false;
+
+  const d = debitItems[0];
+  const c = creditItems[0];
+
+  // If they share similar x but different y → rotated (y is horizontal)
+  // If they share similar y but different x → normal (x is horizontal)
+  const xDiff = Math.abs(d.x - c.x);
+  const yDiff = Math.abs(d.y - c.y);
+
+  return xDiff < 20 && yDiff > 50; // rotated: same x, spread y
+}
+
 async function extractTextItems(file: File): Promise<TextItem[]> {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  const allItems: TextItem[] = [];
+
+  // First pass: collect raw items to detect rotation
+  const rawItems: { page: number; x: number; y: number; text: string }[] = [];
 
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
     const page = await pdf.getPage(pageNumber);
@@ -64,7 +87,7 @@ async function extractTextItems(file: File): Promise<TextItem[]> {
 
     for (const item of textContent.items) {
       if (!('str' in item) || !item.str.trim()) continue;
-      allItems.push({
+      rawItems.push({
         page: pageNumber,
         x: Math.round(item.transform[4]),
         y: Math.round(item.transform[5]),
@@ -73,19 +96,28 @@ async function extractTextItems(file: File): Promise<TextItem[]> {
     }
   }
 
-  return allItems;
+  const isRotated = detectRotation(rawItems);
+
+  // Map to normalized coordinates
+  return rawItems.map(item => ({
+    page: item.page,
+    // For rotated PDFs: x=vertical(row), y=horizontal(col)
+    // For normal PDFs: y=vertical(row), x=horizontal(col)
+    row: isRotated ? item.x : item.y,
+    col: isRotated ? item.y : item.x,
+    text: item.text,
+  }));
 }
 
 interface LineGroup {
   page: number;
-  y: number;
+  row: number;
   items: TextItem[];
 }
 
 function groupItemsByLine(items: TextItem[]): LineGroup[] {
   const lines: LineGroup[] = [];
 
-  // Group by page first
   const byPage = new Map<number, TextItem[]>();
   for (const item of items) {
     if (!byPage.has(item.page)) byPage.set(item.page, []);
@@ -96,24 +128,24 @@ function groupItemsByLine(items: TextItem[]): LineGroup[] {
     const lineMap = new Map<number, TextItem[]>();
 
     for (const item of pageItems) {
-      let matchedY: number | null = null;
-      for (const existingY of lineMap.keys()) {
-        if (Math.abs(existingY - item.y) <= LINE_Y_TOLERANCE) {
-          matchedY = existingY;
+      let matchedRow: number | null = null;
+      for (const existingRow of lineMap.keys()) {
+        if (Math.abs(existingRow - item.row) <= LINE_TOLERANCE) {
+          matchedRow = existingRow;
           break;
         }
       }
-      const key = matchedY ?? item.y;
+      const key = matchedRow ?? item.row;
       if (!lineMap.has(key)) lineMap.set(key, []);
       lineMap.get(key)!.push(item);
     }
 
-    // Sort by Y descending (top of page first in PDF coordinates)
-    for (const [y, lineItems] of [...lineMap.entries()].sort((a, b) => b[0] - a[0])) {
+    // Sort rows: for normal PDFs y decreases top-to-bottom, for rotated x decreases top-to-bottom
+    for (const [row, lineItems] of [...lineMap.entries()].sort((a, b) => b[0] - a[0])) {
       lines.push({
         page,
-        y,
-        items: lineItems.sort((a, b) => a.x - b.x),
+        row,
+        items: lineItems.sort((a, b) => a.col - b.col),
       });
     }
   }
@@ -122,27 +154,21 @@ function groupItemsByLine(items: TextItem[]): LineGroup[] {
 }
 
 interface ColumnPositions {
-  detailsX: number;
-  debitX: number;
-  creditX: number;
+  debitCol: number;
+  creditCol: number;
 }
 
 function findColumnHeaders(lines: LineGroup[]): ColumnPositions | null {
   for (const line of lines) {
     const texts = line.items.map(i => i.text.toLowerCase());
-    const hasDebit = texts.includes('debit');
-    const hasCredit = texts.includes('credit');
-
-    if (hasDebit && hasCredit) {
-      const detailsItem = line.items.find(i => i.text.toLowerCase() === 'details');
+    if (texts.includes('debit') && texts.includes('credit')) {
       const debitItem = line.items.find(i => i.text.toLowerCase() === 'debit');
       const creditItem = line.items.find(i => i.text.toLowerCase() === 'credit');
 
       if (debitItem && creditItem) {
         return {
-          detailsX: detailsItem?.x ?? 0,
-          debitX: debitItem.x,
-          creditX: creditItem.x,
+          debitCol: debitItem.col,
+          creditCol: creditItem.col,
         };
       }
     }
@@ -150,12 +176,10 @@ function findColumnHeaders(lines: LineGroup[]): ColumnPositions | null {
   return null;
 }
 
-function classifyAmountColumn(itemX: number, cols: ColumnPositions): 'debit' | 'credit' | 'other' {
-  const distDebit = Math.abs(itemX - cols.debitX);
-  const distCredit = Math.abs(itemX - cols.creditX);
-
-  // The amount right-aligns under its header, so allow generous tolerance
-  const tolerance = 80;
+function classifyAmountColumn(itemCol: number, cols: ColumnPositions): 'debit' | 'credit' | 'other' {
+  const distDebit = Math.abs(itemCol - cols.debitCol);
+  const distCredit = Math.abs(itemCol - cols.creditCol);
+  const tolerance = 100;
 
   if (distDebit <= tolerance && distDebit < distCredit) return 'debit';
   if (distCredit <= tolerance && distCredit < distDebit) return 'credit';
@@ -187,11 +211,13 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
   const cols = findColumnHeaders(lines);
 
   if (!cols) {
+    console.warn('Bank statement parser: could not detect Debit/Credit column headers');
     return { bankName, accountNumber, currency, transactions: [], detectedAccount };
   }
 
   const transactions: ParsedTransaction[] = [];
   let currentDate: string | null = null;
+  const minAmountCol = Math.min(cols.debitCol, cols.creditCol);
 
   for (const line of lines) {
     const lineText = line.items.map(i => i.text).join(' ');
@@ -200,7 +226,7 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
     if (/Transaction Summary|Posting Date|Date\s+Reference/i.test(lineText)) continue;
     if (/^Page\s+\d/i.test(lineText)) continue;
 
-    // Check if this line starts with a date
+    // Check if this line has a date
     const firstItem = line.items[0];
     if (firstItem && DATE_PATTERN.test(firstItem.text)) {
       const parsed = parseDate(firstItem.text);
@@ -209,33 +235,30 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
 
     if (!currentDate) continue;
 
-    // Extract amounts from this line
+    // Extract amounts and description from this line
     let debitAmount = 0;
     let creditAmount = 0;
     const descParts: string[] = [];
 
     for (const item of line.items) {
-      // Skip date items
       if (DATE_PATTERN.test(item.text)) continue;
-      // Skip time items
       if (/^\d{2}:\d{2}:\d{2}$/.test(item.text)) continue;
 
       if (AMOUNT_PATTERN.test(item.text)) {
-        const col = classifyAmountColumn(item.x, cols);
+        const col = classifyAmountColumn(item.col, cols);
         const val = parseAmount(item.text);
         if (col === 'debit') debitAmount = val;
         else if (col === 'credit') creditAmount = val;
-        // 'other' amounts (like balance) are ignored
         continue;
       }
 
-      // Text that falls in the details area (before debit column)
-      if (item.x < Math.min(cols.debitX, cols.creditX) - 20) {
+      // Text in the details area (before amount columns)
+      if (item.col < minAmountCol - 20) {
         descParts.push(item.text);
       }
     }
 
-    // Only create a transaction if we have an actual debit or credit
+    // Only create transaction if we have a real debit or credit (skip 0.00 entries)
     if (debitAmount > 0 || creditAmount > 0) {
       const amount = creditAmount > 0 ? creditAmount : -debitAmount;
       const description = descParts.join(' ').replace(/\s+/g, ' ').trim() || 'Transaction';
