@@ -335,10 +335,30 @@ export const BankStatementImportDialog = ({
               </Select>
             </div>
 
+            <div className="flex items-center gap-3">
+              <Label className="whitespace-nowrap">Import Mode:</Label>
+              <Select
+                value={importMode}
+                onValueChange={(v: 'replace' | 'append') => setImportMode(v)}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="replace">Replace existing</SelectItem>
+                  <SelectItem value="append">Append to existing</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                New days will be created automatically. Existing days will have entries <strong>appended</strong>. Item labels default to "TRANSACTION".
+                {importMode === 'replace' ? (
+                  <>New days will be created automatically. Existing entries on imported days will be <strong>cleared and replaced</strong>. Item labels default to "TRANSACTION".</>
+                ) : (
+                  <>New days will be created automatically. Existing days will have entries <strong>appended</strong>. Item labels default to "TRANSACTION".</>
+                )}
               </AlertDescription>
             </Alert>
 
