@@ -164,11 +164,12 @@ export const BankStatementImportDialog = ({
       if (existingDay) {
         dayId = existingDay.id;
         if (importMode === 'replace') {
-          // Delete existing entries AND recalculate opening balances
+          // Delete only entries for the selected payment account, not all entries
           await supabase
             .from('real_time_entries')
             .delete()
-            .eq('day_id', dayId);
+            .eq('day_id', dayId)
+            .eq('payment_account', selectedAccount);
 
           const openingBalances = await calcOpeningBalances(dateStr);
           await supabase
