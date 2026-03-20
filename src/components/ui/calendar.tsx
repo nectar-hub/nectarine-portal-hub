@@ -1,9 +1,14 @@
 import * as React from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
-
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
@@ -13,22 +18,31 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
+  const [displayMonth, setDisplayMonth] = React.useState(
+    props.defaultMonth || (props as any).selected || new Date()
+  );
+
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+  ];
+
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
+
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      month={displayMonth}
+      onMonthChange={setDisplayMonth}
       className={cn("p-3", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
-        caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium",
-        nav: "space-x-1 flex items-center",
-        nav_button: cn(
-          buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
-        ),
-        nav_button_previous: "absolute left-1",
-        nav_button_next: "absolute right-1",
+        caption: "flex justify-center pt-1 relative items-center gap-1",
+        caption_label: "hidden",
+        caption_dropdowns: "flex items-center gap-1",
+        nav: "hidden",
         table: "w-full border-collapse space-y-1",
         head_row: "flex",
         head_cell:
@@ -52,8 +66,51 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
-        IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
+        CaptionLabel: () => null,
+        Caption: ({ displayMonth: dm }) => {
+          return (
+            <div className="flex items-center justify-center gap-1 pt-1">
+              <Select
+                value={dm.getMonth().toString()}
+                onValueChange={(val) => {
+                  const newDate = new Date(dm);
+                  newDate.setMonth(parseInt(val));
+                  setDisplayMonth(newDate);
+                }}
+              >
+                <SelectTrigger className="h-7 w-[110px] text-xs font-medium border-none shadow-none focus:ring-0 px-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="pointer-events-auto">
+                  {months.map((month, i) => (
+                    <SelectItem key={i} value={i.toString()} className="text-xs">
+                      {month}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={dm.getFullYear().toString()}
+                onValueChange={(val) => {
+                  const newDate = new Date(dm);
+                  newDate.setFullYear(parseInt(val));
+                  setDisplayMonth(newDate);
+                }}
+              >
+                <SelectTrigger className="h-7 w-[72px] text-xs font-medium border-none shadow-none focus:ring-0 px-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="pointer-events-auto">
+                  {years.map((year) => (
+                    <SelectItem key={year} value={year.toString()} className="text-xs">
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          );
+        },
       }}
       {...props}
     />
