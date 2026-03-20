@@ -437,7 +437,7 @@ export const BankStatementImportDialog = ({
           <div className="py-8 text-center space-y-4">
             <Check className="h-10 w-10 text-green-600 mx-auto" />
             <p className="font-medium text-lg">Import Complete!</p>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="p-3 bg-muted rounded-lg">
                 <p className="text-2xl font-bold text-green-600">{importResults.created}</p>
                 <p className="text-xs text-muted-foreground">Days Created</p>
@@ -445,6 +445,10 @@ export const BankStatementImportDialog = ({
               <div className="p-3 bg-muted rounded-lg">
                 <p className="text-2xl font-bold text-primary">{importResults.entries}</p>
                 <p className="text-xs text-muted-foreground">Entries Added</p>
+              </div>
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="text-2xl font-bold text-orange-600">{importResults.replaced}</p>
+                <p className="text-xs text-muted-foreground">Days Replaced</p>
               </div>
               <div className="p-3 bg-muted rounded-lg">
                 <p className="text-2xl font-bold text-muted-foreground">{importResults.appended}</p>
