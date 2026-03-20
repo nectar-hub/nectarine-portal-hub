@@ -58,8 +58,9 @@ export const BankStatementImportDialog = ({
     setSelectedAccount('CRDB');
     setIsParsing(false);
     setImportProgress({ current: 0, total: 0 });
-    setImportResults({ created: 0, appended: 0, entries: 0 });
+    setImportResults({ created: 0, appended: 0, replaced: 0, entries: 0 });
     setSelectedTransactions(new Set());
+    setImportMode('replace');
   }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
