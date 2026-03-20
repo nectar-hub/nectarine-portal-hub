@@ -18,15 +18,35 @@ export interface ParsedStatement {
   detectedAccount: PaymentAccount;
 }
 
-interface TextItem {
+interface RawTextItem {
   page: number;
-  row: number;  // vertical position (used for row grouping)
-  col: number;  // horizontal position (used for column classification)
+  x: number;
+  y: number;
   text: string;
 }
 
-const LINE_TOLERANCE = 5;
+interface TextItem {
+  page: number;
+  row: number;
+  col: number;
+  text: string;
+}
+
+interface LineGroup {
+  page: number;
+  row: number;
+  items: TextItem[];
+}
+
+interface ColumnPositions {
+  debitCol: number;
+  creditCol: number;
+}
+
+const LINE_TOLERANCE = 6;
 const DATE_PATTERN = /^(\d{2})[./](\d{2})[./](\d{4})$/;
+const DATE_INLINE_PATTERN = /(\d{2}[./]\d{2}[./]\d{4})/;
+const TIME_PATTERN = /^\d{2}:\d{2}:\d{2}$/;
 const AMOUNT_PATTERN = /^[\d,]+\.\d{2}$/;
 
 function detectPaymentAccount(bankName: string, currency: string): PaymentAccount {
@@ -40,9 +60,8 @@ function detectPaymentAccount(bankName: string, currency: string): PaymentAccoun
 }
 
 function parseAmount(str: string): number {
-  if (!str) return 0;
-  const num = parseFloat(str.replace(/,/g, ''));
-  return Number.isFinite(num) ? num : 0;
+  const value = parseFloat(str.replace(/,/g, ''));
+  return Number.isFinite(value) ? value : 0;
 }
 
 function parseDate(dateStr: string): string | null {
@@ -52,34 +71,35 @@ function parseDate(dateStr: string): string | null {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-/**
- * Detect if the PDF uses rotated coordinates.
- * In rotated PDFs, column headers (Debit, Credit) share the same x but differ in y.
- * In normal PDFs, they share the same y but differ in x.
- */
-function detectRotation(items: { x: number; y: number; text: string }[]): boolean {
-  const debitItems = items.filter(i => i.text.toLowerCase() === 'debit');
-  const creditItems = items.filter(i => i.text.toLowerCase() === 'credit');
+function normalizeWhitespace(value: string): string {
+  return value.replace(/\s+/g, ' ').trim();
+}
 
-  if (debitItems.length === 0 || creditItems.length === 0) return false;
+function cleanDescription(value: string): string {
+  return normalizeWhitespace(
+    value
+      .replace(/^details\s*/i, '')
+      .replace(/\bvalue date\b/gi, ' ')
+      .replace(/\bbook balance\b/gi, ' ')
+  ).substring(0, 200) || 'Transaction';
+}
 
-  const d = debitItems[0];
-  const c = creditItems[0];
+function detectRotation(items: RawTextItem[]): boolean {
+  const debitItem = items.find((item) => item.text.toLowerCase() === 'debit');
+  const creditItem = items.find((item) => item.text.toLowerCase() === 'credit');
 
-  // If they share similar x but different y → rotated (y is horizontal)
-  // If they share similar y but different x → normal (x is horizontal)
-  const xDiff = Math.abs(d.x - c.x);
-  const yDiff = Math.abs(d.y - c.y);
+  if (!debitItem || !creditItem) return false;
 
-  return xDiff < 20 && yDiff > 50; // rotated: same x, spread y
+  const xDiff = Math.abs(debitItem.x - creditItem.x);
+  const yDiff = Math.abs(debitItem.y - creditItem.y);
+
+  return xDiff < 20 && yDiff > 50;
 }
 
 async function extractTextItems(file: File): Promise<TextItem[]> {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-  // First pass: collect raw items to detect rotation
-  const rawItems: { page: number; x: number; y: number; text: string }[] = [];
+  const rawItems: RawTextItem[] = [];
 
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
     const page = await pdf.getPage(pageNumber);
@@ -98,33 +118,24 @@ async function extractTextItems(file: File): Promise<TextItem[]> {
 
   const isRotated = detectRotation(rawItems);
 
-  // Map to normalized coordinates
-  return rawItems.map(item => ({
+  return rawItems.map((item) => ({
     page: item.page,
-    // For rotated PDFs: x=vertical(row), y=horizontal(col)
-    // For normal PDFs: y=vertical(row), x=horizontal(col)
     row: isRotated ? item.x : item.y,
     col: isRotated ? item.y : item.x,
     text: item.text,
   }));
 }
 
-interface LineGroup {
-  page: number;
-  row: number;
-  items: TextItem[];
-}
-
 function groupItemsByLine(items: TextItem[]): LineGroup[] {
   const lines: LineGroup[] = [];
+  const itemsByPage = new Map<number, TextItem[]>();
 
-  const byPage = new Map<number, TextItem[]>();
   for (const item of items) {
-    if (!byPage.has(item.page)) byPage.set(item.page, []);
-    byPage.get(item.page)!.push(item);
+    if (!itemsByPage.has(item.page)) itemsByPage.set(item.page, []);
+    itemsByPage.get(item.page)!.push(item);
   }
 
-  for (const [page, pageItems] of [...byPage.entries()].sort((a, b) => a[0] - b[0])) {
+  for (const [page, pageItems] of [...itemsByPage.entries()].sort((a, b) => a[0] - b[0])) {
     const lineMap = new Map<number, TextItem[]>();
 
     for (const item of pageItems) {
@@ -135,12 +146,12 @@ function groupItemsByLine(items: TextItem[]): LineGroup[] {
           break;
         }
       }
-      const key = matchedRow ?? item.row;
-      if (!lineMap.has(key)) lineMap.set(key, []);
-      lineMap.get(key)!.push(item);
+
+      const rowKey = matchedRow ?? item.row;
+      if (!lineMap.has(rowKey)) lineMap.set(rowKey, []);
+      lineMap.get(rowKey)!.push(item);
     }
 
-    // Sort rows: for normal PDFs y decreases top-to-bottom, for rotated x decreases top-to-bottom
     for (const [row, lineItems] of [...lineMap.entries()].sort((a, b) => b[0] - a[0])) {
       lines.push({
         page,
@@ -153,124 +164,145 @@ function groupItemsByLine(items: TextItem[]): LineGroup[] {
   return lines;
 }
 
-interface ColumnPositions {
-  debitCol: number;
-  creditCol: number;
-}
-
-function findColumnHeaders(lines: LineGroup[]): ColumnPositions | null {
+function findColumnHeaders(items: TextItem[], lines: LineGroup[]): ColumnPositions | null {
   for (const line of lines) {
-    const texts = line.items.map(i => i.text.toLowerCase());
+    const texts = line.items.map((item) => item.text.toLowerCase());
     if (texts.includes('debit') && texts.includes('credit')) {
-      const debitItem = line.items.find(i => i.text.toLowerCase() === 'debit');
-      const creditItem = line.items.find(i => i.text.toLowerCase() === 'credit');
-
+      const debitItem = line.items.find((item) => item.text.toLowerCase() === 'debit');
+      const creditItem = line.items.find((item) => item.text.toLowerCase() === 'credit');
       if (debitItem && creditItem) {
-        return {
-          debitCol: debitItem.col,
-          creditCol: creditItem.col,
-        };
+        return { debitCol: debitItem.col, creditCol: creditItem.col };
       }
     }
   }
+
+  const debitItem = items.find((item) => item.text.toLowerCase() === 'debit');
+  const creditItem = items.find((item) => item.text.toLowerCase() === 'credit');
+  if (debitItem && creditItem) {
+    return { debitCol: debitItem.col, creditCol: creditItem.col };
+  }
+
   return null;
 }
 
 function classifyAmountColumn(itemCol: number, cols: ColumnPositions): 'debit' | 'credit' | 'other' {
-  const distDebit = Math.abs(itemCol - cols.debitCol);
-  const distCredit = Math.abs(itemCol - cols.creditCol);
-  const tolerance = 100;
+  const debitDistance = Math.abs(itemCol - cols.debitCol);
+  const creditDistance = Math.abs(itemCol - cols.creditCol);
+  const tolerance = 110;
 
-  if (distDebit <= tolerance && distDebit < distCredit) return 'debit';
-  if (distCredit <= tolerance && distCredit < distDebit) return 'credit';
-  if (distDebit <= tolerance) return 'debit';
-  if (distCredit <= tolerance) return 'credit';
+  if (debitDistance <= tolerance && debitDistance < creditDistance) return 'debit';
+  if (creditDistance <= tolerance && creditDistance < debitDistance) return 'credit';
+  if (debitDistance <= tolerance) return 'debit';
+  if (creditDistance <= tolerance) return 'credit';
   return 'other';
+}
+
+function extractDateFromLine(items: TextItem[]): string | null {
+  for (const item of items) {
+    if (DATE_PATTERN.test(item.text)) return parseDate(item.text);
+    const inlineMatch = item.text.match(DATE_INLINE_PATTERN);
+    if (inlineMatch) return parseDate(inlineMatch[1]);
+  }
+  return null;
+}
+
+function isHeaderOrSummaryLine(lineText: string): boolean {
+  return /transaction summary|posting date|book balance|available balance|summary of|total value for|account bank statement|^page\s+\d/i.test(
+    lineText
+  );
 }
 
 export async function parseBankStatement(file: File): Promise<ParsedStatement> {
   const items = await extractTextItems(file);
   const lines = groupItemsByLine(items);
 
-  // Detect bank info from top lines
   let bankName = 'CRDB';
   let accountNumber = '';
   let currency = 'TZS';
 
-  for (const line of lines.slice(0, 30)) {
-    const lineText = line.items.map(i => i.text).join(' ');
+  for (const line of lines.slice(0, 40)) {
+    const lineText = line.items.map((item) => item.text).join(' ');
     if (/CRDB|CROB/i.test(lineText)) bankName = 'CRDB';
     if (/\bNMB\b/i.test(lineText) && !/TRANSFER|FT|TO|FROM/i.test(lineText)) bankName = 'NMB';
-    const accMatch = lineText.match(/Account\s*:?\s*(\d+)/i);
-    if (accMatch) accountNumber = accMatch[1];
+    const accountMatch = lineText.match(/Account\s*:?\s*(\d+)/i);
+    if (accountMatch) accountNumber = accountMatch[1];
     if (/\bUSD\b/i.test(lineText)) currency = 'USD';
     if (/\bTZS\b/i.test(lineText)) currency = 'TZS';
   }
 
   const detectedAccount = detectPaymentAccount(bankName, currency);
-  const cols = findColumnHeaders(lines);
+  const columns = findColumnHeaders(items, lines);
 
-  if (!cols) {
-    console.warn('Bank statement parser: could not detect Debit/Credit column headers');
+  if (!columns) {
+    console.warn('Bank statement parser: could not detect Debit/Credit columns');
     return { bankName, accountNumber, currency, transactions: [], detectedAccount };
   }
 
+  const minAmountCol = Math.min(columns.debitCol, columns.creditCol);
   const transactions: ParsedTransaction[] = [];
-  let currentDate: string | null = null;
-  const minAmountCol = Math.min(cols.debitCol, cols.creditCol);
+  let pendingTransaction: ParsedTransaction | null = null;
+
+  const flushPendingTransaction = () => {
+    if (!pendingTransaction) return;
+    pendingTransaction.description = cleanDescription(pendingTransaction.description);
+    transactions.push(pendingTransaction);
+    pendingTransaction = null;
+  };
 
   for (const line of lines) {
-    const lineText = line.items.map(i => i.text).join(' ');
+    const lineText = normalizeWhitespace(line.items.map((item) => item.text).join(' '));
+    if (!lineText || isHeaderOrSummaryLine(lineText)) continue;
 
-    // Skip header/summary lines
-    if (/Transaction Summary|Posting Date|Date\s+Reference/i.test(lineText)) continue;
-    if (/^Page\s+\d/i.test(lineText)) continue;
-
-    // Check if this line has a date
-    const firstItem = line.items[0];
-    if (firstItem && DATE_PATTERN.test(firstItem.text)) {
-      const parsed = parseDate(firstItem.text);
-      if (parsed) currentDate = parsed;
-    }
-
-    if (!currentDate) continue;
-
-    // Extract amounts and description from this line
+    const lineDate = extractDateFromLine(line.items);
     let debitAmount = 0;
     let creditAmount = 0;
-    const descParts: string[] = [];
+    const descriptionParts: string[] = [];
 
     for (const item of line.items) {
-      if (DATE_PATTERN.test(item.text)) continue;
-      if (/^\d{2}:\d{2}:\d{2}$/.test(item.text)) continue;
+      if (TIME_PATTERN.test(item.text)) continue;
 
       if (AMOUNT_PATTERN.test(item.text)) {
-        const col = classifyAmountColumn(item.col, cols);
-        const val = parseAmount(item.text);
-        if (col === 'debit') debitAmount = val;
-        else if (col === 'credit') creditAmount = val;
+        const amountType = classifyAmountColumn(item.col, columns);
+        const amount = parseAmount(item.text);
+        if (amountType === 'debit') debitAmount = amount;
+        if (amountType === 'credit') creditAmount = amount;
         continue;
       }
 
-      // Text in the details area (before amount columns)
+      if (DATE_PATTERN.test(item.text)) continue;
+      if (item.text.match(DATE_INLINE_PATTERN) && item.col < minAmountCol - 20) continue;
+
       if (item.col < minAmountCol - 20) {
-        descParts.push(item.text);
+        descriptionParts.push(item.text);
       }
     }
 
-    // Only create transaction if we have a real debit or credit (skip 0.00 entries)
-    if (debitAmount > 0 || creditAmount > 0) {
-      const amount = creditAmount > 0 ? creditAmount : -debitAmount;
-      const description = descParts.join(' ').replace(/\s+/g, ' ').trim() || 'Transaction';
+    const hasAmount = debitAmount > 0 || creditAmount > 0;
+    const descriptionText = cleanDescription(descriptionParts.join(' '));
 
-      transactions.push({
-        date: currentDate,
-        description: description.substring(0, 200),
-        amount,
+    if (lineDate && hasAmount) {
+      flushPendingTransaction();
+      pendingTransaction = {
+        date: lineDate,
+        description: descriptionText,
+        amount: creditAmount > 0 ? creditAmount : -debitAmount,
         paymentAccount: detectedAccount,
-      });
+      };
+      continue;
+    }
+
+    if (!lineDate && !hasAmount && pendingTransaction && descriptionText !== 'Transaction') {
+      pendingTransaction.description = cleanDescription(`${pendingTransaction.description} ${descriptionText}`);
     }
   }
 
-  return { bankName, accountNumber, currency, transactions, detectedAccount };
+  flushPendingTransaction();
+
+  return {
+    bankName,
+    accountNumber,
+    currency,
+    transactions,
+    detectedAccount,
+  };
 }
