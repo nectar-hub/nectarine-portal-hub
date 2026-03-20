@@ -122,54 +122,66 @@ export const BankStatementImportDialog = ({
 
       let dayId: string;
 
+      // Helper to calculate opening balances from previous day's closing
+      const calcOpeningBalances = async (beforeDate: string) => {
+        const { data: prevDay } = await supabase
+          .from('real_time_days')
+          .select('*')
+          .lt('op_date', beforeDate)
+          .order('op_date', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!prevDay) {
+          return {
+            opening_cash: 0,
+            opening_nmb_card: 0,
+            opening_mpesa_271: 0,
+            opening_crdb: 0,
+            opening_crdb_usd: 0,
+          };
+        }
+
+        const { data: prevEntries } = await supabase
+          .from('real_time_entries')
+          .select('payment_account, amount')
+          .eq('day_id', prevDay.id);
+
+        const sumByAccount = (account: string) =>
+          (prevEntries || [])
+            .filter((e) => e.payment_account === account)
+            .reduce((s, e) => s + safeNum(e.amount), 0);
+
+        return {
+          opening_cash: safeNum(prevDay.opening_cash) + sumByAccount('CASH'),
+          opening_nmb_card: safeNum(prevDay.opening_nmb_card) + sumByAccount('NMB_CARD'),
+          opening_mpesa_271: safeNum(prevDay.opening_mpesa_271) + sumByAccount('MPESA_271'),
+          opening_crdb: safeNum(prevDay.opening_crdb) + sumByAccount('CRDB'),
+          opening_crdb_usd: safeNum(prevDay.opening_crdb_usd) + sumByAccount('CRDB_USD'),
+        };
+      };
+
       if (existingDay) {
         dayId = existingDay.id;
         if (importMode === 'replace') {
+          // Delete existing entries AND recalculate opening balances
           await supabase
             .from('real_time_entries')
             .delete()
             .eq('day_id', dayId);
+
+          const openingBalances = await calcOpeningBalances(dateStr);
+          await supabase
+            .from('real_time_days')
+            .update(openingBalances)
+            .eq('id', dayId);
+
           replaced++;
         } else {
           appended++;
         }
       } else {
-        // Find the most recent previous day to copy closing balances as opening
-        const { data: prevDay } = await supabase
-          .from('real_time_days')
-          .select('*')
-          .lt('op_date', dateStr)
-          .order('op_date', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        let openingBalances = {
-          opening_cash: 0,
-          opening_nmb_card: 0,
-          opening_mpesa_271: 0,
-          opening_crdb: 0,
-          opening_crdb_usd: 0,
-        };
-
-        if (prevDay) {
-          const { data: prevEntries } = await supabase
-            .from('real_time_entries')
-            .select('payment_account, amount')
-            .eq('day_id', prevDay.id);
-
-          const sumByAccount = (account: string) =>
-            (prevEntries || [])
-              .filter((e) => e.payment_account === account)
-              .reduce((s, e) => s + safeNum(e.amount), 0);
-
-          openingBalances = {
-            opening_cash: safeNum(prevDay.opening_cash) + sumByAccount('CASH'),
-            opening_nmb_card: safeNum(prevDay.opening_nmb_card) + sumByAccount('NMB_CARD'),
-            opening_mpesa_271: safeNum(prevDay.opening_mpesa_271) + sumByAccount('MPESA_271'),
-            opening_crdb: safeNum(prevDay.opening_crdb) + sumByAccount('CRDB'),
-            opening_crdb_usd: safeNum(prevDay.opening_crdb_usd) + sumByAccount('CRDB_USD'),
-          };
-        }
+        const openingBalances = await calcOpeningBalances(dateStr);
 
         const { data: newDay, error: dayError } = await supabase
           .from('real_time_days')
