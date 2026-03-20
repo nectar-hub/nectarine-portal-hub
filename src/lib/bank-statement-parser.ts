@@ -16,6 +16,8 @@ export interface ParsedStatement {
   currency: string;
   transactions: ParsedTransaction[];
   detectedAccount: PaymentAccount;
+  statementClosingBalance: number | null;
+  statementOpeningBalance: number | null;
 }
 
 interface RawTextItem {
@@ -82,6 +84,11 @@ function cleanDescription(value: string): string {
       .replace(/\bvalue date\b/gi, ' ')
       .replace(/\bbook balance\b/gi, ' ')
   ).substring(0, 200) || 'Transaction';
+}
+
+function extractSummaryAmount(lineText: string, label: RegExp): number | null {
+  const match = lineText.match(label);
+  return match ? parseAmount(match[1]) : null;
 }
 
 function detectRotation(items: RawTextItem[]): boolean {
@@ -219,6 +226,9 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
   let bankName = 'CRDB';
   let accountNumber = '';
   let currency = 'TZS';
+  let statementClosingBalance: number | null = null;
+  let totalCredits: number | null = null;
+  let totalDebits: number | null = null;
 
   for (const line of lines.slice(0, 40)) {
     const lineText = line.items.map((item) => item.text).join(' ');
@@ -228,14 +238,34 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
     if (accountMatch) accountNumber = accountMatch[1];
     if (/\bUSD\b/i.test(lineText)) currency = 'USD';
     if (/\bTZS\b/i.test(lineText)) currency = 'TZS';
+
+    statementClosingBalance ??=
+      extractSummaryAmount(lineText, /Available Balance\s*:?\s*([\d,]+\.\d{2})/i) ??
+      extractSummaryAmount(lineText, /Summary of Book Balance(?:\s+as\s+at\s+[^:]+)?\s*:?\s*([\d,]+\.\d{2})/i) ??
+      extractSummaryAmount(lineText, /Summary of Cleared Balance(?:\s+as\s+at\s+[^:]+)?\s*:?\s*([\d,]+\.\d{2})/i);
+
+    totalCredits ??= extractSummaryAmount(lineText, /Total Value for Credit\s*:?\s*([\d,]+\.\d{2})/i);
+    totalDebits ??= extractSummaryAmount(lineText, /Total Value for Debit\s*:?\s*([\d,]+\.\d{2})/i);
   }
 
   const detectedAccount = detectPaymentAccount(bankName, currency);
+  const statementOpeningBalance =
+    statementClosingBalance !== null && totalCredits !== null && totalDebits !== null
+      ? statementClosingBalance - (totalCredits - totalDebits)
+      : null;
   const columns = findColumnHeaders(items, lines);
 
   if (!columns) {
     console.warn('Bank statement parser: could not detect Debit/Credit columns');
-    return { bankName, accountNumber, currency, transactions: [], detectedAccount };
+    return {
+      bankName,
+      accountNumber,
+      currency,
+      transactions: [],
+      detectedAccount,
+      statementClosingBalance,
+      statementOpeningBalance,
+    };
   }
 
   const minAmountCol = Math.min(columns.debitCol, columns.creditCol);
@@ -304,5 +334,7 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
     currency,
     transactions,
     detectedAccount,
+    statementClosingBalance,
+    statementOpeningBalance,
   };
 }

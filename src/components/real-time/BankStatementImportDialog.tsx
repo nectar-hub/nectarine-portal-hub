@@ -43,6 +43,14 @@ export const BankStatementImportDialog = ({
   onOpenChange,
   onImportComplete,
 }: BankStatementImportDialogProps) => {
+  const emptyOpeningBalances = {
+    opening_cash: 0,
+    opening_nmb_card: 0,
+    opening_mpesa_271: 0,
+    opening_crdb: 0,
+    opening_crdb_usd: 0,
+  };
+
   const [step, setStep] = useState<'upload' | 'preview' | 'importing' | 'done'>('upload');
   const [parsedData, setParsedData] = useState<ParsedStatement | null>(null);
   const [selectedAccount, setSelectedAccount] = useState<PaymentAccount>('CRDB');
@@ -104,6 +112,7 @@ export const BankStatementImportDialog = ({
     }
 
     const dates = [...byDate.keys()].sort();
+    const statementStartDate = [...new Set(parsedData.transactions.map((tx) => tx.date))].sort()[0] ?? null;
     setImportProgress({ current: 0, total: dates.length });
 
     let created = 0, appended = 0, replaced = 0, totalEntries = 0;
@@ -133,13 +142,22 @@ export const BankStatementImportDialog = ({
           .maybeSingle();
 
         if (!prevDay) {
-          return {
-            opening_cash: 0,
-            opening_nmb_card: 0,
-            opening_mpesa_271: 0,
-            opening_crdb: 0,
-            opening_crdb_usd: 0,
-          };
+          if (
+            parsedData.statementOpeningBalance !== null &&
+            statementStartDate &&
+            beforeDate === statementStartDate
+          ) {
+            return {
+              ...emptyOpeningBalances,
+              opening_cash: selectedAccount === 'CASH' ? parsedData.statementOpeningBalance : 0,
+              opening_nmb_card: selectedAccount === 'NMB_CARD' ? parsedData.statementOpeningBalance : 0,
+              opening_mpesa_271: selectedAccount === 'MPESA_271' ? parsedData.statementOpeningBalance : 0,
+              opening_crdb: selectedAccount === 'CRDB' ? parsedData.statementOpeningBalance : 0,
+              opening_crdb_usd: selectedAccount === 'CRDB_USD' ? parsedData.statementOpeningBalance : 0,
+            };
+          }
+
+          return emptyOpeningBalances;
         }
 
         const { data: prevEntries } = await supabase
@@ -328,6 +346,23 @@ export const BankStatementImportDialog = ({
                 <p className="font-semibold">{Object.keys(transactionsByDate).length}</p>
               </div>
             </div>
+
+            {parsedData.statementClosingBalance !== null && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-muted rounded-lg text-center">
+                  <p className="text-sm text-muted-foreground">Statement opening</p>
+                  <p className="font-semibold">
+                    {parsedData.statementOpeningBalance?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? '—'}
+                  </p>
+                </div>
+                <div className="p-3 bg-muted rounded-lg text-center">
+                  <p className="text-sm text-muted-foreground">Statement closing</p>
+                  <p className="font-semibold">
+                    {parsedData.statementClosingBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="flex items-center gap-3">
               <Label className="whitespace-nowrap">Payment Account:</Label>

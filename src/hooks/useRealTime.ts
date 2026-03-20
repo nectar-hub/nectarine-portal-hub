@@ -125,18 +125,57 @@ export const useRealTime = () => {
     };
   }, [entries, currentDay]);
 
+  const getCarryForwardBalances = useCallback(async (beforeDate: string) => {
+    const emptyBalances = {
+      opening_cash: 0,
+      opening_nmb_card: 0,
+      opening_mpesa_271: 0,
+      opening_crdb: 0,
+      opening_crdb_usd: 0,
+    };
+
+    const { data: prevDay, error: prevError } = await supabase
+      .from('real_time_days')
+      .select('*')
+      .lt('op_date', beforeDate)
+      .order('op_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (prevError) throw prevError;
+    if (!prevDay) return emptyBalances;
+
+    const { data: prevEntries, error: entriesError } = await supabase
+      .from('real_time_entries')
+      .select('payment_account, amount')
+      .eq('day_id', prevDay.id);
+
+    if (entriesError) throw entriesError;
+
+    const sumByAccount = (account: PaymentAccount) =>
+      (prevEntries || [])
+        .filter((entry) => entry.payment_account === account)
+        .reduce((sum, entry) => sum + safeNum(entry.amount), 0);
+
+    return {
+      opening_cash: safeNum(prevDay.opening_cash) + sumByAccount('CASH'),
+      opening_nmb_card: safeNum(prevDay.opening_nmb_card) + sumByAccount('NMB_CARD'),
+      opening_mpesa_271: safeNum(prevDay.opening_mpesa_271) + sumByAccount('MPESA_271'),
+      opening_crdb: safeNum(prevDay.opening_crdb) + sumByAccount('CRDB'),
+      opening_crdb_usd: safeNum(prevDay.opening_crdb_usd) + sumByAccount('CRDB_USD'),
+    };
+  }, []);
+
   // Create new day
   const createDayMutation = useMutation({
     mutationFn: async () => {
+      const openingBalances = await getCarryForwardBalances(dateStr);
+
       const { data, error } = await supabase
         .from('real_time_days')
         .insert({
           op_date: dateStr,
-          opening_cash: 0,
-          opening_nmb_card: 0,
-          opening_mpesa_271: 0,
-          opening_crdb: 0,
-          opening_crdb_usd: 0,
+          ...openingBalances,
         })
         .select()
         .single();
@@ -156,49 +195,27 @@ export const useRealTime = () => {
   // Copy previous day closing balances
   const copyPreviousDayMutation = useMutation({
     mutationFn: async () => {
-      // Find the most recent day before selected date
-      const { data: prevDay, error: prevError } = await supabase
-        .from('real_time_days')
-        .select('*')
-        .lt('op_date', dateStr)
-        .order('op_date', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const carryForwardBalances = await getCarryForwardBalances(dateStr);
 
-      if (prevError) throw prevError;
-      if (!prevDay) throw new Error('No previous day found');
+      const hasPreviousDay = Object.values(carryForwardBalances).some((value) => safeNum(value) !== 0);
+      if (!hasPreviousDay) {
+        const { data: prevDay, error: prevError } = await supabase
+          .from('real_time_days')
+          .select('id')
+          .lt('op_date', dateStr)
+          .order('op_date', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      // Get previous day entries to calculate closing balances
-      const { data: prevEntries, error: entriesError } = await supabase
-        .from('real_time_entries')
-        .select('*')
-        .eq('day_id', prevDay.id);
-
-      if (entriesError) throw entriesError;
-
-      // Calculate closing balances
-      const closingCash = safeNum(prevDay.opening_cash) +
-        (prevEntries || []).filter(e => e.payment_account === 'CASH').reduce((s, e) => s + safeNum(e.amount), 0);
-      const closingNmbCard = safeNum(prevDay.opening_nmb_card) +
-        (prevEntries || []).filter(e => e.payment_account === 'NMB_CARD').reduce((s, e) => s + safeNum(e.amount), 0);
-      const closingMpesa271 = safeNum(prevDay.opening_mpesa_271) +
-        (prevEntries || []).filter(e => e.payment_account === 'MPESA_271').reduce((s, e) => s + safeNum(e.amount), 0);
-      const closingCrdb = safeNum(prevDay.opening_crdb) +
-        (prevEntries || []).filter(e => e.payment_account === 'CRDB').reduce((s, e) => s + safeNum(e.amount), 0);
-      const closingCrdbUsd = safeNum(prevDay.opening_crdb_usd) +
-        (prevEntries || []).filter(e => e.payment_account === 'CRDB_USD').reduce((s, e) => s + safeNum(e.amount), 0);
+        if (prevError) throw prevError;
+        if (!prevDay) throw new Error('No previous day found');
+      }
 
       if (currentDay) {
         // Update existing day
         const { error } = await supabase
           .from('real_time_days')
-          .update({
-            opening_cash: closingCash,
-            opening_nmb_card: closingNmbCard,
-            opening_mpesa_271: closingMpesa271,
-            opening_crdb: closingCrdb,
-            opening_crdb_usd: closingCrdbUsd,
-          })
+          .update(carryForwardBalances)
           .eq('id', currentDay.id);
 
         if (error) throw error;
@@ -208,11 +225,7 @@ export const useRealTime = () => {
           .from('real_time_days')
           .insert({
             op_date: dateStr,
-            opening_cash: closingCash,
-            opening_nmb_card: closingNmbCard,
-            opening_mpesa_271: closingMpesa271,
-            opening_crdb: closingCrdb,
-            opening_crdb_usd: closingCrdbUsd,
+            ...carryForwardBalances,
           });
 
         if (error) throw error;
