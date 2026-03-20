@@ -329,7 +329,7 @@ export const BankStatementImportDialog = ({
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                Existing days will be <strong>skipped</strong>. Item labels are set to "TRANSACTION" — edit them manually after import.
+                New days will be created automatically. Existing days will have entries <strong>appended</strong>. Item labels default to "TRANSACTION".
               </AlertDescription>
             </Alert>
 
