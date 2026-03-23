@@ -127,7 +127,7 @@ const ShippingAddress = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex justify-between items-center">
-                      <span>{getCountryLabel(addr.country)} Shipping Address</span>
+                      <span>{getDisplayLabel(addr)} Shipping Address</span>
                       <Button
                         variant="outline"
                         size="sm"
