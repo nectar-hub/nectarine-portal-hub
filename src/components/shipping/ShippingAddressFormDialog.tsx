@@ -93,6 +93,10 @@ const ShippingAddressFormDialog = ({ open, onOpenChange, address }: Props) => {
             <Input id="country" value={country} onChange={e => setCountry(e.target.value)} placeholder="e.g. usa, uk, china" required />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="label">Label (optional)</Label>
+            <Input id="label" value={label} onChange={e => setLabel(e.target.value)} placeholder="e.g. USA - Air Cargo, USA - Sea Cargo" />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="ref">Reference Code</Label>
             <Input id="ref" value={referenceCode} onChange={e => setReferenceCode(e.target.value)} placeholder="e.g. Nectarine Your Name" required />
           </div>
