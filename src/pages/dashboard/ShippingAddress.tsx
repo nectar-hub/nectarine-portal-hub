@@ -41,7 +41,7 @@ const ShippingAddress = () => {
 
           const { data: addressData, error: addressError } = await supabase
             .from('shipping_addresses')
-            .select('id, country, reference_code, address, instructions, created_at')
+            .select('id, country, label, reference_code, address, instructions, created_at')
             .in('id', addressIds)
             .order('country');
 
