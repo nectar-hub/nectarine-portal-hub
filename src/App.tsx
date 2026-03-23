@@ -159,7 +159,7 @@ const App = () => (
               path="/admin/shipping-addresses"
               element={
                 <MainLayout requireAuth adminOnly>
-                  <ShippingAddress />
+                  <ShippingAddresses />
                 </MainLayout>
               }
             />
