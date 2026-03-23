@@ -50,6 +50,7 @@ const ShippingAddressFormDialog = ({ open, onOpenChange, address }: Props) => {
         reference_code: referenceCode.trim(),
         address: addressText.trim(),
         instructions: instructions.trim() || null,
+        sort_order: parseInt(sortOrder) || 0,
       };
 
       if (address) {
