@@ -25,6 +25,7 @@ export type ShippingAddressRow = {
   address: string;
   reference_code: string;
   instructions: string | null;
+  sort_order: number;
   created_at: string;
 };
 
