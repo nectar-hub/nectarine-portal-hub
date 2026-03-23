@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import Index from "./pages/Index";
+import ShippingAddresses from "./pages/admin/ShippingAddresses";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
@@ -158,7 +159,7 @@ const App = () => (
               path="/admin/shipping-addresses"
               element={
                 <MainLayout requireAuth adminOnly>
-                  <ShippingAddress />
+                  <ShippingAddresses />
                 </MainLayout>
               }
             />
