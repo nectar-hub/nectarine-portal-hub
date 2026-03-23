@@ -43,6 +43,7 @@ const ShippingAddresses = () => {
       const { data, error } = await supabase
         .from('shipping_addresses')
         .select('*')
+        .order('sort_order')
         .order('country');
       if (error) throw error;
       return data as ShippingAddressRow[];
