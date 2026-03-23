@@ -25,6 +25,7 @@ export type ShippingAddressRow = {
   address: string;
   reference_code: string;
   instructions: string | null;
+  sort_order: number;
   created_at: string;
 };
 
@@ -42,6 +43,7 @@ const ShippingAddresses = () => {
       const { data, error } = await supabase
         .from('shipping_addresses')
         .select('*')
+        .order('sort_order')
         .order('country');
       if (error) throw error;
       return data as ShippingAddressRow[];
@@ -126,6 +128,7 @@ const ShippingAddresses = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[60px]">Order</TableHead>
                       <TableHead>Country</TableHead>
                       <TableHead>Label</TableHead>
                       <TableHead>Reference Code</TableHead>
@@ -137,6 +140,7 @@ const ShippingAddresses = () => {
                   <TableBody>
                     {filtered.map((addr) => (
                       <TableRow key={addr.id}>
+                        <TableCell className="text-muted-foreground">{addr.sort_order}</TableCell>
                         <TableCell className="font-medium capitalize">{addr.country}</TableCell>
                         <TableCell>{addr.label || '—'}</TableCell>
                         <TableCell>{addr.reference_code}</TableCell>

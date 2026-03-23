@@ -21,6 +21,7 @@ const ShippingAddressFormDialog = ({ open, onOpenChange, address }: Props) => {
   const [referenceCode, setReferenceCode] = useState('');
   const [addressText, setAddressText] = useState('');
   const [instructions, setInstructions] = useState('');
+  const [sortOrder, setSortOrder] = useState('0');
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -30,12 +31,14 @@ const ShippingAddressFormDialog = ({ open, onOpenChange, address }: Props) => {
       setReferenceCode(address.reference_code);
       setAddressText(address.address);
       setInstructions(address.instructions || '');
+      setSortOrder(String(address.sort_order ?? 0));
     } else {
       setCountry('');
       setLabel('');
       setReferenceCode('');
       setAddressText('');
       setInstructions('');
+      setSortOrder('0');
     }
   }, [address, open]);
 
@@ -47,6 +50,7 @@ const ShippingAddressFormDialog = ({ open, onOpenChange, address }: Props) => {
         reference_code: referenceCode.trim(),
         address: addressText.trim(),
         instructions: instructions.trim() || null,
+        sort_order: parseInt(sortOrder) || 0,
       };
 
       if (address) {
@@ -103,6 +107,10 @@ const ShippingAddressFormDialog = ({ open, onOpenChange, address }: Props) => {
           <div className="space-y-2">
             <Label htmlFor="addr">Address</Label>
             <Textarea id="addr" value={addressText} onChange={e => setAddressText(e.target.value)} rows={4} placeholder="Full warehouse address" required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="sort">Display Order</Label>
+            <Input id="sort" type="number" value={sortOrder} onChange={e => setSortOrder(e.target.value)} placeholder="0 = first" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="instr">Instructions (optional)</Label>

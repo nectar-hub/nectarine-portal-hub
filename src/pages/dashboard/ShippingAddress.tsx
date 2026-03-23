@@ -43,6 +43,7 @@ const ShippingAddress = () => {
             .from('shipping_addresses')
             .select('id, country, label, reference_code, address, instructions, created_at')
             .in('id', addressIds)
+            .order('sort_order')
             .order('country');
 
           if (addressError) throw addressError;

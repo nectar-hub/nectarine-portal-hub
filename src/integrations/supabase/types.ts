@@ -1146,6 +1146,7 @@ export type Database = {
           instructions: string | null
           label: string | null
           reference_code: string
+          sort_order: number
         }
         Insert: {
           address: string
@@ -1156,6 +1157,7 @@ export type Database = {
           instructions?: string | null
           label?: string | null
           reference_code: string
+          sort_order?: number
         }
         Update: {
           address?: string
@@ -1166,6 +1168,7 @@ export type Database = {
           instructions?: string | null
           label?: string | null
           reference_code?: string
+          sort_order?: number
         }
         Relationships: []
       }
