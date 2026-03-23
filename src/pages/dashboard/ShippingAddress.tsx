@@ -117,7 +117,7 @@ const ShippingAddress = () => {
             <TabsList className={`grid mb-6`} style={{ gridTemplateColumns: `repeat(${Math.min(addresses.length, 4)}, 1fr)` }}>
               {addresses.map((addr) => (
                 <TabsTrigger key={addr.id} value={addr.id}>
-                  {getCountryLabel(addr.country)}
+                  {getDisplayLabel(addr)}
                 </TabsTrigger>
               ))}
             </TabsList>
