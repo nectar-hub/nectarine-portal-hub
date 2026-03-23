@@ -1139,6 +1139,7 @@ export type Database = {
       shipping_addresses: {
         Row: {
           address: string
+          auto_assign_new_users: boolean
           country: string
           created_at: string
           id: string
@@ -1147,6 +1148,7 @@ export type Database = {
         }
         Insert: {
           address: string
+          auto_assign_new_users?: boolean
           country: string
           created_at?: string
           id?: string
@@ -1155,6 +1157,7 @@ export type Database = {
         }
         Update: {
           address?: string
+          auto_assign_new_users?: boolean
           country?: string
           created_at?: string
           id?: string
