@@ -17,6 +17,7 @@ interface Props {
 
 const ShippingAddressFormDialog = ({ open, onOpenChange, address }: Props) => {
   const [country, setCountry] = useState('');
+  const [label, setLabel] = useState('');
   const [referenceCode, setReferenceCode] = useState('');
   const [addressText, setAddressText] = useState('');
   const [instructions, setInstructions] = useState('');
@@ -25,11 +26,13 @@ const ShippingAddressFormDialog = ({ open, onOpenChange, address }: Props) => {
   useEffect(() => {
     if (address) {
       setCountry(address.country);
+      setLabel(address.label || '');
       setReferenceCode(address.reference_code);
       setAddressText(address.address);
       setInstructions(address.instructions || '');
     } else {
       setCountry('');
+      setLabel('');
       setReferenceCode('');
       setAddressText('');
       setInstructions('');
