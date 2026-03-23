@@ -83,6 +83,10 @@ const ShippingAddress = () => {
     return map[country.toLowerCase()] || country;
   };
 
+  const getDisplayLabel = (addr: ShippingAddressData) => {
+    return addr.label || getCountryLabel(addr.country);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
