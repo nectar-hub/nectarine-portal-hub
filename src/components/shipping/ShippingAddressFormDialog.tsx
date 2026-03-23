@@ -43,6 +43,7 @@ const ShippingAddressFormDialog = ({ open, onOpenChange, address }: Props) => {
     mutationFn: async () => {
       const payload = {
         country: country.trim(),
+        label: label.trim() || null,
         reference_code: referenceCode.trim(),
         address: addressText.trim(),
         instructions: instructions.trim() || null,
