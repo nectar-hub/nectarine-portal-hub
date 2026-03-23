@@ -1,0 +1,1 @@
+ALTER TABLE public.shipping_addresses ADD COLUMN label text;

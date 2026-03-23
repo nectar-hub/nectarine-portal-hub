@@ -1144,6 +1144,7 @@ export type Database = {
           created_at: string
           id: string
           instructions: string | null
+          label: string | null
           reference_code: string
         }
         Insert: {
@@ -1153,6 +1154,7 @@ export type Database = {
           created_at?: string
           id?: string
           instructions?: string | null
+          label?: string | null
           reference_code: string
         }
         Update: {
@@ -1162,6 +1164,7 @@ export type Database = {
           created_at?: string
           id?: string
           instructions?: string | null
+          label?: string | null
           reference_code?: string
         }
         Relationships: []
