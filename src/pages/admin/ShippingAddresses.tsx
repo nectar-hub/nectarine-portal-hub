@@ -128,6 +128,7 @@ const ShippingAddresses = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[60px]">Order</TableHead>
                       <TableHead>Country</TableHead>
                       <TableHead>Label</TableHead>
                       <TableHead>Reference Code</TableHead>
