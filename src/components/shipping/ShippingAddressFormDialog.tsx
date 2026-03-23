@@ -31,12 +31,14 @@ const ShippingAddressFormDialog = ({ open, onOpenChange, address }: Props) => {
       setReferenceCode(address.reference_code);
       setAddressText(address.address);
       setInstructions(address.instructions || '');
+      setSortOrder(String(address.sort_order ?? 0));
     } else {
       setCountry('');
       setLabel('');
       setReferenceCode('');
       setAddressText('');
       setInstructions('');
+      setSortOrder('0');
     }
   }, [address, open]);
 
