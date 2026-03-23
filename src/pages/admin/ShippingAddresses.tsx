@@ -127,6 +127,7 @@ const ShippingAddresses = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Country</TableHead>
+                      <TableHead>Label</TableHead>
                       <TableHead>Reference Code</TableHead>
                       <TableHead>Address</TableHead>
                       <TableHead>Instructions</TableHead>
