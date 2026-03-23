@@ -109,6 +109,10 @@ const ShippingAddressFormDialog = ({ open, onOpenChange, address }: Props) => {
             <Textarea id="addr" value={addressText} onChange={e => setAddressText(e.target.value)} rows={4} placeholder="Full warehouse address" required />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="sort">Display Order</Label>
+            <Input id="sort" type="number" value={sortOrder} onChange={e => setSortOrder(e.target.value)} placeholder="0 = first" />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="instr">Instructions (optional)</Label>
             <Textarea id="instr" value={instructions} onChange={e => setInstructions(e.target.value)} rows={3} placeholder="Special instructions for this address" />
           </div>

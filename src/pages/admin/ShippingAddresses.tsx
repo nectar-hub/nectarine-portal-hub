@@ -140,6 +140,7 @@ const ShippingAddresses = () => {
                   <TableBody>
                     {filtered.map((addr) => (
                       <TableRow key={addr.id}>
+                        <TableCell className="text-muted-foreground">{addr.sort_order}</TableCell>
                         <TableCell className="font-medium capitalize">{addr.country}</TableCell>
                         <TableCell>{addr.label || '—'}</TableCell>
                         <TableCell>{addr.reference_code}</TableCell>
