@@ -6,34 +6,22 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Copy } from "lucide-react";
+import { Copy, MapPin } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-type ShippingAddress = {
+type ShippingAddressData = {
   id: string;
   country: string;
-  countryName: string;
   reference_code: string;
   address: string;
-  address_parts: {
-    addressLine1: string;
-    addressLine2: string;
-    city: string;
-    state: string;
-    zipCode: string;
-  };
-  phone: string;
   instructions: string | null;
   created_at: string;
-  shipping_method?: "air" | "sea";
-  shipping_mark?: string;
 };
 
 const ShippingAddress = () => {
   const { user } = useAuth();
-  const [shippingAddresses, setShippingAddresses] = useState<ShippingAddress[]>([]);
+  const [addresses, setAddresses] = useState<ShippingAddressData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [shippingMethod, setShippingMethod] = useState<"air" | "sea">("air");
 
   useEffect(() => {
     const fetchShippingAddresses = async () => {
@@ -44,47 +32,20 @@ const ShippingAddress = () => {
           .from('user_shipping_addresses')
           .select('address_id')
           .eq('user_id', user.id);
-        
-        if (userAddressError) {
-          throw userAddressError;
-        }
-        
+
+        if (userAddressError) throw userAddressError;
+
         if (userAddressData && userAddressData.length > 0) {
           const addressIds = userAddressData.map(item => item.address_id);
-          
+
           const { data: addressData, error: addressError } = await supabase
             .from('shipping_addresses')
-            .select(`
-              id, 
-              country, 
-              reference_code, 
-              address, 
-              instructions,
-              created_at
-            `)
-            .in('id', addressIds);
-            
-          if (addressError) {
-            throw addressError;
-          }
+            .select('id, country, reference_code, address, instructions, created_at')
+            .in('id', addressIds)
+            .order('country');
 
-          if (addressData) {
-            // Transform and enhance the data
-            const enhancedData: ShippingAddress[] = addressData.map(address => {
-              // Parse the address to get individual components
-              // In a real app, these would be separate fields in the database
-              const addressParts = parseAddress(address.address, address.country);
-              
-              return {
-                ...address,
-                countryName: getCountryName(address.country),
-                address_parts: addressParts,
-                phone: getCountryPhone(address.country) // Add default phone based on country
-              };
-            });
-            
-            setShippingAddresses(enhancedData);
-          }
+          if (addressError) throw addressError;
+          if (addressData) setAddresses(addressData);
         }
       } catch (error) {
         console.error('Error fetching shipping addresses:', error);
@@ -101,40 +62,6 @@ const ShippingAddress = () => {
     fetchShippingAddresses();
   }, [user]);
 
-  // Helper function to parse the address string into components
-  const parseAddress = (address: string, country: string) => {
-    // In a real app, you would parse this properly or have separate fields
-    // This is just a placeholder implementation
-    const lines = address.split(',');
-    return {
-      addressLine1: lines[0]?.trim() || '',
-      addressLine2: lines[1]?.trim() || '',
-      city: lines[2]?.trim() || '',
-      state: lines[3]?.trim() || '',
-      zipCode: lines[4]?.trim() || ''
-    };
-  };
-
-  // Helper function to get country name from code
-  const getCountryName = (code: string) => {
-    const countries = {
-      'usa': 'United States',
-      'uk': 'United Kingdom',
-      'china': 'China',
-    };
-    return countries[code as keyof typeof countries] || code;
-  };
-
-  // Helper function to get default phone based on country
-  const getCountryPhone = (code: string) => {
-    const phones = {
-      'usa': '+1 631 353 7275',
-      'uk': '+44(0)7724334014',
-      'china': '+8613392784790', // Updated China phone number
-    };
-    return phones[code as keyof typeof phones] || '+1 (000) 000-0000';
-  };
-
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
@@ -143,101 +70,17 @@ const ShippingAddress = () => {
     });
   };
 
-  const formatAddress = (address: ShippingAddress) => {
-    // Special case for China - different formats for air vs sea
-    if (address.country === "china") {
-      if (shippingMethod === "air") {
-        return `${address.shipping_mark || ""}
-
-广东省广州市越秀区 梓元岗1号尚峰电商直播基地负一楼0042-1
-+8613392784790
-
-SHIPPING MARK
-BY AIR CARGO
-NAME: Nectarine Your Name
-PHONE: 0687029104
-DAR ES SALAAM`;
-      } else {
-        return `${address.shipping_mark || ""}
-
-广州市白云区石门街石沙路石井工业四横路2号约尼克仓库海运B栋110房 
-[Nectarine Your Name 0744484271]
-(18122014351,18122423551,18127901961)
-
-SHIPPING MARK
-BY SEA CARGO
-NAME: Nectarine Your Name
-Phone 0744484271
-Dar es Salaaam`;
-      }
-    }
-    
-    // Regular format for other countries
-    const parts = address.address_parts;
-    return `Nectarine Your Name\n${parts.addressLine1}\n${parts.addressLine2}\n${parts.city}${
-      parts.state ? `, ${parts.state}` : ""
-    } ${parts.zipCode}\n${address.countryName}`;
+  const formatCopyText = (addr: ShippingAddressData) => {
+    return `${addr.reference_code}\n${addr.address}\n${addr.country}`;
   };
 
-  // Fallback mock data for development
-  const mockAddresses: ShippingAddress[] = [
-    {
-      id: "usa-id",
-      country: "usa",
-      countryName: "United States",
-      reference_code: "Nectarine Your Name",
-      address: "17401 Nichols LN Unit J, , Huntington Beach, CA, 92647",
-      address_parts: {
-        addressLine1: "17401 Nichols LN",
-        addressLine2: "Unit J",
-        city: "Huntington Beach",
-        state: "CA",
-        zipCode: "92647"
-      },
-      phone: "+1 631 353 7275",
-      instructions: null,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: "uk-id",
-      country: "uk",
-      countryName: "United Kingdom",
-      reference_code: "Nectarine Your Name",
-      address: "Safe Store Ltd, 11 Bilton Road, Bletchley, Milton Keynes, MK1 1HW",
-      address_parts: {
-        addressLine1: "Safe Store Ltd",
-        addressLine2: "11 Bilton Road",
-        city: "Bletchley",
-        state: "Milton Keynes",
-        zipCode: "MK1 1HW"
-      },
-      phone: "+44(0)7724334014",
-      instructions: null,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: "china-id",
-      country: "china",
-      countryName: "China",
-      reference_code: "Nectarine Your Name",
-      address: "广东省广州市越秀区 梓元岗1号尚峰电商直播基地负一楼0042-1",
-      address_parts: {
-        addressLine1: "广东省广州市越秀区",
-        addressLine2: "梓元岗1号尚峰电商直播基地负一楼0042-1",
-        city: "广州市",
-        state: "",
-        zipCode: ""
-      },
-      phone: "+8613392784790",
-      instructions: null,
-      created_at: new Date().toISOString(),
-      shipping_method: "air",
-      shipping_mark: "BY AIR CARGO"
-    }
-  ];
-
-  // Use mock data if no addresses found from the database
-  const displayAddresses = shippingAddresses.length > 0 ? shippingAddresses : mockAddresses;
+  const getCountryLabel = (country: string) => {
+    const map: Record<string, string> = {
+      usa: "United States", uk: "United Kingdom", china: "China",
+      uae: "UAE", tanzania: "Tanzania",
+    };
+    return map[country.toLowerCase()] || country;
+  };
 
   return (
     <DashboardLayout>
@@ -252,141 +95,80 @@ Dar es Salaaam`;
 
         {loading ? (
           <div className="flex justify-center p-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-nectarine-500"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
           </div>
+        ) : addresses.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <MapPin className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold">No Shipping Addresses Assigned</h3>
+              <p className="text-muted-foreground mt-1 max-w-md">
+                You don't have any shipping addresses assigned yet. Please contact support to get your warehouse addresses set up.
+              </p>
+            </CardContent>
+          </Card>
         ) : (
-          <Tabs defaultValue={displayAddresses[0]?.country || "usa"} className="w-full">
-            <TabsList className="grid grid-cols-3 mb-6">
-              {displayAddresses.map((address) => (
-                <TabsTrigger key={address.id} value={address.country}>
-                  {address.countryName}
+          <Tabs defaultValue={addresses[0]?.id} className="w-full">
+            <TabsList className={`grid mb-6`} style={{ gridTemplateColumns: `repeat(${Math.min(addresses.length, 4)}, 1fr)` }}>
+              {addresses.map((addr) => (
+                <TabsTrigger key={addr.id} value={addr.id}>
+                  {getCountryLabel(addr.country)}
                 </TabsTrigger>
               ))}
             </TabsList>
 
-            {displayAddresses.map((address) => (
-              <TabsContent key={address.id} value={address.country} className="mt-0">
+            {addresses.map((addr) => (
+              <TabsContent key={addr.id} value={addr.id} className="mt-0">
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex justify-between items-center">
-                      <span>{address.countryName} Shipping Address</span>
+                      <span>{getCountryLabel(addr.country)} Shipping Address</span>
                       <Button
                         variant="outline"
                         size="sm"
                         className="flex items-center gap-1"
-                        onClick={() => copyToClipboard(formatAddress(address))}
+                        onClick={() => copyToClipboard(formatCopyText(addr))}
                       >
                         <Copy className="h-4 w-4" />
                         <span>Copy</span>
                       </Button>
                     </CardTitle>
                     <CardDescription>
-                      Use this address when shopping online in {address.countryName}
+                      Use this address when shopping online in {getCountryLabel(addr.country)}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {address.country === "china" && (
-                      <div className="mb-4">
-                        <div className="flex justify-center space-x-2 mb-4">
-                          <Button
-                            variant={shippingMethod === "air" ? "default" : "outline"}
-                            onClick={() => setShippingMethod("air")}
-                            className="w-32"
-                          >
-                            By Air
-                          </Button>
-                          <Button
-                            variant={shippingMethod === "sea" ? "default" : "outline"}
-                            onClick={() => setShippingMethod("sea")}
-                            className="w-32"
-                          >
-                            By Sea
-                          </Button>
+                    <div className="bg-muted p-4 rounded-md font-mono text-sm whitespace-pre-wrap">
+                      <div className="grid gap-2">
+                        <div>
+                          <span className="text-muted-foreground">Reference:</span>{" "}
+                          <span className="font-semibold">{addr.reference_code}</span>
                         </div>
+                        <div>
+                          <span className="text-muted-foreground">Address:</span>{" "}
+                          <span className="whitespace-pre-line">{addr.address}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Country:</span>{" "}
+                          {getCountryLabel(addr.country)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {addr.instructions && (
+                      <div className="mt-6 bg-yellow-50 text-yellow-800 p-4 rounded-md border border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-200 dark:border-yellow-800">
+                        <h4 className="font-semibold mb-2">Important Instructions</h4>
+                        <p className="whitespace-pre-line">{addr.instructions}</p>
                       </div>
                     )}
 
-                    <div className="bg-muted p-4 rounded-md font-mono text-sm whitespace-pre-wrap">
-                      {address.country === "china" ? (
-                        <>
-                          {shippingMethod === "air" ? (
-                            <div>
-                              <div className="font-semibold mb-2">BY AIR CARGO</div>
-                              <div className="mb-3">
-                                广东省广州市越秀区 梓元岗1号尚峰电商直播基地负一楼0042-1<br />
-                                +8613392784790
-                              </div>
-                              <div className="text-muted-foreground mt-3 mb-1">SHIPPING MARK</div>
-                              <div>
-                                BY AIR CARGO<br />
-                                NAME: {address.reference_code}<br />
-                                PHONE: 0687029104<br />
-                                DAR ES SALAAM
-                              </div>
-                            </div>
-                          ) : (
-                            <div>
-                              <div className="font-semibold mb-2">BY SEA CARGO</div>
-                              <div className="mb-3">
-                                广州市白云区石门街石沙路石井工业四横路2号约尼克仓库海运B栋110房<br /> 
-                                [{address.reference_code} 0744484271]<br />
-                                (18122014351,18122423551,18127901961)
-                              </div>
-                              <div className="text-muted-foreground mt-3 mb-1">SHIPPING MARK</div>
-                              <div>
-                                BY SEA CARGO<br />
-                                NAME: {address.reference_code}<br />
-                                Phone 0744484271<br />
-                                Dar es Salaaam
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="grid gap-2">
-                          <div>
-                            <span className="text-muted-foreground">Reference:</span>{" "}
-                            <span className="font-semibold">{address.reference_code}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Address Line 1:</span>{" "}
-                            {address.address_parts.addressLine1}
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Address Line 2:</span>{" "}
-                            {address.address_parts.addressLine2}
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">City:</span> {address.address_parts.city}
-                          </div>
-                          {address.address_parts.state && (
-                            <div>
-                              <span className="text-muted-foreground">State/Province:</span>{" "}
-                              {address.address_parts.state}
-                            </div>
-                          )}
-                          <div>
-                            <span className="text-muted-foreground">Postal/ZIP Code:</span>{" "}
-                            {address.address_parts.zipCode}
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Country:</span> {address.countryName}
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Phone:</span> {address.phone}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-6 bg-yellow-50 text-yellow-800 p-4 rounded-md border border-yellow-200">
-                      <h4 className="font-semibold mb-2">Important Instructions</h4>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li>Always include your unique reference code: <strong>{address.reference_code}</strong></li>
+                    <div className="mt-4 bg-muted/50 p-4 rounded-md border">
+                      <h4 className="font-semibold mb-2">General Guidelines</h4>
+                      <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                        <li>Always include your unique reference code: <strong className="text-foreground">{addr.reference_code}</strong></li>
                         <li>Submit a "Self Purchase Notification" form after ordering to help us identify your package</li>
                         <li>Please forward any tracking information you receive</li>
                         <li>We cannot accept food, liquid, or prohibited items</li>
-                        {address.instructions && <li>{address.instructions}</li>}
                       </ul>
                     </div>
                   </CardContent>
