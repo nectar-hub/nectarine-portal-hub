@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 type ShippingAddressData = {
   id: string;
   country: string;
+  label: string | null;
   reference_code: string;
   address: string;
   instructions: string | null;
