@@ -1,0 +1,1 @@
+ALTER TABLE public.shipping_addresses DROP CONSTRAINT shipping_addresses_reference_code_key;
