@@ -21,6 +21,7 @@ const ShippingAddressFormDialog = ({ open, onOpenChange, address }: Props) => {
   const [referenceCode, setReferenceCode] = useState('');
   const [addressText, setAddressText] = useState('');
   const [instructions, setInstructions] = useState('');
+  const [sortOrder, setSortOrder] = useState('0');
   const queryClient = useQueryClient();
 
   useEffect(() => {
