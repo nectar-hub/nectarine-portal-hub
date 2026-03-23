@@ -21,6 +21,7 @@ import AssignUsersDialog from '@/components/shipping/AssignUsersDialog';
 export type ShippingAddressRow = {
   id: string;
   country: string;
+  label: string | null;
   address: string;
   reference_code: string;
   instructions: string | null;
