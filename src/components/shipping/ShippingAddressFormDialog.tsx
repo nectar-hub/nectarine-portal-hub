@@ -17,6 +17,7 @@ interface Props {
 
 const ShippingAddressFormDialog = ({ open, onOpenChange, address }: Props) => {
   const [country, setCountry] = useState('');
+  const [label, setLabel] = useState('');
   const [referenceCode, setReferenceCode] = useState('');
   const [addressText, setAddressText] = useState('');
   const [instructions, setInstructions] = useState('');
@@ -25,11 +26,13 @@ const ShippingAddressFormDialog = ({ open, onOpenChange, address }: Props) => {
   useEffect(() => {
     if (address) {
       setCountry(address.country);
+      setLabel(address.label || '');
       setReferenceCode(address.reference_code);
       setAddressText(address.address);
       setInstructions(address.instructions || '');
     } else {
       setCountry('');
+      setLabel('');
       setReferenceCode('');
       setAddressText('');
       setInstructions('');
@@ -40,6 +43,7 @@ const ShippingAddressFormDialog = ({ open, onOpenChange, address }: Props) => {
     mutationFn: async () => {
       const payload = {
         country: country.trim(),
+        label: label.trim() || null,
         reference_code: referenceCode.trim(),
         address: addressText.trim(),
         instructions: instructions.trim() || null,
@@ -87,6 +91,10 @@ const ShippingAddressFormDialog = ({ open, onOpenChange, address }: Props) => {
           <div className="space-y-2">
             <Label htmlFor="country">Country</Label>
             <Input id="country" value={country} onChange={e => setCountry(e.target.value)} placeholder="e.g. usa, uk, china" required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="label">Label (optional)</Label>
+            <Input id="label" value={label} onChange={e => setLabel(e.target.value)} placeholder="e.g. USA - Air Cargo, USA - Sea Cargo" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="ref">Reference Code</Label>

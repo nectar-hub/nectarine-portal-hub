@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 type ShippingAddressData = {
   id: string;
   country: string;
+  label: string | null;
   reference_code: string;
   address: string;
   instructions: string | null;
@@ -40,7 +41,7 @@ const ShippingAddress = () => {
 
           const { data: addressData, error: addressError } = await supabase
             .from('shipping_addresses')
-            .select('id, country, reference_code, address, instructions, created_at')
+            .select('id, country, label, reference_code, address, instructions, created_at')
             .in('id', addressIds)
             .order('country');
 
@@ -82,6 +83,10 @@ const ShippingAddress = () => {
     return map[country.toLowerCase()] || country;
   };
 
+  const getDisplayLabel = (addr: ShippingAddressData) => {
+    return addr.label || getCountryLabel(addr.country);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -112,7 +117,7 @@ const ShippingAddress = () => {
             <TabsList className={`grid mb-6`} style={{ gridTemplateColumns: `repeat(${Math.min(addresses.length, 4)}, 1fr)` }}>
               {addresses.map((addr) => (
                 <TabsTrigger key={addr.id} value={addr.id}>
-                  {getCountryLabel(addr.country)}
+                  {getDisplayLabel(addr)}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -122,7 +127,7 @@ const ShippingAddress = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex justify-between items-center">
-                      <span>{getCountryLabel(addr.country)} Shipping Address</span>
+                      <span>{getDisplayLabel(addr)} Shipping Address</span>
                       <Button
                         variant="outline"
                         size="sm"
@@ -134,7 +139,7 @@ const ShippingAddress = () => {
                       </Button>
                     </CardTitle>
                     <CardDescription>
-                      Use this address when shopping online in {getCountryLabel(addr.country)}
+                      Use this address when shopping online — {getDisplayLabel(addr)}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>

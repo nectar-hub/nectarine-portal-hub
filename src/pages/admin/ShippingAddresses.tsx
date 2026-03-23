@@ -21,6 +21,7 @@ import AssignUsersDialog from '@/components/shipping/AssignUsersDialog';
 export type ShippingAddressRow = {
   id: string;
   country: string;
+  label: string | null;
   address: string;
   reference_code: string;
   instructions: string | null;
@@ -126,6 +127,7 @@ const ShippingAddresses = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Country</TableHead>
+                      <TableHead>Label</TableHead>
                       <TableHead>Reference Code</TableHead>
                       <TableHead>Address</TableHead>
                       <TableHead>Instructions</TableHead>
@@ -136,6 +138,7 @@ const ShippingAddresses = () => {
                     {filtered.map((addr) => (
                       <TableRow key={addr.id}>
                         <TableCell className="font-medium capitalize">{addr.country}</TableCell>
+                        <TableCell>{addr.label || '—'}</TableCell>
                         <TableCell>{addr.reference_code}</TableCell>
                         <TableCell className="max-w-xs truncate">{addr.address}</TableCell>
                         <TableCell className="max-w-xs truncate">{addr.instructions || '—'}</TableCell>
