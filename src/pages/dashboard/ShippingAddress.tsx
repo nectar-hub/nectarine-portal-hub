@@ -139,7 +139,7 @@ const ShippingAddress = () => {
                       </Button>
                     </CardTitle>
                     <CardDescription>
-                      Use this address when shopping online in {getCountryLabel(addr.country)}
+                      Use this address when shopping online — {getDisplayLabel(addr)}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
