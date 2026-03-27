@@ -113,79 +113,122 @@ const ShippingAddress = () => {
               </p>
             </CardContent>
           </Card>
-        ) : (
-          <Tabs defaultValue={addresses[0]?.id} className="w-full">
-            <TabsList className={`grid mb-6`} style={{ gridTemplateColumns: `repeat(${Math.min(addresses.length, 4)}, 1fr)` }}>
-              {addresses.map((addr) => (
-                <TabsTrigger key={addr.id} value={addr.id}>
-                  {getDisplayLabel(addr)}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+        ) : (() => {
+          // Group addresses by country
+          const grouped = addresses.reduce<Record<string, ShippingAddressData[]>>((acc, addr) => {
+            const key = addr.country.toLowerCase();
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(addr);
+            return acc;
+          }, {});
 
-            {addresses.map((addr) => (
-              <TabsContent key={addr.id} value={addr.id} className="mt-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex justify-between items-center">
-                      <span>{getDisplayLabel(addr)} Shipping Address</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center gap-1"
-                        onClick={() => copyToClipboard(formatCopyText(addr))}
-                      >
-                        <Copy className="h-4 w-4" />
-                        <span>Copy</span>
-                      </Button>
-                    </CardTitle>
-                    <CardDescription>
-                      Use this address when shopping online — {getDisplayLabel(addr)}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="bg-muted p-4 rounded-md font-mono text-sm whitespace-pre-wrap">
-                      <div className="grid gap-2">
-                        <div>
-                          <span className="text-muted-foreground">Reference:</span>{" "}
-                          <span className="font-semibold">{addr.reference_code}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Address:</span>{" "}
-                          <span className="whitespace-pre-line">{addr.address}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Country:</span>{" "}
-                          {getCountryLabel(addr.country)}
-                        </div>
-                      </div>
-                    </div>
+          const countryKeys = Object.keys(grouped);
 
-                    {addr.instructions && (
-                      <div className="mt-6 bg-yellow-50 text-yellow-800 p-4 rounded-md border border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-200 dark:border-yellow-800">
-                        <h4 className="font-semibold mb-2">Important Instructions</h4>
-                        <p className="whitespace-pre-line">{addr.instructions}</p>
-                      </div>
+          return (
+            <Tabs defaultValue={countryKeys[0]} className="w-full">
+              <TabsList className="grid mb-6" style={{ gridTemplateColumns: `repeat(${Math.min(countryKeys.length, 4)}, 1fr)` }}>
+                {countryKeys.map((key) => (
+                  <TabsTrigger key={key} value={key}>
+                    {getCountryLabel(key)}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              {countryKeys.map((key) => {
+                const countryAddresses = grouped[key];
+                return (
+                  <TabsContent key={key} value={key} className="mt-0">
+                    {countryAddresses.length === 1 ? (
+                      <AddressCard addr={countryAddresses[0]} copyToClipboard={copyToClipboard} formatCopyText={formatCopyText} getCountryLabel={getCountryLabel} getDisplayLabel={getDisplayLabel} />
+                    ) : (
+                      <Tabs defaultValue={countryAddresses[0].id} className="w-full">
+                        <TabsList className="grid mb-4" style={{ gridTemplateColumns: `repeat(${countryAddresses.length}, 1fr)` }}>
+                          {countryAddresses.map((addr) => (
+                            <TabsTrigger key={addr.id} value={addr.id}>
+                              {addr.label || 'Address'}
+                            </TabsTrigger>
+                          ))}
+                        </TabsList>
+                        {countryAddresses.map((addr) => (
+                          <TabsContent key={addr.id} value={addr.id} className="mt-0">
+                            <AddressCard addr={addr} copyToClipboard={copyToClipboard} formatCopyText={formatCopyText} getCountryLabel={getCountryLabel} getDisplayLabel={getDisplayLabel} />
+                          </TabsContent>
+                        ))}
+                      </Tabs>
                     )}
-
-                    <div className="mt-4 bg-muted/50 p-4 rounded-md border">
-                      <h4 className="font-semibold mb-2">General Guidelines</h4>
-                      <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-                        <li>Always include your unique reference code: <strong className="text-foreground">{addr.reference_code}</strong></li>
-                        <li>Submit a "Self Purchase Notification" form after ordering to help us identify your package</li>
-                        <li>Please forward any tracking information you receive</li>
-                        <li>We cannot accept food, liquid, or prohibited items</li>
-                      </ul>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            ))}
-          </Tabs>
-        )}
+                  </TabsContent>
+                );
+              })}
+            </Tabs>
+          );
+        })()}
       </div>
     </DashboardLayout>
   );
 };
+
+// Extracted address card component
+const AddressCard = ({ addr, copyToClipboard, formatCopyText, getCountryLabel, getDisplayLabel }: {
+  addr: ShippingAddressData;
+  copyToClipboard: (text: string) => void;
+  formatCopyText: (addr: ShippingAddressData) => string;
+  getCountryLabel: (country: string) => string;
+  getDisplayLabel: (addr: ShippingAddressData) => string;
+}) => (
+  <Card>
+    <CardHeader>
+      <CardTitle className="flex justify-between items-center">
+        <span>{getDisplayLabel(addr)} Shipping Address</span>
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-1"
+          onClick={() => copyToClipboard(formatCopyText(addr))}
+        >
+          <Copy className="h-4 w-4" />
+          <span>Copy</span>
+        </Button>
+      </CardTitle>
+      <CardDescription>
+        Use this address when shopping online — {getDisplayLabel(addr)}
+      </CardDescription>
+    </CardHeader>
+    <CardContent>
+      <div className="bg-muted p-4 rounded-md font-mono text-sm whitespace-pre-wrap">
+        <div className="grid gap-2">
+          <div>
+            <span className="text-muted-foreground">Reference:</span>{" "}
+            <span className="font-semibold">{addr.reference_code}</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Address:</span>{" "}
+            <span className="whitespace-pre-line">{addr.address}</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Country:</span>{" "}
+            {getCountryLabel(addr.country)}
+          </div>
+        </div>
+      </div>
+
+      {addr.instructions && (
+        <div className="mt-6 bg-yellow-50 text-yellow-800 p-4 rounded-md border border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-200 dark:border-yellow-800">
+          <h4 className="font-semibold mb-2">Important Instructions</h4>
+          <p className="whitespace-pre-line">{addr.instructions}</p>
+        </div>
+      )}
+
+      <div className="mt-4 bg-muted/50 p-4 rounded-md border">
+        <h4 className="font-semibold mb-2">General Guidelines</h4>
+        <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+          <li>Always include your unique reference code: <strong className="text-foreground">{addr.reference_code}</strong></li>
+          <li>Submit a "Self Purchase Notification" form after ordering to help us identify your package</li>
+          <li>Please forward any tracking information you receive</li>
+          <li>We cannot accept food, liquid, or prohibited items</li>
+        </ul>
+      </div>
+    </CardContent>
+  </Card>
+);
 
 export default ShippingAddress;
