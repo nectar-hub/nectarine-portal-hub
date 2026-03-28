@@ -195,21 +195,19 @@ export const useRealTime = () => {
   // Copy previous day closing balances
   const copyPreviousDayMutation = useMutation({
     mutationFn: async () => {
+      // First check if a previous day exists at all
+      const { data: prevDay, error: prevError } = await supabase
+        .from('real_time_days')
+        .select('id')
+        .lt('op_date', dateStr)
+        .order('op_date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (prevError) throw prevError;
+      if (!prevDay) throw new Error('No previous day found to copy from');
+
       const carryForwardBalances = await getCarryForwardBalances(dateStr);
-
-      const hasPreviousDay = Object.values(carryForwardBalances).some((value) => safeNum(value) !== 0);
-      if (!hasPreviousDay) {
-        const { data: prevDay, error: prevError } = await supabase
-          .from('real_time_days')
-          .select('id')
-          .lt('op_date', dateStr)
-          .order('op_date', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (prevError) throw prevError;
-        if (!prevDay) throw new Error('No previous day found');
-      }
 
       if (currentDay) {
         // Update existing day
