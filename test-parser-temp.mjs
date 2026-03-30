@@ -1,11 +1,6 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import fs from 'fs';
-
-// Set worker BEFORE importing the parser module
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/tmp/pdf.worker.min.mjs';
-
-// Now dynamically patch the parser's import - since it re-sets workerSrc,
-// we need to override after. Let's just copy+run the logic inline.
 
 const LINE_TOLERANCE = 6;
 const DATE_PATTERN = /^(\d{2})[./](\d{2})[./](\d{4})$/;
@@ -103,7 +98,7 @@ function extractDateFromLine(items) {
   return null;
 }
 
-// Main parse
+// Main
 const buffer = fs.readFileSync('/tmp/test-statement.pdf');
 const blob = new Blob([buffer], { type: 'application/pdf' });
 const file = new File([blob], 'test.pdf', { type: 'application/pdf' });
@@ -132,7 +127,6 @@ const statementOpeningBalance = statementClosingBalance !== null && totalCredits
   ? statementClosingBalance - (totalCredits - totalDebits)
   : null;
 const columns = findColumnHeaders(items, lines);
-
 if (!columns) { console.log('No columns found!'); process.exit(1); }
 
 const minAmountCol = Math.min(columns.debitCol, columns.creditCol);
@@ -179,7 +173,22 @@ for (const line of lines) {
     pendingTransaction = { date: lineDate, description: fullDescription, amount: creditAmount > 0 ? creditAmount : -debitAmount, paymentAccount: detectedAccount, referenceNo: fullRefNo };
     continue;
   }
-  if (!lineDate && !hasAmount && descriptionText !== 'Transaction') {
+
+  // Amount-only line (no date): inherit date from pending or preBuffer
+  if (!lineDate && hasAmount) {
+    const inheritedDate = pendingTransaction?.date || parseDate(preBuffer) || null;
+    if (inheritedDate) {
+      flushPendingTransaction();
+      const fullDescription = preBuffer ? cleanDescription(`${preBuffer} ${descriptionText}`) : descriptionText;
+      const fullRefNo = refNo || extractReferenceNo(preBuffer);
+      preBuffer = '';
+      pendingTransaction = { date: inheritedDate, description: fullDescription, amount: creditAmount > 0 ? creditAmount : -debitAmount, paymentAccount: detectedAccount, referenceNo: fullRefNo };
+    }
+    continue;
+  }
+
+  // Continuation line: no amount
+  if (!hasAmount && descriptionText !== 'Transaction') {
     if (refNo && pendingTransaction) {
       flushPendingTransaction();
       preBuffer = rawDescription;
@@ -196,7 +205,9 @@ flushPendingTransaction();
 console.log(`Bank: ${bankName}, Currency: ${currency}, Detected: ${detectedAccount}`);
 console.log(`Opening: ${statementOpeningBalance}, Closing: ${statementClosingBalance}`);
 console.log(`Total: ${transactions.length}\n`);
-transactions.forEach((tx, i) => {
+
+// Show first 30 and check specific ones
+transactions.slice(0, 60).forEach((tx, i) => {
   console.log(`[${i+1}] ${tx.date} | ${tx.amount >= 0 ? '+' : ''}${tx.amount.toLocaleString()} | Ref: ${tx.referenceNo || '-'}`);
   console.log(`    Desc: ${tx.description}`);
 });
