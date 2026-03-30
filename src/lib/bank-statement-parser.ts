@@ -109,7 +109,7 @@ function detectRotation(items: RawTextItem[]): boolean {
   return xDiff < 20 && yDiff > 50;
 }
 
-async function extractTextItems(file: File): Promise<TextItem[]> {
+async function extractTextItems(file: File): Promise<{ items: TextItem[]; isRotated: boolean }> {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const rawItems: RawTextItem[] = [];
@@ -131,15 +131,18 @@ async function extractTextItems(file: File): Promise<TextItem[]> {
 
   const isRotated = detectRotation(rawItems);
 
-  return rawItems.map((item) => ({
-    page: item.page,
-    row: isRotated ? item.x : item.y,
-    col: isRotated ? item.y : item.x,
-    text: item.text,
-  }));
+  return {
+    items: rawItems.map((item) => ({
+      page: item.page,
+      row: isRotated ? item.x : item.y,
+      col: isRotated ? item.y : item.x,
+      text: item.text,
+    })),
+    isRotated,
+  };
 }
 
-function groupItemsByLine(items: TextItem[]): LineGroup[] {
+function groupItemsByLine(items: TextItem[], isRotated: boolean): LineGroup[] {
   const lines: LineGroup[] = [];
   const itemsByPage = new Map<number, TextItem[]>();
 
@@ -165,7 +168,7 @@ function groupItemsByLine(items: TextItem[]): LineGroup[] {
       lineMap.get(rowKey)!.push(item);
     }
 
-    for (const [row, lineItems] of [...lineMap.entries()].sort((a, b) => b[0] - a[0])) {
+    for (const [row, lineItems] of [...lineMap.entries()].sort((a, b) => isRotated ? a[0] - b[0] : b[0] - a[0])) {
       lines.push({
         page,
         row,
@@ -220,14 +223,14 @@ function extractDateFromLine(items: TextItem[]): string | null {
 }
 
 function isHeaderOrSummaryLine(lineText: string): boolean {
-  return /transaction summary|posting date|book balance|available balance|summary of|total value for|account bank statement|^page\s+\d/i.test(
+  return /transaction summary|posting date|book balance|available balance|summary of|total value for|account bank statement|^page\s+\d|^period:\s|^account:\s|CROB BANK|^NECTARINE LOGISTICS|^makumbusho$|^MAKUMBUSHO$/i.test(
     lineText
   );
 }
 
 export async function parseBankStatement(file: File): Promise<ParsedStatement> {
-  const items = await extractTextItems(file);
-  const lines = groupItemsByLine(items);
+  const { items, isRotated } = await extractTextItems(file);
+  const lines = groupItemsByLine(items, isRotated);
 
   let bankName = 'CRDB';
   let accountNumber = '';
@@ -337,7 +340,29 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
       continue;
     }
 
-    if (!lineDate && !hasAmount && descriptionText !== 'Transaction') {
+    // Amount-only line (no date): create transaction inheriting date from pending or preBuffer
+    if (!lineDate && hasAmount) {
+      const inheritedDate = pendingTransaction?.date || parseDate(preBuffer) || null;
+      if (inheritedDate) {
+        flushPendingTransaction();
+        const fullDescription = preBuffer
+          ? cleanDescription(`${preBuffer} ${descriptionText}`)
+          : descriptionText;
+        const fullRefNo = refNo || extractReferenceNo(preBuffer);
+        preBuffer = '';
+        pendingTransaction = {
+          date: inheritedDate,
+          description: fullDescription,
+          amount: creditAmount > 0 ? creditAmount : -debitAmount,
+          paymentAccount: detectedAccount,
+          referenceNo: fullRefNo,
+        };
+      }
+      continue;
+    }
+
+    // Continuation line: no amount (may or may not have a date)
+    if (!hasAmount && descriptionText !== 'Transaction') {
       // If this continuation line contains a REF: pattern, it likely belongs to the NEXT transaction
       if (refNo && pendingTransaction) {
         // Flush current transaction and buffer this text for the next one
