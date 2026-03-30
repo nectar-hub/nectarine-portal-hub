@@ -78,12 +78,50 @@ function normalizeWhitespace(value: string): string {
 }
 
 function cleanDescription(value: string): string {
-  return normalizeWhitespace(
-    value
-      .replace(/^details\s*/i, '')
-      .replace(/\bvalue date\b/gi, ' ')
-      .replace(/\bbook balance\b/gi, ' ')
-  ).substring(0, 200) || 'Transaction';
+  let cleaned = value
+    // Remove column header remnants
+    .replace(/^details\s*/i, '')
+    .replace(/\bvalue date\b/gi, ' ')
+    .replace(/\bbook balance\b/gi, ' ')
+    // Remove REF: patterns (hex reference numbers)
+    .replace(/\bREF:\s*[a-fA-F0-9]+\b/gi, ' ')
+    // Remove transaction type codes
+    .replace(/\b(IB\s+FT\s+(TO|FROM)|ESB\s+TIPS?|SIMAPP\s+FT|AGENCY\s+FT|IB\s+GePG\s+TIS\s+BIL|IB\s+GePG\s+BIL|CHQ\.\s*NO\.?|GEPG\s+TISS?\s+REF:?\s*[A-Z0-9]*|GEPG\s+TIS\s+CHARGE\s+REF:?|SWIFT\s+CHARGE\s+REF:?)\b/gi, ' ')
+    // Remove mobile money / bank account identifiers (TIGOPESA 06xxx, YAS/ZANTEL 501-xxx, AIRTEL 504-xxx, etc.)
+    .replace(/\b(TIGOPESA|HALOPESA|HALOTEL|YAS\/ZANTEL|AIRTEL|SELCOM\s+BANK)\s+[\d\-]+/gi, ' ')
+    // Remove NMB/NBC bank reference patterns (NMB016-xxx, NBC015-xxx)
+    .replace(/\b(NMB|NBC)\d{3}-[A-Z0-9]+/gi, ' ')
+    // Remove long numeric account/transaction IDs (10+ digits)
+    .replace(/\b\d{10,}\b/g, ' ')
+    // Remove ROC patterns (/ROC/xxx)
+    .replace(/\/ROC\/[\d]+/gi, ' ')
+    // Remove EventType patterns
+    .replace(/\bEventType(Tax|Charge)\b/gi, ' ')
+    // Remove standalone "N/A"
+    .replace(/\bN\/A\b/gi, ' ')
+    // Remove "CHARGE:" prefix patterns
+    .replace(/\bCHARGE:\s*(GEPG\s+TISS?\s+INTBNK|SWIFT\s+TRANSFER\s+INTBNK|SWIFT)\b/gi, ' ')
+    // Remove AB-prefixed reference codes (AB17725xxx:name:type)
+    .replace(/\bAB\d{5,}[:\w]*/gi, ' ')
+    // Remove "REC" followed by long numbers
+    .replace(/\bREC\s+\d{5,}/gi, ' ')
+    // Remove "Value Added Tax (VAT)"
+    .replace(/\bValue\s+Added\s+Tax\s*\(VAT\)/gi, 'VAT')
+    // Remove SWIFT TRANSFER AT XRATE patterns
+    .replace(/\bSWIFT\s+TRANSFER\s+AT\s+XRATE\s+\d+/gi, 'SWIFT TRANSFER')
+    // Remove "Swift Transfer XX" country prefix
+    .replace(/\bSwift\s+Transfer\s+[A-Z]{2}\s+[A-Z0-9]+\b/gi, 'SWIFT TRANSFER')
+    // Clean up "FROM ... TO NECTARINE" → keep the person name
+    .replace(/\bFROM\s+/gi, '')
+    .replace(/\s+TO\s+NECTARINE\b/gi, '')
+    // Remove standalone "NECTARINE LOGISTICS LTD" or "NECTARINE LOGISTICS LIMITED" or "NECTARINELOGISTICS LTD"
+    .replace(/\bNECTARINE\s*LOGISTICS\s*(LTD|LIMITED)\b/gi, ' ')
+    // Remove standalone "NECTARINE" when it's not part of a name
+    .replace(/\bTO\s+NECTARINE\b/gi, ' ')
+    // Remove "IB" standalone
+    .replace(/\bIB\b/g, ' ');
+
+  return normalizeWhitespace(cleaned).substring(0, 200) || 'Transaction';
 }
 
 function extractSummaryAmount(lineText: string, label: RegExp): number | null {
