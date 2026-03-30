@@ -223,7 +223,7 @@ function extractDateFromLine(items: TextItem[]): string | null {
 }
 
 function isHeaderOrSummaryLine(lineText: string): boolean {
-  return /transaction summary|posting date|book balance|available balance|summary of|total value for|account bank statement|^page\s+\d|^period:\s|^account:\s|CROB BANK|^NECTARINE LOGISTICS|^makumbusho$|^MAKUMBUSHO$/i.test(
+  return /transaction summary|posting date|book balance|available balance|summary of|total value for|account bank statement|^page\s+\d|period:\s*current|account:\s*\d|CROB BANK|NECTARINE LOGISTICS LIMITED$|^makumbusho$|^MAKUMBUSHO$|the bank that listens/i.test(
     lineText
   );
 }
@@ -280,11 +280,15 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
   const minAmountCol = Math.min(columns.debitCol, columns.creditCol);
   const transactions: ParsedTransaction[] = [];
   let pendingTransaction: ParsedTransaction | null = null;
-  let preBuffer: string = '';  // Buffer for description text that appears before a date+amount line
+  let lastDate: string | null = null;
 
   const flushPendingTransaction = () => {
     if (!pendingTransaction) return;
     pendingTransaction.description = cleanDescription(pendingTransaction.description);
+    // Extract reference from description if not already set
+    if (!pendingTransaction.referenceNo) {
+      pendingTransaction.referenceNo = extractReferenceNo(pendingTransaction.description);
+    }
     transactions.push(pendingTransaction);
     pendingTransaction = null;
   };
@@ -322,62 +326,33 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
     const descriptionText = cleanDescription(rawDescription);
     const refNo = extractReferenceNo(rawDescription);
 
-    if (lineDate && hasAmount) {
-      flushPendingTransaction();
-      // Prepend any buffered description text from preceding non-date/non-amount lines
-      const fullDescription = preBuffer
-        ? cleanDescription(`${preBuffer} ${descriptionText}`)
-        : descriptionText;
-      const fullRefNo = refNo || extractReferenceNo(preBuffer);
-      preBuffer = '';
-      pendingTransaction = {
-        date: lineDate,
-        description: fullDescription,
-        amount: creditAmount > 0 ? creditAmount : -debitAmount,
-        paymentAccount: detectedAccount,
-        referenceNo: fullRefNo,
-      };
-      continue;
-    }
+    if (lineDate) lastDate = lineDate;
 
-    // Amount-only line (no date): create transaction inheriting date from pending or preBuffer
-    if (!lineDate && hasAmount) {
-      const inheritedDate = pendingTransaction?.date || parseDate(preBuffer) || null;
-      if (inheritedDate) {
+    // New transaction: line has an amount (with or without a date)
+    if (hasAmount) {
+      const txDate = lineDate || lastDate;
+      if (txDate) {
         flushPendingTransaction();
-        const fullDescription = preBuffer
-          ? cleanDescription(`${preBuffer} ${descriptionText}`)
-          : descriptionText;
-        const fullRefNo = refNo || extractReferenceNo(preBuffer);
-        preBuffer = '';
         pendingTransaction = {
-          date: inheritedDate,
-          description: fullDescription,
+          date: txDate,
+          description: descriptionText,
           amount: creditAmount > 0 ? creditAmount : -debitAmount,
           paymentAccount: detectedAccount,
-          referenceNo: fullRefNo,
+          referenceNo: refNo,
         };
       }
       continue;
     }
 
-    // Continuation line: no amount (may or may not have a date)
-    if (!hasAmount && descriptionText !== 'Transaction') {
-      // If this continuation line contains a REF: pattern, it likely belongs to the NEXT transaction
-      if (refNo && pendingTransaction) {
-        // Flush current transaction and buffer this text for the next one
-        flushPendingTransaction();
-        preBuffer = rawDescription;
-      } else if (pendingTransaction) {
-        // Normal continuation: append to current pending transaction
-        pendingTransaction.description = cleanDescription(`${pendingTransaction.description} ${descriptionText}`);
+    // No amount: continuation line - append to current pending transaction
+    if (descriptionText && descriptionText !== 'Transaction') {
+      if (pendingTransaction) {
+        pendingTransaction.description = `${pendingTransaction.description} ${descriptionText}`;
         if (!pendingTransaction.referenceNo && refNo) {
           pendingTransaction.referenceNo = refNo;
         }
-      } else {
-        // No pending transaction yet, buffer for the next one
-        preBuffer = preBuffer ? `${preBuffer} ${rawDescription}` : rawDescription;
       }
+      // If no pending transaction, discard orphan text (likely header/footer)
     }
   }
 
