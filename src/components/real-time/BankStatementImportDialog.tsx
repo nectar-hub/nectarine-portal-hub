@@ -237,7 +237,7 @@ export const BankStatementImportDialog = ({
         description: tx.description,
         payment_account: selectedAccount,
         amount: tx.amount,
-        reference_no: null,
+        reference_no: tx.referenceNo || null,
         sort_order: startOrder + idx,
       }));
 
