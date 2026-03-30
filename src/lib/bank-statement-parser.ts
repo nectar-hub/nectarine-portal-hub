@@ -332,6 +332,9 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
 
     if (!lineDate && !hasAmount && pendingTransaction && descriptionText !== 'Transaction') {
       pendingTransaction.description = cleanDescription(`${pendingTransaction.description} ${descriptionText}`);
+      if (!pendingTransaction.referenceNo && refNo) {
+        pendingTransaction.referenceNo = refNo;
+      }
     }
   }
 
