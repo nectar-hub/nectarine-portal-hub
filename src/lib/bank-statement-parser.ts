@@ -314,7 +314,9 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
     }
 
     const hasAmount = debitAmount > 0 || creditAmount > 0;
-    const descriptionText = cleanDescription(descriptionParts.join(' '));
+    const rawDescription = descriptionParts.join(' ');
+    const descriptionText = cleanDescription(rawDescription);
+    const refNo = extractReferenceNo(rawDescription);
 
     if (lineDate && hasAmount) {
       flushPendingTransaction();
@@ -323,6 +325,7 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
         description: descriptionText,
         amount: creditAmount > 0 ? creditAmount : -debitAmount,
         paymentAccount: detectedAccount,
+        referenceNo: refNo,
       };
       continue;
     }
