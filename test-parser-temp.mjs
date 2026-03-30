@@ -8,12 +8,6 @@ const DATE_INLINE_PATTERN = /(\d{2}[./]\d{2}[./]\d{4})/;
 const TIME_PATTERN = /^\d{2}:\d{2}:\d{2}$/;
 const AMOUNT_PATTERN = /^[\d,]+\.\d{2}$/;
 
-function detectPaymentAccount(bankName, currency) {
-  const bank = bankName.toUpperCase();
-  if (bank.includes('CRDB') || bank.includes('CROB')) return currency.toUpperCase() === 'USD' ? 'CRDB_USD' : 'CRDB';
-  if (bank.includes('NMB')) return 'NMB_CARD';
-  return 'CASH';
-}
 function parseAmount(str) { const v = parseFloat(str.replace(/,/g, '')); return Number.isFinite(v) ? v : 0; }
 function parseDate(dateStr) { const m = dateStr.match(/(\d{2})[./](\d{2})[./](\d{4})/); return m ? `${m[3]}-${m[2]}-${m[1]}` : null; }
 function normalizeWhitespace(v) { return v.replace(/\s+/g, ' ').trim(); }
@@ -21,7 +15,7 @@ function extractReferenceNo(v) { const m = v.match(/\bREF:\s*([a-fA-F0-9]+)\b/i)
 function cleanDescription(value) {
   return normalizeWhitespace(value.replace(/^details\s*/i, '').replace(/\bvalue date\b/gi, ' ').replace(/\bbook balance\b/gi, ' ')).substring(0, 200) || 'Transaction';
 }
-function extractSummaryAmount(lineText, label) { const m = lineText.match(label); return m ? parseAmount(m[1]) : null; }
+function extractSummaryAmount(lt, label) { const m = lt.match(label); return m ? parseAmount(m[1]) : null; }
 function detectRotation(items) {
   const d = items.find(i => i.text.toLowerCase() === 'debit');
   const c = items.find(i => i.text.toLowerCase() === 'credit');
@@ -45,10 +39,10 @@ async function extractTextItems(file) {
     }
   }
   const rot = detectRotation(raw);
-  return raw.map(i => ({ page: i.page, row: rot ? i.x : i.y, col: rot ? i.y : i.x, text: i.text }));
+  return { items: raw.map(i => ({ page: i.page, row: rot ? i.x : i.y, col: rot ? i.y : i.x, text: i.text })), isRotated: rot };
 }
 
-function groupItemsByLine(items) {
+function groupItemsByLine(items, isRotated) {
   const lines = [];
   const byPage = new Map();
   for (const item of items) { if (!byPage.has(item.page)) byPage.set(item.page, []); byPage.get(item.page).push(item); }
@@ -61,7 +55,8 @@ function groupItemsByLine(items) {
       if (!lineMap.has(rk)) lineMap.set(rk, []);
       lineMap.get(rk).push(item);
     }
-    for (const [row, li] of [...lineMap.entries()].sort((a,b) => b[0]-a[0])) {
+    // KEY FIX: ascending for rotated, descending for normal
+    for (const [row, li] of [...lineMap.entries()].sort((a,b) => isRotated ? a[0] - b[0] : b[0] - a[0])) {
       lines.push({ page, row, items: li.sort((a,b) => a.col - b.col) });
     }
   }
@@ -98,13 +93,21 @@ function extractDateFromLine(items) {
   return null;
 }
 
+function detectPaymentAccount(bankName, currency) {
+  const bank = bankName.toUpperCase();
+  if (bank.includes('CRDB') || bank.includes('CROB')) return currency.toUpperCase() === 'USD' ? 'CRDB_USD' : 'CRDB';
+  if (bank.includes('NMB')) return 'NMB_CARD';
+  return 'CASH';
+}
+
 // Main
 const buffer = fs.readFileSync('/tmp/test-statement.pdf');
 const blob = new Blob([buffer], { type: 'application/pdf' });
 const file = new File([blob], 'test.pdf', { type: 'application/pdf' });
 
-const items = await extractTextItems(file);
-const lines = groupItemsByLine(items);
+const { items, isRotated } = await extractTextItems(file);
+console.log(`Rotated: ${isRotated}`);
+const lines = groupItemsByLine(items, isRotated);
 
 let bankName = 'CRDB', accountNumber = '', currency = 'TZS';
 let statementClosingBalance = null, totalCredits = null, totalDebits = null;
@@ -174,7 +177,6 @@ for (const line of lines) {
     continue;
   }
 
-  // Amount-only line (no date): inherit date from pending or preBuffer
   if (!lineDate && hasAmount) {
     const inheritedDate = pendingTransaction?.date || parseDate(preBuffer) || null;
     if (inheritedDate) {
@@ -187,7 +189,6 @@ for (const line of lines) {
     continue;
   }
 
-  // Continuation line: no amount
   if (!hasAmount && descriptionText !== 'Transaction') {
     if (refNo && pendingTransaction) {
       flushPendingTransaction();
@@ -206,8 +207,8 @@ console.log(`Bank: ${bankName}, Currency: ${currency}, Detected: ${detectedAccou
 console.log(`Opening: ${statementOpeningBalance}, Closing: ${statementClosingBalance}`);
 console.log(`Total: ${transactions.length}\n`);
 
-// Show first 30 and check specific ones
-transactions.slice(0, 60).forEach((tx, i) => {
+// Compare with statement: first 3 should be ANNASTAZIA, HEBRON, KWEGE (all -1,500,000)
+transactions.slice(0, 40).forEach((tx, i) => {
   console.log(`[${i+1}] ${tx.date} | ${tx.amount >= 0 ? '+' : ''}${tx.amount.toLocaleString()} | Ref: ${tx.referenceNo || '-'}`);
   console.log(`    Desc: ${tx.description}`);
 });
