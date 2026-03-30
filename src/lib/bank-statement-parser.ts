@@ -229,8 +229,8 @@ function isHeaderOrSummaryLine(lineText: string): boolean {
 }
 
 export async function parseBankStatement(file: File): Promise<ParsedStatement> {
-  const items = await extractTextItems(file);
-  const lines = groupItemsByLine(items);
+  const { items, isRotated } = await extractTextItems(file);
+  const lines = groupItemsByLine(items, isRotated);
 
   let bankName = 'CRDB';
   let accountNumber = '';
