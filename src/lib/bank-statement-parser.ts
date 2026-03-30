@@ -109,7 +109,7 @@ function detectRotation(items: RawTextItem[]): boolean {
   return xDiff < 20 && yDiff > 50;
 }
 
-async function extractTextItems(file: File): Promise<TextItem[]> {
+async function extractTextItems(file: File): Promise<{ items: TextItem[]; isRotated: boolean }> {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const rawItems: RawTextItem[] = [];
@@ -131,12 +131,15 @@ async function extractTextItems(file: File): Promise<TextItem[]> {
 
   const isRotated = detectRotation(rawItems);
 
-  return rawItems.map((item) => ({
-    page: item.page,
-    row: isRotated ? item.x : item.y,
-    col: isRotated ? item.y : item.x,
-    text: item.text,
-  }));
+  return {
+    items: rawItems.map((item) => ({
+      page: item.page,
+      row: isRotated ? item.x : item.y,
+      col: isRotated ? item.y : item.x,
+      text: item.text,
+    })),
+    isRotated,
+  };
 }
 
 function groupItemsByLine(items: TextItem[]): LineGroup[] {
