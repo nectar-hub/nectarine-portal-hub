@@ -142,7 +142,7 @@ async function extractTextItems(file: File): Promise<{ items: TextItem[]; isRota
   };
 }
 
-function groupItemsByLine(items: TextItem[]): LineGroup[] {
+function groupItemsByLine(items: TextItem[], isRotated: boolean): LineGroup[] {
   const lines: LineGroup[] = [];
   const itemsByPage = new Map<number, TextItem[]>();
 
@@ -168,7 +168,7 @@ function groupItemsByLine(items: TextItem[]): LineGroup[] {
       lineMap.get(rowKey)!.push(item);
     }
 
-    for (const [row, lineItems] of [...lineMap.entries()].sort((a, b) => b[0] - a[0])) {
+    for (const [row, lineItems] of [...lineMap.entries()].sort((a, b) => isRotated ? a[0] - b[0] : b[0] - a[0])) {
       lines.push({
         page,
         row,
