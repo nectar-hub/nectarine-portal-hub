@@ -337,7 +337,29 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
       continue;
     }
 
-    if (!lineDate && !hasAmount && descriptionText !== 'Transaction') {
+    // Amount-only line (no date): create transaction inheriting date from pending or preBuffer
+    if (!lineDate && hasAmount) {
+      const inheritedDate = pendingTransaction?.date || parseDate(preBuffer) || null;
+      if (inheritedDate) {
+        flushPendingTransaction();
+        const fullDescription = preBuffer
+          ? cleanDescription(`${preBuffer} ${descriptionText}`)
+          : descriptionText;
+        const fullRefNo = refNo || extractReferenceNo(preBuffer);
+        preBuffer = '';
+        pendingTransaction = {
+          date: inheritedDate,
+          description: fullDescription,
+          amount: creditAmount > 0 ? creditAmount : -debitAmount,
+          paymentAccount: detectedAccount,
+          referenceNo: fullRefNo,
+        };
+      }
+      continue;
+    }
+
+    // Continuation line: no amount (may or may not have a date)
+    if (!hasAmount && descriptionText !== 'Transaction') {
       // If this continuation line contains a REF: pattern, it likely belongs to the NEXT transaction
       if (refNo && pendingTransaction) {
         // Flush current transaction and buffer this text for the next one
