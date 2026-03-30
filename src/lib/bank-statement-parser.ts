@@ -223,7 +223,7 @@ function extractDateFromLine(items: TextItem[]): string | null {
 }
 
 function isHeaderOrSummaryLine(lineText: string): boolean {
-  return /transaction summary|posting date|book balance|available balance|summary of|total value for|account bank statement|^page\s+\d/i.test(
+  return /transaction summary|posting date|book balance|available balance|summary of|total value for|account bank statement|^page\s+\d|^period:\s|^account:\s|CROB BANK|^NECTARINE LOGISTICS|^makumbusho$|^MAKUMBUSHO$/i.test(
     lineText
   );
 }
