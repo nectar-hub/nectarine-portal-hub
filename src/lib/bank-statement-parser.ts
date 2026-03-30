@@ -277,6 +277,7 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
   const minAmountCol = Math.min(columns.debitCol, columns.creditCol);
   const transactions: ParsedTransaction[] = [];
   let pendingTransaction: ParsedTransaction | null = null;
+  let preBuffer: string = '';  // Buffer for description text that appears before a date+amount line
 
   const flushPendingTransaction = () => {
     if (!pendingTransaction) return;
@@ -320,20 +321,37 @@ export async function parseBankStatement(file: File): Promise<ParsedStatement> {
 
     if (lineDate && hasAmount) {
       flushPendingTransaction();
+      // Prepend any buffered description text from preceding non-date/non-amount lines
+      const fullDescription = preBuffer
+        ? cleanDescription(`${preBuffer} ${descriptionText}`)
+        : descriptionText;
+      const fullRefNo = refNo || extractReferenceNo(preBuffer);
+      preBuffer = '';
       pendingTransaction = {
         date: lineDate,
-        description: descriptionText,
+        description: fullDescription,
         amount: creditAmount > 0 ? creditAmount : -debitAmount,
         paymentAccount: detectedAccount,
-        referenceNo: refNo,
+        referenceNo: fullRefNo,
       };
       continue;
     }
 
-    if (!lineDate && !hasAmount && pendingTransaction && descriptionText !== 'Transaction') {
-      pendingTransaction.description = cleanDescription(`${pendingTransaction.description} ${descriptionText}`);
-      if (!pendingTransaction.referenceNo && refNo) {
-        pendingTransaction.referenceNo = refNo;
+    if (!lineDate && !hasAmount && descriptionText !== 'Transaction') {
+      // If this continuation line contains a REF: pattern, it likely belongs to the NEXT transaction
+      if (refNo && pendingTransaction) {
+        // Flush current transaction and buffer this text for the next one
+        flushPendingTransaction();
+        preBuffer = rawDescription;
+      } else if (pendingTransaction) {
+        // Normal continuation: append to current pending transaction
+        pendingTransaction.description = cleanDescription(`${pendingTransaction.description} ${descriptionText}`);
+        if (!pendingTransaction.referenceNo && refNo) {
+          pendingTransaction.referenceNo = refNo;
+        }
+      } else {
+        // No pending transaction yet, buffer for the next one
+        preBuffer = preBuffer ? `${preBuffer} ${rawDescription}` : rawDescription;
       }
     }
   }
