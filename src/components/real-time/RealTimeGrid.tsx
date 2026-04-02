@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus, Trash2, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { RealTimeEntryForm } from './RealTimeEntryForm';
+import { RealTimeSearchBar, type TransactionFilters } from './RealTimeSearchBar';
 import type { RealTimeDay, RealTimeEntryRow, PaymentAccount } from '@/types/real-time';
 import { cn } from '@/lib/utils';
 
