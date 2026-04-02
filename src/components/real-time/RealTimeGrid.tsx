@@ -60,6 +60,57 @@ export const RealTimeGrid = ({
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState<RealTimeEntryRow | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [filters, setFilters] = useState<TransactionFilters>({
+    searchQuery: '',
+    paymentAccount: 'all',
+    amountFilter: 'all',
+    sortField: 'default',
+  });
+
+  const filteredEntries = useMemo(() => {
+    let result = [...entries];
+
+    // Text search
+    if (filters.searchQuery) {
+      const q = filters.searchQuery.toLowerCase();
+      result = result.filter(
+        (e) =>
+          e.item.toLowerCase().includes(q) ||
+          e.description.toLowerCase().includes(q) ||
+          (e.reference_no && e.reference_no.toLowerCase().includes(q))
+      );
+    }
+
+    // Payment account filter
+    if (filters.paymentAccount !== 'all') {
+      result = result.filter((e) => e.payment_account === filters.paymentAccount);
+    }
+
+    // Amount type filter
+    if (filters.amountFilter === 'inflows') {
+      result = result.filter((e) => safeNum(e.amount) > 0);
+    } else if (filters.amountFilter === 'outflows') {
+      result = result.filter((e) => safeNum(e.amount) < 0);
+    }
+
+    // Sorting
+    switch (filters.sortField) {
+      case 'amount_desc':
+        result.sort((a, b) => Math.abs(safeNum(b.amount)) - Math.abs(safeNum(a.amount)));
+        break;
+      case 'amount_asc':
+        result.sort((a, b) => Math.abs(safeNum(a.amount)) - Math.abs(safeNum(b.amount)));
+        break;
+      case 'item_asc':
+        result.sort((a, b) => a.item.localeCompare(b.item));
+        break;
+      case 'item_desc':
+        result.sort((a, b) => b.item.localeCompare(a.item));
+        break;
+    }
+
+    return result;
+  }, [entries, filters]);
 
   if (!day) {
     return (
