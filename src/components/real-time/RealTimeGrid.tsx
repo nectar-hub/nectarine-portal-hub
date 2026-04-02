@@ -238,10 +238,12 @@ export const RealTimeGrid = ({
               </TableRow>
             ))}
 
-            {entries.length === 0 && (
+            {filteredEntries.length === 0 && (
               <TableRow>
                 <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
-                  No entries yet. Click "Add Entry" to add a transaction.
+                  {entries.length === 0
+                    ? 'No entries yet. Click "Add Entry" to add a transaction.'
+                    : 'No transactions match your search or filters.'}
                 </TableCell>
               </TableRow>
             )}
