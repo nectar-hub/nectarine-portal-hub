@@ -185,7 +185,7 @@ export const RealTimeGrid = ({
             </TableRow>
 
             {/* Entry Rows */}
-            {entries.map((entry) => (
+            {filteredEntries.map((entry) => (
               <TableRow 
                 key={entry.id}
                 className={cn(
