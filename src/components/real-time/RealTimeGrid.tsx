@@ -139,12 +139,20 @@ export const RealTimeGrid = ({
 
   return (
     <div className="rounded-lg border bg-card">
-      <div className="flex items-center justify-between p-4 border-b">
-        <h3 className="font-semibold">Transactions</h3>
-        <Button onClick={() => setShowAddForm(true)} size="sm">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Entry
-        </Button>
+      <div className="p-4 border-b">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold">Transactions</h3>
+          <Button onClick={() => setShowAddForm(true)} size="sm">
+            <Plus className="mr-2 h-4 w-4" />
+            Add Entry
+          </Button>
+        </div>
+        <RealTimeSearchBar
+          filters={filters}
+          onFiltersChange={setFilters}
+          resultCount={filteredEntries.length}
+          totalCount={entries.length}
+        />
       </div>
 
       <div className="overflow-x-auto">
