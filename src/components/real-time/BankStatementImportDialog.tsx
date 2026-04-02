@@ -233,7 +233,7 @@ export const BankStatementImportDialog = ({
 
       const entries = dayTransactions.map((tx, idx) => ({
         day_id: dayId,
-        item: 'TRANSACTION',
+        item: categorizeTransaction(tx.description),
         description: tx.description,
         payment_account: selectedAccount,
         amount: tx.amount,
