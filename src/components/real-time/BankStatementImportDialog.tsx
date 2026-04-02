@@ -32,6 +32,19 @@ const safeNum = (val: number | null | undefined): number => {
   return Number(val);
 };
 
+// Auto-categorize transactions based on description patterns
+const CATEGORY_RULES: { pattern: RegExp; item: string }[] = [
+  { pattern: /TIGOPESA\s+0677815157\s+MUNIR\s+ALI/i, item: 'CLEARANCE' },
+  { pattern: /TIGOPESA\s+0713789341\s+IDRISSA\s+OTHMAN/i, item: 'CLEARANCE' },
+];
+
+const categorizeTransaction = (description: string): string => {
+  for (const rule of CATEGORY_RULES) {
+    if (rule.pattern.test(description)) return rule.item;
+  }
+  return 'TRANSACTION';
+};
+
 interface BankStatementImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -233,7 +246,7 @@ export const BankStatementImportDialog = ({
 
       const entries = dayTransactions.map((tx, idx) => ({
         day_id: dayId,
-        item: 'TRANSACTION',
+        item: categorizeTransaction(tx.description),
         description: tx.description,
         payment_account: selectedAccount,
         amount: tx.amount,
