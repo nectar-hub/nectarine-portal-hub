@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus, Trash2, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { RealTimeEntryForm } from './RealTimeEntryForm';
+import { RealTimeSearchBar, type TransactionFilters } from './RealTimeSearchBar';
 import type { RealTimeDay, RealTimeEntryRow, PaymentAccount } from '@/types/real-time';
 import { cn } from '@/lib/utils';
 
@@ -59,6 +60,57 @@ export const RealTimeGrid = ({
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState<RealTimeEntryRow | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [filters, setFilters] = useState<TransactionFilters>({
+    searchQuery: '',
+    paymentAccount: 'all',
+    amountFilter: 'all',
+    sortField: 'default',
+  });
+
+  const filteredEntries = useMemo(() => {
+    let result = [...entries];
+
+    // Text search
+    if (filters.searchQuery) {
+      const q = filters.searchQuery.toLowerCase();
+      result = result.filter(
+        (e) =>
+          e.item.toLowerCase().includes(q) ||
+          e.description.toLowerCase().includes(q) ||
+          (e.reference_no && e.reference_no.toLowerCase().includes(q))
+      );
+    }
+
+    // Payment account filter
+    if (filters.paymentAccount !== 'all') {
+      result = result.filter((e) => e.payment_account === filters.paymentAccount);
+    }
+
+    // Amount type filter
+    if (filters.amountFilter === 'inflows') {
+      result = result.filter((e) => safeNum(e.amount) > 0);
+    } else if (filters.amountFilter === 'outflows') {
+      result = result.filter((e) => safeNum(e.amount) < 0);
+    }
+
+    // Sorting
+    switch (filters.sortField) {
+      case 'amount_desc':
+        result.sort((a, b) => Math.abs(safeNum(b.amount)) - Math.abs(safeNum(a.amount)));
+        break;
+      case 'amount_asc':
+        result.sort((a, b) => Math.abs(safeNum(a.amount)) - Math.abs(safeNum(b.amount)));
+        break;
+      case 'item_asc':
+        result.sort((a, b) => a.item.localeCompare(b.item));
+        break;
+      case 'item_desc':
+        result.sort((a, b) => b.item.localeCompare(a.item));
+        break;
+    }
+
+    return result;
+  }, [entries, filters]);
 
   if (!day) {
     return (
@@ -87,12 +139,20 @@ export const RealTimeGrid = ({
 
   return (
     <div className="rounded-lg border bg-card">
-      <div className="flex items-center justify-between p-4 border-b">
-        <h3 className="font-semibold">Transactions</h3>
-        <Button onClick={() => setShowAddForm(true)} size="sm">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Entry
-        </Button>
+      <div className="p-4 border-b">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold">Transactions</h3>
+          <Button onClick={() => setShowAddForm(true)} size="sm">
+            <Plus className="mr-2 h-4 w-4" />
+            Add Entry
+          </Button>
+        </div>
+        <RealTimeSearchBar
+          filters={filters}
+          onFiltersChange={setFilters}
+          resultCount={filteredEntries.length}
+          totalCount={entries.length}
+        />
       </div>
 
       <div className="overflow-x-auto">
@@ -125,7 +185,7 @@ export const RealTimeGrid = ({
             </TableRow>
 
             {/* Entry Rows */}
-            {entries.map((entry) => (
+            {filteredEntries.map((entry) => (
               <TableRow 
                 key={entry.id}
                 className={cn(
@@ -178,10 +238,12 @@ export const RealTimeGrid = ({
               </TableRow>
             ))}
 
-            {entries.length === 0 && (
+            {filteredEntries.length === 0 && (
               <TableRow>
                 <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
-                  No entries yet. Click "Add Entry" to add a transaction.
+                  {entries.length === 0
+                    ? 'No entries yet. Click "Add Entry" to add a transaction.'
+                    : 'No transactions match your search or filters.'}
                 </TableCell>
               </TableRow>
             )}
