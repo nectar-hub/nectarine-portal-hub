@@ -1,5 +1,5 @@
 export type PurchaseRegion = 'UK' | 'US' | 'UAE' | 'CN' | 'EU' | 'AU';
-export type PurchaseStatus = 'PENDING' | 'ORDERED' | 'RECEIVED' | 'IN_TRANSIT' | 'READY' | 'DELIVERED' | 'CANCELLED';
+export type PurchaseStatus = 'PENDING' | 'ORDERED' | 'PARTIAL_ORDERED' | 'RECEIVED' | 'IN_TRANSIT' | 'READY' | 'DELIVERED' | 'CANCELLED';
 
 export interface PurchaseTrackerItem {
   id: string;
@@ -53,6 +53,7 @@ export const REGION_CURRENCIES = {
 export const PURCHASE_STATUS_COLORS = {
   PENDING: 'bg-gray-500',
   ORDERED: 'bg-blue-600',
+  PARTIAL_ORDERED: 'bg-indigo-500',
   RECEIVED: 'bg-teal-600',
   IN_TRANSIT: 'bg-purple-600',
   READY: 'bg-orange-500',

@@ -29,7 +29,7 @@ const formSchema = z.object({
   from_region: z.enum(['UK', 'US', 'UAE', 'CN', 'EU', 'AU']),
   dop: z.date().optional(),
   purchased_by: z.string().optional(),
-  status: z.enum(['PENDING', 'ORDERED', 'RECEIVED', 'IN_TRANSIT', 'READY', 'DELIVERED', 'CANCELLED']),
+  status: z.enum(['PENDING', 'ORDERED', 'PARTIAL_ORDERED', 'RECEIVED', 'IN_TRANSIT', 'READY', 'DELIVERED', 'CANCELLED']),
   remarks: z.string().optional(),
   month_period_id: z.string().min(1, 'Month period is required'),
 });
@@ -457,6 +457,7 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
                         <SelectContent>
                           <SelectItem value="PENDING">Pending</SelectItem>
                           <SelectItem value="ORDERED">Ordered</SelectItem>
+                          <SelectItem value="PARTIAL_ORDERED">Partial Ordered</SelectItem>
                           <SelectItem value="RECEIVED">Received</SelectItem>
                           <SelectItem value="IN_TRANSIT">In Transit</SelectItem>
                           <SelectItem value="READY">Ready</SelectItem>

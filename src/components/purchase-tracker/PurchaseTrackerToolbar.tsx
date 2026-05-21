@@ -212,6 +212,7 @@ export function PurchaseTrackerToolbar({
             <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="PENDING">Pending</SelectItem>
             <SelectItem value="ORDERED">Ordered</SelectItem>
+            <SelectItem value="PARTIAL_ORDERED">Partial Ordered</SelectItem>
             <SelectItem value="RECEIVED">Received</SelectItem>
             <SelectItem value="IN_TRANSIT">In Transit</SelectItem>
             <SelectItem value="READY">Ready</SelectItem>

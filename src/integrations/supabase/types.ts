@@ -1340,6 +1340,7 @@ export type Database = {
       purchase_status:
         | "PENDING"
         | "ORDERED"
+        | "PARTIAL_ORDERED"
         | "RECEIVED"
         | "IN_TRANSIT"
         | "READY"
@@ -1498,6 +1499,7 @@ export const Constants = {
       purchase_status: [
         "PENDING",
         "ORDERED",
+        "PARTIAL_ORDERED",
         "RECEIVED",
         "IN_TRANSIT",
         "READY",
