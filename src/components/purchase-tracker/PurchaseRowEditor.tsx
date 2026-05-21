@@ -457,6 +457,7 @@ export function PurchaseRowEditor({ purchase, clients, open, onOpenChange, defau
                         <SelectContent>
                           <SelectItem value="PENDING">Pending</SelectItem>
                           <SelectItem value="ORDERED">Ordered</SelectItem>
+                          <SelectItem value="PARTIAL_ORDERED">Partial Ordered</SelectItem>
                           <SelectItem value="RECEIVED">Received</SelectItem>
                           <SelectItem value="IN_TRANSIT">In Transit</SelectItem>
                           <SelectItem value="READY">Ready</SelectItem>
