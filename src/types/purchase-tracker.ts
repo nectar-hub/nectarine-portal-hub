@@ -1,5 +1,5 @@
 export type PurchaseRegion = 'UK' | 'US' | 'UAE' | 'CN' | 'EU' | 'AU';
-export type PurchaseStatus = 'PENDING' | 'ORDERED' | 'RECEIVED' | 'IN_TRANSIT' | 'READY' | 'DELIVERED' | 'CANCELLED';
+export type PurchaseStatus = 'PENDING' | 'ORDERED' | 'PARTIAL_ORDERED' | 'RECEIVED' | 'IN_TRANSIT' | 'READY' | 'DELIVERED' | 'CANCELLED';
 
 export interface PurchaseTrackerItem {
   id: string;
