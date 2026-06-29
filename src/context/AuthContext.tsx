@@ -39,18 +39,14 @@ type RegisterData = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
-  console.log('[AUTH] useAuth hook called');
   const context = useContext(AuthContext);
-  console.log('[AUTH] useAuth context value:', context);
   if (context === undefined) {
-    console.error('[AUTH] useAuth called outside of AuthProvider!');
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  console.log('[AUTH] AuthProvider initializing...');
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -59,7 +55,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Load user profile from Supabase
   const loadUserProfile = async (userId: string) => {
-    console.log('[AUTH] Loading profile for user:', userId);
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -68,29 +63,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
 
       if (error) {
-        console.error('[AUTH] Error loading user profile:', error);
+        console.error('[AUTH] Error loading user profile');
         return;
       }
 
-      console.log('[AUTH] Profile loaded successfully:', data);
       setProfile(data);
-      
+
       // Load user roles
       const { data: rolesData, error: rolesError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId);
-      
+
       if (rolesError) {
-        console.error('[AUTH] Error loading user roles:', rolesError);
+        console.error('[AUTH] Error loading user roles');
         return;
       }
-      
+
       const roles = rolesData?.map(r => r.role as UserRole) || [];
-      console.log('[AUTH] User roles loaded:', roles);
       setUserRoles(roles);
     } catch (error) {
-      console.error('[AUTH] Error in loadUserProfile:', error);
+      console.error('[AUTH] Error in loadUserProfile');
     }
   };
 
@@ -296,17 +289,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const isAdmin = !!profile?.is_admin || userRoles.includes('admin') || userRoles.includes('superadmin');
   const isSuperadmin = userRoles.includes('superadmin');
-  
-  console.log('[AUTH] Current auth state:', {
-    user: user?.id,
-    profile: profile?.id,
-    isAdmin,
-    isSuperadmin,
-    userRoles,
-    profileIsAdmin: profile?.is_admin
-  });
 
-  console.log('[AUTH] AuthProvider rendering with context value');
+
 
   return (
     <AuthContext.Provider 
