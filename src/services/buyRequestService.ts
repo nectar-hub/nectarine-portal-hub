@@ -35,8 +35,6 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
     }
   }
 
-  console.log("[BUY SERVICE] Starting submission process with user_id:", userId);
-  console.log("[BUY SERVICE] Form values:", values);
   
   // Step 1: Insert the buy request into the database for the first item
   const firstItem = values.items[0];
@@ -63,7 +61,6 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
     size: firstItem.size || null
   };
   
-  console.log("[BUY SERVICE] Submitting buy request with data:", buyRequestData);
   
   // First create the buy request
   const { data: createdBuyRequest, error: buyRequestError } = await supabase
@@ -81,7 +78,6 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
     throw new Error("Failed to create buy request - no ID returned");
   }
   
-  console.log("[BUY SERVICE] Buy request created successfully:", createdBuyRequest);
   
   // Create an order for this request
   const orderPayload = {
@@ -101,11 +97,9 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
     throw new Error(`Order creation error: ${orderError.message || "Unknown error occurred"}`);
   }
   
-  console.log("[BUY SERVICE] Main order created successfully with ID:", createdOrder?.id);
   
   // Now insert additional items if there are more than one item
   if (values.items.length > 1) {
-    console.log(`[BUY SERVICE] Adding ${values.items.length - 1} additional items to buy_request_items table`);
     
     // For additional items, create buy_request_items entries linked to the main buy_request
     const additionalItems = values.items.slice(1);
@@ -120,7 +114,6 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
       size: item.size || null
     }));
     
-    console.log("[BUY SERVICE] Adding additional items:", itemsToInsert);
     
     const { error: additionalItemsError } = await supabase
       .from("buy_request_items")
@@ -130,7 +123,6 @@ export async function createBuyRequest(values: BuyRequestFormValues, userId: str
       console.error("[BUY SERVICE] Error adding additional items:", additionalItemsError);
       // Log but don't throw - the main request was created successfully
     } else {
-      console.log("[BUY SERVICE] Additional items added successfully");
     }
   }
   
@@ -171,7 +163,6 @@ export async function updateBuyRequest(
     }
   }
 
-  console.log("[BUY SERVICE] Updating buy request:", buyRequestId);
   
   const firstItem = values.items[0];
   
@@ -238,5 +229,4 @@ export async function updateBuyRequest(
     }
   }
   
-  console.log("[BUY SERVICE] Buy request updated successfully");
 }
