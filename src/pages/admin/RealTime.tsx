@@ -196,6 +196,10 @@ const RealTime = () => {
                 Daily Entry
               </TabsTrigger>
             )}
+            <TabsTrigger value="search" className="flex items-center gap-2">
+              <Search className="h-4 w-4" />
+              Search
+            </TabsTrigger>
             <TabsTrigger value="reports" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Monthly Reports
