@@ -55,7 +55,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Load user profile from Supabase
   const loadUserProfile = async (userId: string) => {
-    console.log('[AUTH] Loading profile for user:', userId);
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -64,29 +63,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
 
       if (error) {
-        console.error('[AUTH] Error loading user profile:', error);
+        console.error('[AUTH] Error loading user profile');
         return;
       }
 
-      console.log('[AUTH] Profile loaded successfully:', data);
       setProfile(data);
-      
+
       // Load user roles
       const { data: rolesData, error: rolesError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId);
-      
+
       if (rolesError) {
-        console.error('[AUTH] Error loading user roles:', rolesError);
+        console.error('[AUTH] Error loading user roles');
         return;
       }
-      
+
       const roles = rolesData?.map(r => r.role as UserRole) || [];
-      console.log('[AUTH] User roles loaded:', roles);
       setUserRoles(roles);
     } catch (error) {
-      console.error('[AUTH] Error in loadUserProfile:', error);
+      console.error('[AUTH] Error in loadUserProfile');
     }
   };
 
