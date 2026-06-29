@@ -252,6 +252,10 @@ const RealTime = () => {
             </TabsContent>
           )}
 
+          <TabsContent value="search" className="mt-6">
+            <RealTimeSearch />
+          </TabsContent>
+
           <TabsContent value="reports" className="mt-6">
             <RealTimeMonthlyReports />
           </TabsContent>
