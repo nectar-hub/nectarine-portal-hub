@@ -7,6 +7,7 @@ import { RealTimeOpeningBalances } from '@/components/real-time/RealTimeOpeningB
 import { RealTimeGrid } from '@/components/real-time/RealTimeGrid';
 import { RealTimeSummary } from '@/components/real-time/RealTimeSummary';
 import { RealTimeMonthlyReports } from '@/components/real-time/RealTimeMonthlyReports';
+import { RealTimeSearch } from '@/components/real-time/RealTimeSearch';
 import { BankStatementImportDialog } from '@/components/real-time/BankStatementImportDialog';
 import { useRealTime } from '@/hooks/useRealTime';
 import { exportDayToXLSX, exportMonthToXLSX } from '@/lib/real-time-export';
@@ -16,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/context/AuthContext';
 import type { RealTimeDay, RealTimeEntry, RealTimeEntryRow, DaySummary } from '@/types/real-time';
-import { Loader2, Clock, CalendarDays, BarChart3, Lock } from 'lucide-react';
+import { Loader2, Clock, CalendarDays, BarChart3, Lock, Search } from 'lucide-react';
 
 const safeNum = (val: number | null | undefined): number => {
   if (val === null || val === undefined || isNaN(Number(val))) return 0;
