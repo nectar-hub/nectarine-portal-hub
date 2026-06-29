@@ -39,11 +39,8 @@ type RegisterData = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
-  console.log('[AUTH] useAuth hook called');
   const context = useContext(AuthContext);
-  console.log('[AUTH] useAuth context value:', context);
   if (context === undefined) {
-    console.error('[AUTH] useAuth called outside of AuthProvider!');
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
