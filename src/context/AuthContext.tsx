@@ -289,17 +289,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const isAdmin = !!profile?.is_admin || userRoles.includes('admin') || userRoles.includes('superadmin');
   const isSuperadmin = userRoles.includes('superadmin');
-  
-  console.log('[AUTH] Current auth state:', {
-    user: user?.id,
-    profile: profile?.id,
-    isAdmin,
-    isSuperadmin,
-    userRoles,
-    profileIsAdmin: profile?.is_admin
-  });
 
-  console.log('[AUTH] AuthProvider rendering with context value');
+
 
   return (
     <AuthContext.Provider 
