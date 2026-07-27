@@ -133,18 +133,6 @@ function Calendar({
                 </SelectContent>
               </Select>
             </div>
-
-            <button
-              type="button"
-              onClick={() => goToOffset(1)}
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "icon" }),
-                "h-7 w-7 opacity-70 hover:opacity-100"
-              )}
-              aria-label="Next month"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
           </div>
         ),
       }}
