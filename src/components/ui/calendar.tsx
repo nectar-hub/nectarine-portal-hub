@@ -12,23 +12,35 @@ import {
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
 function Calendar({
   className,
   classNames,
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
-  const [displayMonth, setDisplayMonth] = React.useState(
-    props.defaultMonth || (props as any).selected || new Date()
-  );
+  const initialMonth =
+    props.month ||
+    props.defaultMonth ||
+    (props as any).selected ||
+    new Date();
+  const [displayMonth, setDisplayMonth] = React.useState<Date>(initialMonth);
 
-  const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-  ];
+  // Keep in sync when parent-controlled `month` changes
+  React.useEffect(() => {
+    if (props.month) setDisplayMonth(props.month);
+  }, [props.month]);
 
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
+  const years = React.useMemo(
+    () => Array.from({ length: 21 }, (_, i) => currentYear - 15 + i),
+    [currentYear]
+  );
+
 
   return (
     <DayPicker
@@ -38,7 +50,7 @@ function Calendar({
       className={cn("p-3", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-        month: "space-y-4",
+        month: "space-y-3",
         caption: "flex justify-center pt-1 relative items-center gap-1",
         caption_label: "hidden",
         caption_dropdowns: "flex items-center gap-1",
@@ -46,20 +58,32 @@ function Calendar({
         table: "w-full border-collapse space-y-1",
         head_row: "flex",
         head_cell:
-          "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
-        row: "flex w-full mt-2",
-        cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+          "text-muted-foreground rounded-md w-9 font-medium text-[0.72rem] uppercase tracking-wide",
+        row: "flex w-full mt-1.5",
+        cell: cn(
+          "relative h-9 w-9 p-0 text-center text-sm",
+          "focus-within:relative focus-within:z-20",
+          "[&:has([aria-selected])]:bg-primary/10 [&:has([aria-selected])]:rounded-md",
+          "[&:has([aria-selected].day-range-end)]:rounded-r-md",
+          "[&:has([aria-selected].day-outside)]:bg-accent/40"
+        ),
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
+          "h-9 w-9 p-0 font-normal rounded-md transition-colors",
+          "hover:bg-accent hover:text-accent-foreground",
+          "aria-selected:opacity-100"
         ),
         day_range_end: "day-range-end",
-        day_selected:
-          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        day_today: "bg-accent text-accent-foreground",
+        day_selected: cn(
+          "bg-primary text-primary-foreground shadow-sm",
+          "hover:bg-primary hover:text-primary-foreground",
+          "focus:bg-primary focus:text-primary-foreground"
+        ),
+        day_today:
+          "border border-primary/60 text-foreground font-semibold",
         day_outside:
-          "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
-        day_disabled: "text-muted-foreground opacity-50",
+          "day-outside text-muted-foreground/60 aria-selected:bg-accent/40 aria-selected:text-muted-foreground",
+        day_disabled: "text-muted-foreground/40 line-through",
         day_range_middle:
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
@@ -67,9 +91,9 @@ function Calendar({
       }}
       components={{
         CaptionLabel: () => null,
-        Caption: ({ displayMonth: dm }) => {
-          return (
-            <div className="flex items-center justify-center gap-1 pt-1">
+        Caption: ({ displayMonth: dm }) => (
+          <div className="flex items-center justify-center gap-1 px-1 pt-1 pb-2">
+            <div className="flex items-center gap-1">
               <Select
                 value={dm.getMonth().toString()}
                 onValueChange={(val) => {
@@ -78,11 +102,11 @@ function Calendar({
                   setDisplayMonth(newDate);
                 }}
               >
-                <SelectTrigger className="h-7 w-[110px] text-xs font-medium border-none shadow-none focus:ring-0 px-2">
+                <SelectTrigger className="h-8 w-[112px] text-xs font-semibold border-none shadow-none bg-transparent hover:bg-accent focus:ring-0 px-2">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="pointer-events-auto">
-                  {months.map((month, i) => (
+                <SelectContent className="pointer-events-auto max-h-64">
+                  {MONTHS.map((month, i) => (
                     <SelectItem key={i} value={i.toString()} className="text-xs">
                       {month}
                     </SelectItem>
@@ -97,10 +121,10 @@ function Calendar({
                   setDisplayMonth(newDate);
                 }}
               >
-                <SelectTrigger className="h-7 w-[72px] text-xs font-medium border-none shadow-none focus:ring-0 px-2">
+                <SelectTrigger className="h-8 w-[80px] text-xs font-semibold border-none shadow-none bg-transparent hover:bg-accent focus:ring-0 px-2">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="pointer-events-auto">
+                <SelectContent className="pointer-events-auto max-h-64">
                   {years.map((year) => (
                     <SelectItem key={year} value={year.toString()} className="text-xs">
                       {year}
@@ -109,8 +133,8 @@ function Calendar({
                 </SelectContent>
               </Select>
             </div>
-          );
-        },
+          </div>
+        ),
       }}
       {...props}
     />
