@@ -1,6 +1,5 @@
 import * as React from "react";
 import { DayPicker } from "react-day-picker";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -42,11 +41,6 @@ function Calendar({
     [currentYear]
   );
 
-  const goToOffset = (offset: number) => {
-    const next = new Date(displayMonth);
-    next.setMonth(next.getMonth() + offset);
-    setDisplayMonth(next);
-  };
 
   return (
     <DayPicker
@@ -98,19 +92,7 @@ function Calendar({
       components={{
         CaptionLabel: () => null,
         Caption: ({ displayMonth: dm }) => (
-          <div className="flex items-center justify-between gap-1 px-1 pt-1 pb-2">
-            <button
-              type="button"
-              onClick={() => goToOffset(-1)}
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "icon" }),
-                "h-7 w-7 opacity-70 hover:opacity-100"
-              )}
-              aria-label="Previous month"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-
+          <div className="flex items-center justify-center gap-1 px-1 pt-1 pb-2">
             <div className="flex items-center gap-1">
               <Select
                 value={dm.getMonth().toString()}
