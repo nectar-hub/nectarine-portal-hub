@@ -33,10 +33,13 @@ const safeNum = (val: number | null | undefined): number => {
 };
 
 // Auto-categorize transactions based on description patterns
-const CATEGORY_RULES: { pattern: RegExp; item: string }[] = [
-  { pattern: /TIGOPESA\s+0677815157\s+MUNIR\s+ALI/i, item: 'CLEARANCE' },
-  { pattern: /TIGOPESA\s+0713789341\s+IDRISSA\s+OTHMAN/i, item: 'CLEARANCE' },
-];
+const CLEARANCE_NUMBERS = ['0777734335', '0713789341', '0677815157', '0682094274'];
+
+const CATEGORY_RULES: { pattern: RegExp; item: string }[] = CLEARANCE_NUMBERS.map((num) => ({
+  pattern: new RegExp(num),
+  item: 'CLEARANCE',
+}));
+
 
 const categorizeTransaction = (description: string): string => {
   for (const rule of CATEGORY_RULES) {
