@@ -127,7 +127,7 @@ export const ProductionCostFormDialog = ({
   const handleConsignmentSelect = (consignment: ConsignmentWithWeights) => {
     setSelectedConsignment(consignment);
     setConsignmentOpen(false);
-    if (!editingCost && existingCostIds.includes(consignment.id)) {
+    if (!editingCost && takenIds.has(consignment.id)) {
       setDuplicateError(true);
     } else {
       setDuplicateError(false);
