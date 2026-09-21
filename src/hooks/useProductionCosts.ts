@@ -53,7 +53,7 @@ export const useProductionCosts = () => {
 
       // Order by the date inside the consignment title (oldest first)
       enrichedCosts.sort((a, b) =>
-        compareConsignmentTitlesAsc(a.consignment?.consignment_name, b.consignment?.consignment_name)
+        compareConsignmentTitlesDesc(a.consignment?.consignment_name, b.consignment?.consignment_name)
       );
 
       return enrichedCosts;
