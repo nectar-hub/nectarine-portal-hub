@@ -96,7 +96,7 @@ export const useProductionCosts = () => {
         total_chargeable_weight: weightsByConsignment[c.id]?.chargeable || 0,
       }));
 
-      result.sort((a, b) => compareConsignmentTitlesAsc(a.consignment_name, b.consignment_name));
+      result.sort((a, b) => compareConsignmentTitlesDesc(a.consignment_name, b.consignment_name));
 
       return result;
     },
