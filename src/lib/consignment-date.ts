@@ -48,3 +48,14 @@ export const compareConsignmentTitlesAsc = (a?: string | null, b?: string | null
   if (da !== db) return da - db;
   return (a || '').localeCompare(b || '');
 };
+
+/** Sort comparator: newest title date first; untitled/unparsable entries last. */
+export const compareConsignmentTitlesDesc = (a?: string | null, b?: string | null): number => {
+  const da = parseConsignmentTitleDate(a);
+  const db = parseConsignmentTitleDate(b);
+  if (da === null && db === null) return (a || '').localeCompare(b || '');
+  if (da === null) return 1;
+  if (db === null) return -1;
+  if (da !== db) return db - da;
+  return (a || '').localeCompare(b || '');
+};
