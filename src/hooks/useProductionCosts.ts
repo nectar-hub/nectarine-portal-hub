@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ProductionCostWithConsignment, ConsignmentWithWeights, ForeignCurrencyType } from '@/types/production-cost';
-import { compareConsignmentTitlesAsc } from '@/lib/consignment-date';
+import { compareConsignmentTitlesDesc } from '@/lib/consignment-date';
 
 export const useProductionCosts = () => {
   const { toast } = useToast();
