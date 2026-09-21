@@ -201,7 +201,7 @@ export const ProductionCostFormDialog = ({
                 <Command>
                   <CommandInput placeholder="Search consignment..." />
                   <CommandList>
-                    <CommandEmpty>No consignment found.</CommandEmpty>
+                    <CommandEmpty>All consignments already have a production cost.</CommandEmpty>
                     <CommandGroup>
                       {availableConsignments.map((consignment) => (
                         <CommandItem
