@@ -24,7 +24,7 @@ export const parseConsignmentTitleDate = (name?: string | null): number | null =
   // Tolerate common typos where letters stand in for digits (e.g. "2O26", "2Ol6")
   const upper = name
     .toUpperCase()
-    .replace(/(?<=\d)[OIL]|[OIL](?=\d)/g, (ch) => (ch === 'O' ? '0' : '1'));
+    .replace(/(?<=\d)[OIL](?![A-Z])|(?<![A-Z])[OIL](?=\d)/g, (ch) => (ch === 'O' ? '0' : '1'));
 
   const monthNames = Object.keys(MONTHS).join('|');
   const match = upper.match(new RegExp(`\\b(${monthNames})\\b[^0-9]*(\\d{4})`));
