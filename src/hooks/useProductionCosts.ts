@@ -126,6 +126,7 @@ export const useProductionCosts = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['production-costs'] });
+      queryClient.invalidateQueries({ queryKey: ['production-cost-consignment-ids'] });
       toast({ title: 'Success', description: 'Production cost created successfully' });
     },
     onError: (error: Error) => {
@@ -158,6 +159,7 @@ export const useProductionCosts = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['production-costs'] });
+      queryClient.invalidateQueries({ queryKey: ['production-cost-consignment-ids'] });
       toast({ title: 'Success', description: 'Production cost updated successfully' });
     },
     onError: (error: Error) => {
@@ -173,6 +175,7 @@ export const useProductionCosts = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['production-costs'] });
+      queryClient.invalidateQueries({ queryKey: ['production-cost-consignment-ids'] });
       toast({ title: 'Success', description: 'Production cost deleted successfully' });
     },
     onError: (error: Error) => {
