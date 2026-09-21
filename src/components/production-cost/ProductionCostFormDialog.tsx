@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,6 +49,24 @@ export const ProductionCostFormDialog = ({
   const [dateOpen, setDateOpen] = useState(false);
   const [selectedConsignment, setSelectedConsignment] = useState<ConsignmentWithWeights | null>(null);
   const [duplicateError, setDuplicateError] = useState(false);
+
+  // Always fetch the authoritative list of consignments that already have a cost
+  const { data: usedConsignmentIds } = useQuery({
+    queryKey: ['production-cost-consignment-ids'],
+    enabled: open,
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('production_costs').select('consignment_id');
+      if (error) throw error;
+      return (data || []).map((r) => r.consignment_id as string);
+    },
+  });
+
+  const takenIds = useMemo(
+    () => new Set([...(existingCostIds || []), ...(usedConsignmentIds || [])]),
+    [existingCostIds, usedConsignmentIds]
+  );
+
 
   const [formData, setFormData] = useState({
     airline_freight_cost: 0,
@@ -107,7 +127,7 @@ export const ProductionCostFormDialog = ({
   const handleConsignmentSelect = (consignment: ConsignmentWithWeights) => {
     setSelectedConsignment(consignment);
     setConsignmentOpen(false);
-    if (!editingCost && existingCostIds.includes(consignment.id)) {
+    if (!editingCost && takenIds.has(consignment.id)) {
       setDuplicateError(true);
     } else {
       setDuplicateError(false);
@@ -142,8 +162,12 @@ export const ProductionCostFormDialog = ({
     });
   };
 
-  const availableConsignments = consignments.filter(
-    (c) => !existingCostIds.includes(c.id) || c.id === editingCost?.consignment_id
+  const availableConsignments = useMemo(
+    () =>
+      consignments.filter(
+        (c) => !takenIds.has(c.id) || c.id === editingCost?.consignment_id
+      ),
+    [consignments, takenIds, editingCost?.consignment_id]
   );
 
   return (
@@ -177,7 +201,7 @@ export const ProductionCostFormDialog = ({
                 <Command>
                   <CommandInput placeholder="Search consignment..." />
                   <CommandList>
-                    <CommandEmpty>No consignment found.</CommandEmpty>
+                    <CommandEmpty>All consignments already have a production cost.</CommandEmpty>
                     <CommandGroup>
                       {availableConsignments.map((consignment) => (
                         <CommandItem
