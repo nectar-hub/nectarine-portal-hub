@@ -162,8 +162,12 @@ export const ProductionCostFormDialog = ({
     });
   };
 
-  const availableConsignments = consignments.filter(
-    (c) => !existingCostIds.includes(c.id) || c.id === editingCost?.consignment_id
+  const availableConsignments = useMemo(
+    () =>
+      consignments.filter(
+        (c) => !takenIds.has(c.id) || c.id === editingCost?.consignment_id
+      ),
+    [consignments, takenIds, editingCost?.consignment_id]
   );
 
   return (
