@@ -50,6 +50,24 @@ export const ProductionCostFormDialog = ({
   const [selectedConsignment, setSelectedConsignment] = useState<ConsignmentWithWeights | null>(null);
   const [duplicateError, setDuplicateError] = useState(false);
 
+  // Always fetch the authoritative list of consignments that already have a cost
+  const { data: usedConsignmentIds } = useQuery({
+    queryKey: ['production-cost-consignment-ids'],
+    enabled: open,
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('production_costs').select('consignment_id');
+      if (error) throw error;
+      return (data || []).map((r) => r.consignment_id as string);
+    },
+  });
+
+  const takenIds = useMemo(
+    () => new Set([...(existingCostIds || []), ...(usedConsignmentIds || [])]),
+    [existingCostIds, usedConsignmentIds]
+  );
+
+
   const [formData, setFormData] = useState({
     airline_freight_cost: 0,
     office_handling_cost: 0,
