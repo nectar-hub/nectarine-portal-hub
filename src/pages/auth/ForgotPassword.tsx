@@ -120,7 +120,7 @@ const ForgotPassword = () => {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input
+                          <Input autoComplete="email"
                             type="email"
                             placeholder="you@example.com"
                             {...field}

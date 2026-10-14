@@ -100,7 +100,7 @@ const Register = () => {
                     <FormItem>
                       <FormLabel>Full Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="John Doe" {...field} />
+                        <Input autoComplete="name" placeholder="John Doe" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -114,7 +114,7 @@ const Register = () => {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="your@email.com" {...field} />
+                        <Input autoComplete="email" type="email" placeholder="your@email.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -128,7 +128,7 @@ const Register = () => {
                     <FormItem>
                       <FormLabel>Phone Number</FormLabel>
                       <FormControl>
-                        <Input placeholder="+1234567890" {...field} />
+                        <Input autoComplete="tel" type="tel" placeholder="+1234567890" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -142,7 +142,7 @@ const Register = () => {
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} />
+                        <Input autoComplete="new-password" type="password" placeholder="••••••••" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -156,7 +156,7 @@ const Register = () => {
                     <FormItem>
                       <FormLabel>Confirm Password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} />
+                        <Input autoComplete="new-password" type="password" placeholder="••••••••" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
