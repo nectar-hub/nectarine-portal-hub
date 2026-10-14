@@ -36,6 +36,8 @@ type RegisterData = {
   password: string;
 };
 
+const clockWarningShown = { current: false };
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
@@ -90,7 +92,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Detect a wrong device clock: the login library compares the server-issued
   // token time with the device clock, so a clock that is far off makes it
   // renew endlessly and the user gets signed out.
-  const clockWarningShown = { current: false };
   const checkClockSkew = (s: Session | null) => {
     if (!s?.access_token || clockWarningShown.current) return;
     try {
