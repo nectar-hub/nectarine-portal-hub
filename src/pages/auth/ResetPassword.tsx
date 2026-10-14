@@ -86,7 +86,7 @@ const ResetPassword = () => {
                   <FormItem>
                     <FormLabel>New Password</FormLabel>
                     <FormControl>
-                      <Input
+                      <Input autoComplete="new-password"
                         type="password"
                         placeholder="Enter your new password"
                         {...field}
@@ -105,7 +105,7 @@ const ResetPassword = () => {
                   <FormItem>
                     <FormLabel>Confirm New Password</FormLabel>
                     <FormControl>
-                      <Input
+                      <Input autoComplete="new-password"
                         type="password"
                         placeholder="Confirm your new password"
                         {...field}
