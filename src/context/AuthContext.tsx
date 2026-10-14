@@ -87,6 +87,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Detect a wrong device clock: the login library compares the server-issued
+  // token time with the device clock, so a clock that is far off makes it
+  // renew endlessly and the user gets signed out.
+  const clockWarningShown = { current: false };
+  const checkClockSkew = (s: Session | null) => {
+    if (!s?.access_token || clockWarningShown.current) return;
+    try {
+      const payload = JSON.parse(atob(s.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      const skewSeconds = Date.now() / 1000 - payload.iat;
+      if (Math.abs(skewSeconds) > 5 * 60) {
+        clockWarningShown.current = true;
+        const mins = Math.round(Math.abs(skewSeconds) / 60);
+        toast({
+          title: "Your computer's clock is wrong",
+          description: `Your device time is about ${mins} minutes ${skewSeconds > 0 ? 'ahead' : 'behind'}. This will keep signing you out. Please turn on "Set time automatically" and the correct time zone, then log in again.`,
+          variant: "destructive",
+          duration: 60000,
+        });
+      }
+    } catch {
+      // ignore malformed tokens
+    }
+  };
+
   // Setup auth state change listener and check for existing session
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -94,6 +118,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        checkClockSkew(session);
 
         if (session?.user) {
           // Use setTimeout to avoid potential deadlocks
